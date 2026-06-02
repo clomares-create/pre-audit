@@ -6,6 +6,8 @@
 <title>Sonate — Générateur Pré-audit</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
     --green-dark: #123c33;
@@ -470,19 +472,6 @@
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
   .col-block h4 { font-size: 12px; font-weight: 700; color: #111; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
 
-  /* PRINT */
-  @media print {
-    header, .sidebar, .result-header, .settings-toggle, .settings-panel,
-    .report-link-container, .auth-screen, .reports-overlay { display: none !important; }
-    .app { display: block; }
-    .main { padding: 0; }
-    .slides-container { max-width: 100%; }
-    .slide { break-inside: avoid; margin-top: 0 !important; border-radius: 0; border: none; }
-    .slide + .slide { margin-top: 0 !important; page-break-before: always; }
-    .slide-section, .slide-cover { page-break-after: avoid; }
-    body { background: white; }
-    @page { margin: 0; size: A4; }
-  }
 
   /* TOAST */
   .toast {
@@ -1198,8 +1187,74 @@ function resetApp() {
   document.getElementById('resultState').style.display = 'none';
 }
 
-function printPDF() {
-  window.print();
+async function printPDF() {
+  const slides = document.querySelectorAll('#slidesContainer .slide');
+  if (!slides.length) return;
+
+  const btn = document.querySelector('.result-actions .btn-primary');
+  const originalText = btn.textContent;
+  btn.textContent = '⏳ Génération PDF…';
+  btn.disabled = true;
+
+  try {
+    const RENDER_WIDTH = 1100;
+    const SCALE = 2;
+
+    // Off-screen render container at fixed width
+    const stage = document.createElement('div');
+    stage.style.cssText = `position:fixed;top:-9999px;left:-9999px;width:${RENDER_WIDTH}px;z-index:-1;pointer-events:none;`;
+    document.body.appendChild(stage);
+
+    const { jsPDF } = window.jspdf;
+    let pdf = null;
+
+    for (let i = 0; i < slides.length; i++) {
+      btn.textContent = `⏳ ${i + 1} / ${slides.length}…`;
+
+      // Clone slide into stage
+      const clone = slides[i].cloneNode(true);
+      clone.style.cssText = `width:${RENDER_WIDTH}px;margin:0;border-radius:0;`;
+      stage.innerHTML = '';
+      stage.appendChild(clone);
+
+      // Wait one frame for layout
+      await new Promise(r => requestAnimationFrame(r));
+
+      const canvas = await html2canvas(clone, {
+        scale: SCALE,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: null,
+        width: RENDER_WIDTH,
+        windowWidth: RENDER_WIDTH,
+      });
+
+      const imgW = canvas.width;
+      const imgH = canvas.height;
+
+      // PDF page sized to match the slide aspect ratio (in mm, ~72dpi → 25.4mm/in)
+      const mmW = (imgW / SCALE / 96) * 25.4;
+      const mmH = (imgH / SCALE / 96) * 25.4;
+
+      if (!pdf) {
+        pdf = new jsPDF({ unit: 'mm', format: [mmW, mmH], orientation: mmW > mmH ? 'l' : 'p' });
+      } else {
+        pdf.addPage([mmW, mmH], mmW > mmH ? 'l' : 'p');
+      }
+
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, mmW, mmH, '', 'FAST');
+    }
+
+    document.body.removeChild(stage);
+
+    const clientName = document.getElementById('resultTitle').textContent.replace('Pré-audit — ', '').trim();
+    pdf.save(`pre-audit-${clientName.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+  } catch (err) {
+    showToast('Erreur PDF : ' + err.message);
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
 }
 
 // Progress steps definition

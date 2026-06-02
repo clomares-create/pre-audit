@@ -977,7 +977,7 @@ async function loadReportIntoApp(reportId) {
   const slugEl = document.getElementById('slug-' + reportId);
   if (!slugEl) return;
   const slug = slugEl.textContent.split('/r/')[1];
-  const res = await fetch('/api/reports/' + slug);
+  const res = await fetch('/api/reports/by-slug?slug=' + slug);
   if (!res.ok) return;
   const { report } = await res.json();
 
@@ -1052,7 +1052,7 @@ function copyText(text) {
 
 async function loadPublicReport(slug) {
   document.getElementById('authScreen').style.display = 'none';
-  const res = await fetch('/api/reports/' + slug);
+  const res = await fetch('/api/reports/by-slug?slug=' + slug);
   if (!res.ok) {
     document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;color:#6b6b67;flex-direction:column;gap:12px">
       <div style="font-size:48px">404</div>

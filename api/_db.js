@@ -15,7 +15,6 @@ export async function initDB() {
       created_at TEXT DEFAULT (datetime('now'))
     )
   `);
-
   await db.execute(`
     CREATE TABLE IF NOT EXISTS reports (
       id TEXT PRIMARY KEY,
@@ -23,7 +22,7 @@ export async function initDB() {
       client_name TEXT NOT NULL,
       client_url TEXT,
       slug TEXT UNIQUE NOT NULL,
-      content JSON NOT NULL,
+      content TEXT NOT NULL,
       status TEXT DEFAULT 'draft',
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),

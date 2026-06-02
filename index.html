@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sonate — Générateur Pré-audit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-dark: #123c33;
+    --green-mid: #1a5446;
+    --green-light: #e8f2ef;
+    --green-accent: #0f6e56;
+    --sand: #f5f3ee;
+    --sand-dark: #e8e4db;
+    --text: #1a1a18;
+    --text-muted: #6b6b67;
+    --text-light: #9a9a96;
+    --border: rgba(18,60,51,0.15);
+    --border-strong: rgba(18,60,51,0.3);
+    --white: #ffffff;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--sand);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--green-dark);
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.02em;
+  }
+  .logo span { color: #9fe1cb; }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer; border: none; transition: all 0.15s;
+    text-decoration: none;
+  }
+  .btn-ghost {
+    background: transparent; color: rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .btn-primary {
+    background: var(--green-accent); color: #fff;
+    border: 1px solid transparent;
+  }
+  .btn-primary:hover { background: #0a5a45; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-outline {
+    background: #fff; color: var(--green-dark);
+    border: 1px solid var(--border-strong);
+  }
+  .btn-outline:hover { background: var(--green-light); }
+  .btn-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+  .btn-danger:hover { background: #fecaca; }
+  .btn-lg { padding: 12px 24px; font-size: 15px; }
+
+  /* MAIN LAYOUT */
+  .app { display: grid; grid-template-columns: 380px 1fr; min-height: calc(100vh - 56px); }
+
+  /* SIDEBAR */
+  .sidebar {
+    background: var(--white);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow-y: auto; max-height: calc(100vh - 56px);
+    position: sticky; top: 56px;
+  }
+  .sidebar-inner { padding: 1.5rem; flex: 1; }
+
+  .section-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    color: var(--text-light); text-transform: uppercase;
+    margin-bottom: 12px; margin-top: 1.5rem;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  /* FORM ELEMENTS */
+  .form-group { margin-bottom: 14px; }
+  .form-label {
+    display: block; font-size: 13px; font-weight: 500;
+    color: var(--text-muted); margin-bottom: 6px;
+  }
+  input[type="text"], input[type="url"], input[type="password"], textarea, select {
+    width: 100%; padding: 9px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius); background: var(--white);
+    font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--green-accent); }
+  textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+
+  /* FILE DROP ZONE */
+  .drop-zone {
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius); padding: 20px;
+    text-align: center; cursor: pointer;
+    transition: all 0.15s; background: var(--sand);
+    position: relative;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--green-accent); background: var(--green-light);
+  }
+  .drop-zone input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    width: 100%; height: 100%;
+  }
+  .drop-zone-icon { font-size: 24px; margin-bottom: 8px; color: var(--text-light); }
+  .drop-zone-text { font-size: 13px; color: var(--text-muted); }
+  .drop-zone-text strong { color: var(--green-accent); }
+
+  .file-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .file-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; background: var(--sand);
+    border-radius: 8px; border: 1px solid var(--border);
+  }
+  .file-item-icon { color: var(--green-accent); font-size: 16px; flex-shrink: 0; }
+  .file-item-name { font-size: 13px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-item-size { font-size: 11px; color: var(--text-light); flex-shrink: 0; }
+  .file-item-remove { background: none; border: none; cursor: pointer; color: var(--text-light); font-size: 16px; padding: 0; line-height: 1; }
+  .file-item-remove:hover { color: #dc2626; }
+
+  /* TABS INSIDE FORM */
+  .input-tabs { display: flex; gap: 4px; margin-bottom: 10px; background: var(--sand); padding: 4px; border-radius: 8px; }
+  .input-tab {
+    flex: 1; padding: 6px; text-align: center; font-size: 12px; font-weight: 500;
+    cursor: pointer; border-radius: 6px; border: none; background: transparent;
+    color: var(--text-muted); transition: all 0.15s;
+  }
+  .input-tab.active { background: var(--white); color: var(--green-dark); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+  /* DIVIDER */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+
+  /* SETTINGS PANEL */
+  .settings-toggle {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem; border-top: 1px solid var(--border);
+    cursor: pointer; font-size: 13px; font-weight: 500;
+    color: var(--text-muted); background: var(--white);
+  }
+  .settings-toggle:hover { color: var(--green-dark); }
+  .settings-panel { padding: 1rem 1.5rem; background: var(--sand); border-top: 1px solid var(--border); display: none; }
+  .settings-panel.open { display: block; }
+
+  /* MAIN CONTENT */
+  .main { padding: 2rem; overflow-y: auto; }
+
+  /* WELCOME STATE */
+  .welcome {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 60vh; text-align: center;
+    max-width: 480px; margin: 0 auto;
+  }
+  .welcome-logo {
+    width: 64px; height: 64px; background: var(--green-dark);
+    border-radius: 16px; display: flex; align-items: center;
+    justify-content: center; margin-bottom: 1.5rem;
+    font-size: 28px; color: #9fe1cb; font-weight: 700;
+  }
+  .welcome h1 { font-size: 24px; font-weight: 600; margin-bottom: 8px; letter-spacing: -0.02em; }
+  .welcome p { color: var(--text-muted); font-size: 15px; line-height: 1.6; }
+  .welcome-steps {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    margin-top: 2rem; width: 100%;
+  }
+  .welcome-step {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px;
+    text-align: left;
+  }
+  .welcome-step-num {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--green-light); color: var(--green-dark);
+    font-size: 12px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 8px;
+  }
+  .welcome-step p { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .welcome-step strong { font-size: 13px; font-weight: 600; }
+
+  /* PROGRESS */
+  .progress-container {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 2rem;
+    max-width: 600px; margin: 0 auto;
+  }
+  .progress-title { font-size: 18px; font-weight: 600; margin-bottom: 1.5rem; }
+  .progress-steps { display: flex; flex-direction: column; gap: 10px; }
+  .progress-step {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; border-radius: var(--radius);
+    border: 1px solid var(--border);
+    font-size: 14px; transition: all 0.3s;
+  }
+  .progress-step.active { background: var(--green-light); border-color: var(--green-accent); }
+  .progress-step.done { background: #f0fdf4; border-color: #86efac; }
+  .progress-step.error { background: #fef2f2; border-color: #fca5a5; }
+  .step-icon { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .step-icon.pending { background: var(--sand); color: var(--text-light); }
+  .step-icon.active { background: var(--green-accent); color: #fff; }
+  .step-icon.done { background: #16a34a; color: #fff; }
+  .step-icon.error { background: #dc2626; color: #fff; }
+  .step-label { flex: 1; font-weight: 500; }
+  .step-sub { font-size: 12px; color: var(--text-muted); }
+
+  /* SPINNER */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin 0.7s linear infinite; flex-shrink: 0;
+  }
+  .spinner-dark {
+    border-color: rgba(18,60,51,0.2); border-top-color: var(--green-dark);
+  }
+
+  /* RESULT — PRE-AUDIT SLIDES */
+  .result-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.5rem; flex-wrap: gap;
+  }
+  .result-title { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+  .result-actions { display: flex; gap: 8px; }
+
+  .slides-container { display: flex; flex-direction: column; gap: 16px; }
+
+  /* SLIDE CARDS */
+  .slide {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); overflow: hidden;
+    page-break-inside: avoid;
+  }
+  .slide-inner { padding: 2rem 2.5rem; min-height: 220px; position: relative; }
+  .slide-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-light);
+    margin-bottom: 4px;
+  }
+  .slide-title { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; color: var(--green-dark); margin-bottom: 0.75rem; }
+  .slide-subtitle { font-size: 15px; color: var(--text-muted); margin-bottom: 1rem; }
+  .slide-body { font-size: 14px; line-height: 1.7; color: var(--text); }
+  .slide-body ul { padding-left: 1.2rem; }
+  .slide-body li { margin-bottom: 4px; }
+  .slide-body strong { color: var(--green-dark); font-weight: 600; }
+
+  /* SLIDE VARIANTS */
+  .slide-cover .slide-inner {
+    background: var(--green-dark); color: #fff;
+    min-height: 280px; display: flex; flex-direction: column; justify-content: flex-end;
+  }
+  .slide-cover .slide-label { color: rgba(255,255,255,0.5); }
+  .slide-cover .slide-title { color: #fff; font-size: 28px; }
+  .slide-cover .slide-subtitle { color: rgba(255,255,255,0.7); font-size: 16px; }
+  .slide-cover .slide-deco {
+    position: absolute; top: 1.5rem; right: 1.5rem;
+    font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.5);
+    letter-spacing: 0.05em;
+  }
+
+  .slide-metric .slide-inner { display: flex; flex-direction: column; }
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 1rem; }
+  .metric-card {
+    background: var(--sand); border-radius: var(--radius);
+    padding: 14px; border: 1px solid var(--border);
+  }
+  .metric-value { font-size: 28px; font-weight: 600; color: var(--green-dark); line-height: 1.1; }
+  .metric-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .metric-trend { font-size: 12px; margin-top: 6px; }
+  .trend-up { color: #16a34a; }
+  .trend-down { color: #dc2626; }
+  .trend-neutral { color: var(--text-muted); }
+
+  .slide-accent-bar { height: 4px; background: var(--green-accent); }
+  .slide-accent-bar.amber { background: #d97706; }
+  .slide-accent-bar.red { background: #dc2626; }
+  .slide-accent-bar.blue { background: #2563eb; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
+  }
+  .badge-green { background: #dcfce7; color: #15803d; }
+  .badge-amber { background: #fef3c7; color: #92400e; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-blue { background: #dbeafe; color: #1d4ed8; }
+  .badge-gray { background: var(--sand-dark); color: var(--text-muted); }
+
+  .score-bar-wrap { margin: 8px 0; }
+  .score-bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+  .score-bar-track { height: 8px; background: var(--sand-dark); border-radius: 4px; overflow: hidden; }
+  .score-bar-fill { height: 100%; border-radius: 4px; background: var(--green-accent); transition: width 0.8s ease; }
+  .score-bar-fill.amber { background: #d97706; }
+  .score-bar-fill.red { background: #dc2626; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .col-block h4 { font-size: 13px; font-weight: 600; color: var(--green-dark); margin-bottom: 8px; }
+
+  /* PRINT */
+  @media print {
+    header, .sidebar, .result-actions, .settings-toggle, .settings-panel { display: none !important; }
+    .app { display: block; }
+    .main { padding: 0; }
+    .slide { break-inside: avoid; margin-bottom: 0; border-radius: 0; border: none; border-bottom: 1px solid #eee; }
+    body { background: white; }
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    background: var(--green-dark); color: #fff;
+    padding: 12px 20px; border-radius: var(--radius);
+    font-size: 14px; z-index: 1000;
+    animation: slideUp 0.3s ease;
+    display: none;
+  }
+  @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* MODEL SELECT */
+  .model-input-row { display: flex; gap: 8px; }
+  .model-input-row input { flex: 1; }
+
+  /* API KEY INDICATOR */
+  .api-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-muted);
+  }
+  .api-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+  }
+  .api-dot.ok { background: #16a34a; }
+  .api-dot.missing { background: #dc2626; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">S<span>onate</span> <span style="font-weight:300;opacity:.5;margin-left:4px">/ Pré-audit</span></div>
+  <div class="header-actions">
+    <span class="api-status" id="apiStatus">
+      <span class="api-dot missing" id="apiDot"></span>
+      <span id="apiLabel">Clé API non configurée</span>
+    </span>
+  </div>
+</header>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <div class="section-title">Client</div>
+      <div class="form-group">
+        <label class="form-label">Nom de l'entreprise *</label>
+        <input type="text" id="clientName" placeholder="ex: Maison Catros-Gérand">
+      </div>
+      <div class="form-group">
+        <label class="form-label">URL du site *</label>
+        <input type="url" id="clientUrl" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Secteur d'activité</label>
+        <input type="text" id="clientSector" placeholder="ex: E-commerce graines & semences">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Zone géographique</label>
+        <input type="text" id="clientGeo" placeholder="ex: France, Bretagne...">
+      </div>
+
+      <hr class="divider">
+      <div class="section-title">Rapport de réunion (Gemini / autre)</div>
+      <div class="input-tabs">
+        <button class="input-tab active" onclick="switchTab('meeting','file')">Fichier</button>
+        <button class="input-tab" onclick="switchTab('meeting','text')">Texte</button>
+      </div>
+      <div id="meeting-file">
+        <div class="drop-zone" id="meetingDrop">
+          <input type="file" id="meetingFile" accept=".txt,.md,.pdf,.docx" onchange="handleFile(event,'meeting')">
+          <div class="drop-zone-icon">📄</div>
+          <div class="drop-zone-text"><strong>Cliquer ou déposer</strong><br>.txt, .md, .pdf</div>
+        </div>
+        <div class="file-list" id="meetingFileList"></div>
+      </div>
+      <div id="meeting-text" style="display:none">
+        <textarea id="meetingText" placeholder="Coller ici le contenu du rapport de réunion..."></textarea>
+      </div>
+
+      <hr class="divider">
+      <div class="section-title">Brief / Infos complémentaires</div>
+      <div class="input-tabs">
+        <button class="input-tab active" onclick="switchTab('brief','file')">Fichier</button>
+        <button class="input-tab" onclick="switchTab('brief','text')">Texte</button>
+      </div>
+      <div id="brief-file">
+        <div class="drop-zone">
+          <input type="file" id="briefFile" accept=".txt,.md,.pdf,.docx" onchange="handleFile(event,'brief')">
+          <div class="drop-zone-icon">📋</div>
+          <div class="drop-zone-text"><strong>Cliquer ou déposer</strong><br>Brief, cahier des charges...</div>
+        </div>
+        <div class="file-list" id="briefFileList"></div>
+      </div>
+      <div id="brief-text" style="display:none">
+        <textarea id="briefText" placeholder="Besoins, objectifs, contexte..."></textarea>
+      </div>
+
+      <hr class="divider">
+      <div class="section-title">Services proposés</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="svcSeo" checked> SEO
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="svcSea"> SEA
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="svcGeo"> GEO / IA
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="svcContent"> Contenu
+        </label>
+      </div>
+
+      <div style="margin-top:1.5rem">
+        <button class="btn btn-primary btn-lg" style="width:100%" onclick="generate()" id="generateBtn">
+          Générer le pré-audit
+        </button>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="settings-toggle" onclick="toggleSettings()">
+      ⚙️ Paramètres API
+      <span id="settingsArrow">▾</span>
+    </div>
+    <div class="settings-panel" id="settingsPanel">
+      <div class="form-group">
+        <label class="form-label">Clé API OpenRouter</label>
+        <input type="password" id="apiKey" placeholder="sk-or-..." oninput="updateApiStatus()">
+        <div style="font-size:11px;color:var(--text-light);margin-top:4px">Stockée localement dans votre navigateur</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Modèle</label>
+        <input type="text" id="modelName" placeholder="google/gemini-2.5-pro" value="google/gemini-2.5-pro">
+        <div style="font-size:11px;color:var(--text-light);margin-top:4px">Tout modèle OpenRouter accepté</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nom du commercial (signature)</label>
+        <input type="text" id="consultantName" placeholder="Fabien Guilleux" value="Fabien Guilleux">
+      </div>
+      <button class="btn btn-outline" style="width:100%;margin-top:4px" onclick="saveSettings()">Enregistrer</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="mainContent">
+    <div class="welcome" id="welcomeState">
+      <div class="welcome-logo">S</div>
+      <h1>Générateur de pré-audit</h1>
+      <p>Renseignez les informations client, importez le rapport de réunion et le brief, puis laissez l'IA construire le pré-audit complet.</p>
+      <div class="welcome-steps">
+        <div class="welcome-step">
+          <div class="welcome-step-num">1</div>
+          <strong>Infos client</strong>
+          <p>Nom, URL, secteur, zone</p>
+        </div>
+        <div class="welcome-step">
+          <div class="welcome-step-num">2</div>
+          <strong>Documents</strong>
+          <p>Rapport Gemini + brief</p>
+        </div>
+        <div class="welcome-step">
+          <div class="welcome-step-num">3</div>
+          <strong>Générer</strong>
+          <p>Pré-audit + export PDF</p>
+        </div>
+      </div>
+    </div>
+    <div id="progressState" style="display:none">
+      <div class="progress-container">
+        <div class="progress-title">Génération en cours...</div>
+        <div class="progress-steps" id="progressSteps"></div>
+      </div>
+    </div>
+    <div id="resultState" style="display:none">
+      <div class="result-header">
+        <div>
+          <div class="result-title" id="resultTitle">Pré-audit —</div>
+          <div style="font-size:13px;color:var(--text-muted)" id="resultDate"></div>
+        </div>
+        <div class="result-actions">
+          <button class="btn btn-outline" onclick="resetApp()">← Nouveau</button>
+          <button class="btn btn-primary" onclick="printPDF()">⬇ Exporter PDF</button>
+        </div>
+      </div>
+      <div class="slides-container" id="slidesContainer"></div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STATE = {
+  meetingContent: '',
+  briefContent: '',
+  meetingMode: 'file',
+  briefMode: 'file',
+};
+
+// Load saved settings
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = JSON.parse(localStorage.getItem('sonate_settings') || '{}');
+  if (saved.apiKey) document.getElementById('apiKey').value = saved.apiKey;
+  if (saved.model) document.getElementById('modelName').value = saved.model;
+  if (saved.consultant) document.getElementById('consultantName').value = saved.consultant;
+  updateApiStatus();
+  // Open settings if no API key
+  if (!saved.apiKey) toggleSettings(true);
+});
+
+function updateApiStatus() {
+  const key = document.getElementById('apiKey').value.trim();
+  const dot = document.getElementById('apiDot');
+  const label = document.getElementById('apiLabel');
+  if (key) {
+    dot.className = 'api-dot ok';
+    label.textContent = 'API configurée';
+  } else {
+    dot.className = 'api-dot missing';
+    label.textContent = 'Clé API non configurée';
+  }
+}
+
+function saveSettings() {
+  const settings = {
+    apiKey: document.getElementById('apiKey').value.trim(),
+    model: document.getElementById('modelName').value.trim(),
+    consultant: document.getElementById('consultantName').value.trim(),
+  };
+  localStorage.setItem('sonate_settings', JSON.stringify(settings));
+  updateApiStatus();
+  showToast('Paramètres enregistrés ✓');
+  toggleSettings(false);
+}
+
+function toggleSettings(forceOpen) {
+  const panel = document.getElementById('settingsPanel');
+  const arrow = document.getElementById('settingsArrow');
+  const isOpen = panel.classList.contains('open');
+  if (forceOpen === true || (!isOpen && forceOpen !== false)) {
+    panel.classList.add('open');
+    arrow.textContent = '▴';
+  } else {
+    panel.classList.remove('open');
+    arrow.textContent = '▾';
+  }
+}
+
+function switchTab(section, mode) {
+  STATE[section + 'Mode'] = mode;
+  const fileEl = document.getElementById(section + '-file');
+  const textEl = document.getElementById(section + '-text');
+  const tabs = fileEl.parentNode.querySelectorAll('.input-tab');
+  tabs.forEach((t, i) => t.classList.toggle('active', (i === 0 && mode === 'file') || (i === 1 && mode === 'text')));
+  fileEl.style.display = mode === 'file' ? '' : 'none';
+  textEl.style.display = mode === 'text' ? '' : 'none';
+}
+
+function handleFile(event, section) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const listEl = document.getElementById(section + 'FileList');
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    STATE[section + 'Content'] = e.target.result;
+    listEl.innerHTML = `
+      <div class="file-item">
+        <span class="file-item-icon">📄</span>
+        <span class="file-item-name">${file.name}</span>
+        <span class="file-item-size">${(file.size/1024).toFixed(0)} Ko</span>
+        <button class="file-item-remove" onclick="removeFile('${section}')">✕</button>
+      </div>`;
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function removeFile(section) {
+  STATE[section + 'Content'] = '';
+  document.getElementById(section + 'FileList').innerHTML = '';
+  document.getElementById(section + 'File').value = '';
+}
+
+function getContent(section) {
+  if (STATE[section + 'Mode'] === 'file') return STATE[section + 'Content'];
+  return document.getElementById(section + 'Text').value.trim();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+function resetApp() {
+  document.getElementById('welcomeState').style.display = '';
+  document.getElementById('progressState').style.display = 'none';
+  document.getElementById('resultState').style.display = 'none';
+}
+
+function printPDF() {
+  window.print();
+}
+
+// Progress steps definition
+const STEPS = [
+  { id: 'parse', label: 'Lecture des documents', sub: 'Analyse du rapport et du brief' },
+  { id: 'analyse', label: 'Analyse du site client', sub: 'Contexte, secteur, positionnement' },
+  { id: 'seo', label: 'Stratégie SEO & technique', sub: 'Audit, potentiel, recommandations' },
+  { id: 'sea', label: 'Stratégie SEA & concurrents', sub: 'Analyse compétitive, opportunités' },
+  { id: 'geo', label: 'Visibilité GEO / IA', sub: 'Présence dans les moteurs génératifs' },
+  { id: 'propo', label: 'Proposition commerciale', sub: 'Offre, pricing, prochaines étapes' },
+];
+
+function renderProgress(steps, currentId, errorId) {
+  return steps.map(s => {
+    let status = 'pending';
+    let icon = '○';
+    const idx = steps.findIndex(x => x.id === s.id);
+    const curIdx = steps.findIndex(x => x.id === currentId);
+    if (s.id === errorId) { status = 'error'; icon = '✕'; }
+    else if (idx < curIdx) { status = 'done'; icon = '✓'; }
+    else if (s.id === currentId) { status = 'active'; icon = ''; }
+    return `<div class="progress-step ${status}">
+      <div class="step-icon ${status}">${status === 'active' ? '<div class="spinner"></div>' : icon}</div>
+      <div>
+        <div class="step-label">${s.label}</div>
+        <div class="step-sub">${s.sub}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function generate() {
+  const settings = JSON.parse(localStorage.getItem('sonate_settings') || '{}');
+  const apiKey = settings.apiKey || document.getElementById('apiKey').value.trim();
+  if (!apiKey) { showToast('⚠️ Configurez votre clé API dans les paramètres'); toggleSettings(true); return; }
+
+  const clientName = document.getElementById('clientName').value.trim();
+  const clientUrl = document.getElementById('clientUrl').value.trim();
+  if (!clientName || !clientUrl) { showToast('⚠️ Nom et URL du client requis'); return; }
+
+  const model = document.getElementById('modelName').value.trim() || 'google/gemini-2.5-pro';
+  const consultant = document.getElementById('consultantName').value.trim() || 'Fabien Guilleux';
+  const sector = document.getElementById('clientSector').value.trim();
+  const geo = document.getElementById('clientGeo').value.trim();
+  const meetingContent = getContent('meeting');
+  const briefContent = getContent('brief');
+  const svcSeo = document.getElementById('svcSeo').checked;
+  const svcSea = document.getElementById('svcSea').checked;
+  const svcGeo = document.getElementById('svcGeo').checked;
+  const svcContent = document.getElementById('svcContent').checked;
+  const services = [svcSeo && 'SEO', svcSea && 'SEA / Google Ads', svcGeo && 'GEO / Visibilité IA', svcContent && 'Stratégie de contenu'].filter(Boolean);
+
+  // Show progress
+  document.getElementById('welcomeState').style.display = 'none';
+  document.getElementById('progressState').style.display = '';
+  document.getElementById('resultState').style.display = 'none';
+  document.getElementById('progressSteps').innerHTML = renderProgress(STEPS, 'parse', null);
+
+  const progressUpdate = (stepId) => {
+    document.getElementById('progressSteps').innerHTML = renderProgress(STEPS, stepId, null);
+  };
+
+  const prompt = buildPrompt({ clientName, clientUrl, sector, geo, services, meetingContent, briefContent, consultant });
+
+  try {
+    progressUpdate('analyse');
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://sonate.group',
+        'X-Title': 'Sonate Pre-audit Generator',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 8000,
+        messages: [{ role: 'user', content: prompt }],
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || `Erreur API ${response.status}`);
+    }
+
+    progressUpdate('propo');
+    const data = await response.json();
+    const raw = data.choices?.[0]?.message?.content || '';
+
+    // Parse JSON from response
+    let slides;
+    try {
+      const jsonMatch = raw.match(/```json\s*([\s\S]*?)```/) || raw.match(/(\{[\s\S]*\})/);
+      const jsonStr = jsonMatch ? jsonMatch[1] : raw;
+      slides = JSON.parse(jsonStr);
+    } catch(e) {
+      // Try to find JSON array directly
+      const arrMatch = raw.match(/\[[\s\S]*\]/);
+      if (arrMatch) { slides = JSON.parse(arrMatch[0]); }
+      else { throw new Error('Impossible de parser la réponse JSON du modèle.'); }
+    }
+
+    // Render
+    document.getElementById('progressState').style.display = 'none';
+    document.getElementById('resultState').style.display = '';
+    document.getElementById('resultTitle').textContent = `Pré-audit — ${clientName}`;
+    document.getElementById('resultDate').textContent = `Généré le ${new Date().toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})} · ${model}`;
+    document.getElementById('slidesContainer').innerHTML = renderSlides(slides, { clientName, clientUrl, consultant });
+
+  } catch(err) {
+    document.getElementById('progressSteps').innerHTML = renderProgress(STEPS, null, 'analyse') +
+      `<div style="color:#dc2626;font-size:13px;padding:10px 14px;background:#fef2f2;border-radius:8px;border:1px solid #fca5a5;margin-top:8px">
+        ⚠️ ${err.message}
+      </div>`;
+    showToast('Erreur : ' + err.message);
+  }
+}
+
+function buildPrompt({ clientName, clientUrl, sector, geo, services, meetingContent, briefContent, consultant }) {
+  return `Tu es un expert en stratégie digitale de l'agence Sonate. Tu dois générer un pré-audit commercial complet pour un prospect.
+
+INFORMATIONS CLIENT :
+- Nom : ${clientName}
+- URL : ${clientUrl}
+- Secteur : ${sector || 'Non précisé'}
+- Zone géographique : ${geo || 'France'}
+- Services proposés : ${services.join(', ') || 'SEO, SEA'}
+- Commercial : ${consultant}
+
+${meetingContent ? `RAPPORT DE RÉUNION :\n${meetingContent.slice(0, 6000)}\n` : ''}
+${briefContent ? `BRIEF COMPLÉMENTAIRE :\n${briefContent.slice(0, 3000)}\n` : ''}
+
+INSTRUCTIONS :
+Génère un pré-audit complet en JSON. Retourne UNIQUEMENT un tableau JSON valide, sans texte avant ni après, sans balises markdown.
+
+Le tableau doit contenir entre 10 et 15 slides selon les services proposés. Chaque slide a le format :
+{
+  "type": "cover" | "intro" | "metrics" | "seo" | "technical" | "content" | "sea" | "geo" | "competition" | "roadmap" | "pricing" | "closing",
+  "label": "Section courte (ex: Analyse SEO)",
+  "title": "Titre principal",
+  "subtitle": "Sous-titre ou phrase d'accroche",
+  "body": "Contenu HTML riche avec <ul><li>, <strong>, etc.",
+  "metrics": [{"value":"XX%","label":"Description","trend":"up|down|neutral"}],
+  "scores": [{"label":"Indicateur","score":75,"max":100,"color":"green|amber|red"}],
+  "badges": [{"text":"Label","color":"green|amber|red|blue|gray"}],
+  "accentColor": "green|amber|red|blue"
+}
+
+Slides OBLIGATOIRES dans cet ordre :
+1. cover : Page de couverture avec le nom du client et la date du jour (${new Date().toLocaleDateString('fr-FR')})
+2. intro : Contexte de l'entreprise, ce que Sonate a observé
+3. technical : Performance technique du site (vitesse, mobile, UX) — invente des données plausibles basées sur le secteur
+4. metrics : Trafic et positionnement SEO actuels — données estimées cohérentes avec le secteur
+5. seo (si SEO coché) : Analyse SEO détaillée et opportunités
+6. content (si SEO coché) : Stratégie de contenu recommandée
+7. competition : Analyse des principaux concurrents
+8. sea (si SEA coché) : Opportunités SEA et Google Ads
+9. geo (si GEO coché) : Visibilité dans les IA génératives (Perplexity, ChatGPT, Gemini)
+10. roadmap : Plan d'action à 3-6 mois
+11. pricing : Proposition tarifaire détaillée (setup + mensuel pour chaque service)
+12. closing : Prochaines étapes et contact
+
+Pour le pricing, base-toi sur ces tarifs Sonate :
+- SEO : setup 1400€ + 700€/mois
+- SEA : setup 1400€ + 400€/mois
+- GEO : setup 800€ + 300€/mois
+- Contenu : setup 600€ + 400€/mois
+
+Rédige en français, ton professionnel et expert. Les données chiffrées doivent être réalistes et cohérentes avec le secteur "${sector || 'digital'}".`;
+}
+
+function renderSlides(slides, { clientName, clientUrl, consultant }) {
+  if (!Array.isArray(slides)) slides = Object.values(slides);
+  return slides.map((s, i) => renderSlide(s, i, clientName, consultant)).join('');
+}
+
+function renderSlide(s, idx, clientName, consultant) {
+  const accentClass = s.accentColor || 'green';
+  const accentBarColor = { green: '', amber: ' amber', red: ' red', blue: ' blue' }[accentClass] || '';
+
+  if (s.type === 'cover') {
+    return `<div class="slide slide-cover">
+      <div class="slide-inner">
+        <div class="slide-deco">SONATE · ${new Date().getFullYear()}</div>
+        <div class="slide-label">Pré-audit digital</div>
+        <div class="slide-title">${s.title || clientName}</div>
+        <div class="slide-subtitle">${s.subtitle || ''}</div>
+        <div style="margin-top:1.5rem;display:flex;align-items:center;gap:12px">
+          <div style="font-size:13px;color:rgba(255,255,255,0.6)">${consultant} · Sonate</div>
+          <div style="height:1px;flex:1;background:rgba(255,255,255,0.2)"></div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.6)">${new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  let content = `<div class="slide-label">${s.label || ''}</div>
+    <div class="slide-title">${s.title || ''}</div>`;
+
+  if (s.subtitle) content += `<div class="slide-subtitle">${s.subtitle}</div>`;
+
+  if (s.badges?.length) {
+    content += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">` +
+      s.badges.map(b => `<span class="badge badge-${b.color || 'gray'}">${b.text}</span>`).join('') + `</div>`;
+  }
+
+  if (s.metrics?.length) {
+    content += `<div class="metrics-grid">` + s.metrics.map(m => `
+      <div class="metric-card">
+        <div class="metric-value">${m.value}</div>
+        <div class="metric-label">${m.label}</div>
+        ${m.trend ? `<div class="metric-trend trend-${m.trend}">${m.trend === 'up' ? '↑' : m.trend === 'down' ? '↓' : '→'} ${m.trendLabel || ''}</div>` : ''}
+      </div>`).join('') + `</div>`;
+  }
+
+  if (s.scores?.length) {
+    content += s.scores.map(sc => {
+      const pct = Math.round((sc.score / (sc.max || 100)) * 100);
+      const color = sc.color === 'amber' ? 'amber' : sc.color === 'red' ? 'red' : '';
+      return `<div class="score-bar-wrap">
+        <div class="score-bar-label"><span>${sc.label}</span><span style="font-weight:600">${sc.score}/${sc.max || 100}</span></div>
+        <div class="score-bar-track"><div class="score-bar-fill ${color}" style="width:${pct}%"></div></div>
+      </div>`;
+    }).join('');
+  }
+
+  if (s.body) content += `<div class="slide-body" style="margin-top:${s.metrics?.length || s.scores?.length ? '1rem' : '0'}">${s.body}</div>`;
+
+  return `<div class="slide">
+    <div class="slide-accent-bar${accentBarColor}"></div>
+    <div class="slide-inner">${content}</div>
+  </div>`;
+}
+</script>
+</body>
+</html>

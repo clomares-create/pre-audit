@@ -758,6 +758,11 @@
         <div style="font-size:11px;color:var(--text-light);margin-top:4px">Stockée localement dans votre navigateur</div>
       </div>
       <div class="form-group">
+        <label class="form-label">Clé API PageSpeed Insights <span style="font-weight:400;color:var(--text-light)">(optionnelle)</span></label>
+        <input type="password" id="pagespeedKey" placeholder="Clé Google Cloud API">
+        <div style="font-size:11px;color:var(--text-light);margin-top:4px">Active les vraies données de performance. Sans clé : scores estimés par l'IA.</div>
+      </div>
+      <div class="form-group">
         <label class="form-label">Modèle</label>
         <input type="text" id="modelName" placeholder="google/gemini-2.5-pro" value="google/gemini-2.5-pro">
         <div style="font-size:11px;color:var(--text-light);margin-top:4px">Tout modèle OpenRouter accepté</div>
@@ -858,6 +863,7 @@ function initApp(jwt) {
 
   const saved = JSON.parse(localStorage.getItem('sonate_settings') || '{}');
   if (saved.apiKey) document.getElementById('apiKey').value = saved.apiKey;
+  if (saved.pagespeedKey) document.getElementById('pagespeedKey').value = saved.pagespeedKey;
   if (saved.model) document.getElementById('modelName').value = saved.model;
   if (saved.consultant) document.getElementById('consultantName').value = saved.consultant;
   updateApiStatus();
@@ -1117,6 +1123,7 @@ function updateApiStatus() {
 function saveSettings() {
   const settings = {
     apiKey: document.getElementById('apiKey').value.trim(),
+    pagespeedKey: document.getElementById('pagespeedKey').value.trim(),
     model: document.getElementById('modelName').value.trim(),
     consultant: document.getElementById('consultantName').value.trim(),
   };
@@ -1198,6 +1205,7 @@ function printPDF() {
 // Progress steps definition
 const STEPS = [
   { id: 'parse', label: 'Lecture des documents', sub: 'Analyse du rapport et du brief' },
+  { id: 'pagespeed', label: 'Mesure de performance', sub: 'PageSpeed Insights mobile & desktop' },
   { id: 'analyse', label: 'Analyse du site client', sub: 'Contexte, secteur, positionnement' },
   { id: 'seo', label: 'Stratégie SEO & technique', sub: 'Audit, potentiel, recommandations' },
   { id: 'sea', label: 'Stratégie SEA & concurrents', sub: 'Analyse compétitive, opportunités' },
@@ -1255,7 +1263,16 @@ async function generate() {
     document.getElementById('progressSteps').innerHTML = renderProgress(STEPS, stepId, null);
   };
 
-  const prompt = buildPrompt({ clientName, clientUrl, sector, geo, services, meetingContent, briefContent, consultant });
+  let pagespeedData = null;
+  try {
+    progressUpdate('pagespeed');
+    const pagespeedKey = settings.pagespeedKey || document.getElementById('pagespeedKey').value.trim();
+    pagespeedData = await fetchPageSpeed(clientUrl, pagespeedKey);
+  } catch (e) {
+    // PageSpeed failed — continue without real data, LLM will estimate
+  }
+
+  const prompt = buildPrompt({ clientName, clientUrl, sector, geo, services, meetingContent, briefContent, consultant, pagespeedData });
 
   try {
     progressUpdate('analyse');
@@ -1335,7 +1352,30 @@ async function generate() {
   }
 }
 
-function buildPrompt({ clientName, clientUrl, sector, geo, services, meetingContent, briefContent, consultant }) {
+async function fetchPageSpeed(url, apiKey) {
+  const base = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
+  const keyParam = apiKey ? `&key=${encodeURIComponent(apiKey)}` : '';
+  const [mobileRes, desktopRes] = await Promise.all([
+    fetch(`${base}?url=${encodeURIComponent(url)}&strategy=mobile${keyParam}&category=performance&category=accessibility&category=seo`),
+    fetch(`${base}?url=${encodeURIComponent(url)}&strategy=desktop${keyParam}&category=performance&category=accessibility&category=seo`),
+  ]);
+  if (!mobileRes.ok || !desktopRes.ok) throw new Error('PageSpeed API inaccessible');
+  const [mobile, desktop] = await Promise.all([mobileRes.json(), desktopRes.json()]);
+
+  const extract = (data) => ({
+    performance: Math.round((data.lighthouseResult?.categories?.performance?.score ?? 0) * 100),
+    accessibility: Math.round((data.lighthouseResult?.categories?.accessibility?.score ?? 0) * 100),
+    seo: Math.round((data.lighthouseResult?.categories?.seo?.score ?? 0) * 100),
+    fcp: data.lighthouseResult?.audits?.['first-contentful-paint']?.displayValue || null,
+    lcp: data.lighthouseResult?.audits?.['largest-contentful-paint']?.displayValue || null,
+    cls: data.lighthouseResult?.audits?.['cumulative-layout-shift']?.displayValue || null,
+    tbt: data.lighthouseResult?.audits?.['total-blocking-time']?.displayValue || null,
+  });
+
+  return { mobile: extract(mobile), desktop: extract(desktop) };
+}
+
+function buildPrompt({ clientName, clientUrl, sector, geo, services, meetingContent, briefContent, consultant, pagespeedData }) {
   const hasSeo = services.some(s => s.toLowerCase().includes('seo'));
   const hasSea = services.some(s => s.toLowerCase().includes('sea'));
   const hasGeo = services.some(s => s.toLowerCase().includes('geo'));
@@ -1400,7 +1440,15 @@ STRUCTURE OBLIGATOIRE DANS CET ORDRE :
 
 5. type "section" — label = "02", title = "Technique SEO", subtitle = "Audit technique du site ${clientUrl}", body = null, summary = null
 
-6. type "technical" — performance technique, vitesse, mobile. scores obligatoires : Performance mobile /100, Performance desktop /100, Accessibilité /100, SEO technique /100. summary obligatoire.
+6. type "technical" — performance technique, vitesse, mobile. scores obligatoires : Performance mobile /100, Performance desktop /100, Accessibilité /100, SEO technique /100. summary obligatoire.${pagespeedData ? `
+DONNÉES RÉELLES PAGESPEED INSIGHTS (utilise EXACTEMENT ces valeurs dans les scores) :
+- Performance mobile : ${pagespeedData.mobile.performance}/100
+- Performance desktop : ${pagespeedData.desktop.performance}/100
+- Accessibilité : ${pagespeedData.mobile.accessibility}/100 (mobile) · ${pagespeedData.desktop.accessibility}/100 (desktop) — utilise la moyenne arrondie
+- SEO technique Lighthouse : ${pagespeedData.mobile.seo}/100 (mobile) · ${pagespeedData.desktop.seo}/100 (desktop) — utilise la moyenne arrondie
+- Core Web Vitals mobile : FCP ${pagespeedData.mobile.fcp || 'N/A'} · LCP ${pagespeedData.mobile.lcp || 'N/A'} · CLS ${pagespeedData.mobile.cls || 'N/A'} · TBT ${pagespeedData.mobile.tbt || 'N/A'}
+- Core Web Vitals desktop : FCP ${pagespeedData.desktop.fcp || 'N/A'} · LCP ${pagespeedData.desktop.lcp || 'N/A'} · CLS ${pagespeedData.desktop.cls || 'N/A'} · TBT ${pagespeedData.desktop.tbt || 'N/A'}
+Mentionne les Core Web Vitals dans le body de la slide.` : ''}
 
 7. type "section" — label = "03", title = "Trafic & Concurrence", subtitle = "Positionnement marché et opportunités", body = null, summary = null
 

@@ -493,9 +493,144 @@
   }
   .api-dot.ok { background: #16a34a; }
   .api-dot.missing { background: #dc2626; }
+
+  /* AUTH SCREEN */
+  .auth-screen {
+    position: fixed; inset: 0; background: var(--sand);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+  }
+  .auth-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 2.5rem;
+    width: 100%; max-width: 400px; box-shadow: 0 8px 32px rgba(18,60,51,0.1);
+  }
+  .auth-logo {
+    width: 48px; height: 48px; background: var(--green-dark);
+    border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 700; color: #9fe1cb; margin-bottom: 1.5rem;
+  }
+  .auth-title { font-size: 22px; font-weight: 700; color: var(--green-dark); margin-bottom: 4px; }
+  .auth-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 1.5rem; }
+  .auth-tabs { display: flex; gap: 4px; background: var(--sand); padding: 4px; border-radius: 8px; margin-bottom: 1.5rem; }
+  .auth-tab {
+    flex: 1; padding: 7px; text-align: center; font-size: 13px; font-weight: 500;
+    cursor: pointer; border-radius: 6px; border: none; background: transparent;
+    color: var(--text-muted); transition: all 0.15s;
+  }
+  .auth-tab.active { background: var(--white); color: var(--green-dark); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .auth-error {
+    background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b;
+    border-radius: var(--radius); padding: 10px 14px; font-size: 13px;
+    margin-bottom: 1rem; display: none;
+  }
+
+  /* HEADER USER */
+  .header-user { display: flex; align-items: center; gap: 10px; }
+  .header-username { font-size: 13px; color: rgba(255,255,255,0.7); }
+
+  /* REPORTS PANEL */
+  .reports-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    z-index: 500; display: none;
+  }
+  .reports-overlay.open { display: block; }
+  .reports-panel {
+    position: fixed; top: 0; right: 0; bottom: 0; width: 420px;
+    background: var(--white); border-left: 1px solid var(--border);
+    display: flex; flex-direction: column; z-index: 501;
+    transform: translateX(100%); transition: transform 0.25s ease;
+  }
+  .reports-overlay.open .reports-panel { transform: translateX(0); }
+  .reports-panel-header {
+    padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--green-dark);
+  }
+  .reports-panel-title { font-size: 16px; font-weight: 600; color: #fff; }
+  .reports-panel-close {
+    background: none; border: none; color: rgba(255,255,255,0.6);
+    font-size: 20px; cursor: pointer; line-height: 1; padding: 2px 6px;
+  }
+  .reports-panel-close:hover { color: #fff; }
+  .reports-list { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 8px; }
+  .reports-empty { text-align: center; color: var(--text-muted); font-size: 14px; padding: 2rem; }
+  .report-item {
+    background: var(--sand); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px; cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .report-item:hover { border-color: var(--green-accent); }
+  .report-item-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .report-item-name { font-size: 14px; font-weight: 600; color: var(--green-dark); }
+  .report-item-date { font-size: 11px; color: var(--text-light); }
+  .report-item-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+  .report-item-url { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
+  .report-item-actions { display: flex; gap: 6px; align-items: center; }
+  .status-select {
+    font-size: 11px; padding: 3px 8px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--white); color: var(--text); cursor: pointer; font-family: inherit;
+  }
+  .report-slug-row {
+    margin-top: 8px; display: flex; align-items: center; gap: 6px;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 10px;
+  }
+  .report-slug-text { font-size: 11px; color: var(--text-muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'DM Mono', monospace; }
+  .btn-copy { background: none; border: none; cursor: pointer; color: var(--text-light); font-size: 13px; padding: 2px 4px; }
+  .btn-copy:hover { color: var(--green-dark); }
+
+  /* REPORT LINK IN RESULT */
+  .report-link-container {
+    display: none; align-items: center; gap: 8px;
+    background: var(--sand); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 8px 12px;
+    margin-top: 10px;
+  }
+  .report-link-label { font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
+  .report-link-url { font-size: 12px; color: var(--green-dark); font-family: 'DM Mono', monospace; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 </style>
 </head>
 <body>
+
+<!-- AUTH SCREEN -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">S</div>
+    <div class="auth-title">Sonate · Pré-audit</div>
+    <div class="auth-sub">Connectez-vous pour générer et sauvegarder vos rapports.</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Connexion</button>
+      <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Créer un compte</button>
+    </div>
+    <div class="auth-error" id="authError"></div>
+    <div id="authFormRegisterName" class="form-group" style="display:none">
+      <label class="form-label">Nom</label>
+      <input type="text" id="authName" placeholder="Fabien Guilleux">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" id="authEmail" placeholder="fabien@sonate.group">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mot de passe</label>
+      <input type="password" id="authPassword" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary btn-lg" style="width:100%;margin-top:4px" id="authSubmit" onclick="submitAuth()">Se connecter</button>
+  </div>
+</div>
+
+<!-- REPORTS PANEL OVERLAY -->
+<div class="reports-overlay" id="reportsOverlay" onclick="closeReportsPanel(event)">
+  <div class="reports-panel" id="reportsPanel">
+    <div class="reports-panel-header">
+      <span class="reports-panel-title">Mes rapports</span>
+      <button class="reports-panel-close" onclick="closeReportsPanel()">✕</button>
+    </div>
+    <div class="reports-list" id="reportsList"></div>
+  </div>
+</div>
 
 <header>
   <div class="logo">S<span>onate</span> <span style="font-weight:300;opacity:.5;margin-left:4px">/ Pré-audit</span></div>
@@ -504,6 +639,11 @@
       <span class="api-dot missing" id="apiDot"></span>
       <span id="apiLabel">Clé API non configurée</span>
     </span>
+    <div class="header-user" id="headerUser" style="display:none">
+      <span class="header-username" id="headerUsername"></span>
+      <button class="btn btn-ghost" style="font-size:13px;padding:6px 12px" onclick="openReportsPanel()">Mes rapports</button>
+      <button class="btn btn-ghost" style="font-size:13px;padding:6px 12px" onclick="logout()">Déconnexion</button>
+    </div>
   </div>
 </header>
 
@@ -655,6 +795,11 @@
           <button class="btn btn-primary" onclick="printPDF()">⬇ Exporter PDF</button>
         </div>
       </div>
+      <div class="report-link-container" id="reportLinkContainer">
+        <span class="report-link-label">Lien unique :</span>
+        <span class="report-link-url" id="reportLink"></span>
+        <button class="btn-copy" title="Copier" onclick="copyReportLink()">📋</button>
+      </div>
       <div class="slides-container" id="slidesContainer"></div>
     </div>
   </main>
@@ -670,16 +815,266 @@ const STATE = {
   briefMode: 'file',
 };
 
-// Load saved settings
+// ─── INIT ───────────────────────────────────────────────────────────────────
+
 window.addEventListener('DOMContentLoaded', () => {
+  // Public report route: /r/<slug>
+  const path = window.location.pathname;
+  if (path.startsWith('/r/')) {
+    loadPublicReport(path.slice(3));
+    return;
+  }
+
+  // Check auth
+  const jwt = JSON.parse(localStorage.getItem('sonate_jwt') || 'null');
+  if (!jwt) {
+    document.getElementById('authScreen').style.display = 'flex';
+    return;
+  }
+
+  initApp(jwt);
+});
+
+function initApp(jwt) {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('headerUser').style.display = 'flex';
+  document.getElementById('headerUsername').textContent = jwt.user?.name || jwt.user?.email || '';
+
   const saved = JSON.parse(localStorage.getItem('sonate_settings') || '{}');
   if (saved.apiKey) document.getElementById('apiKey').value = saved.apiKey;
   if (saved.model) document.getElementById('modelName').value = saved.model;
   if (saved.consultant) document.getElementById('consultantName').value = saved.consultant;
   updateApiStatus();
-  // Open settings if no API key
   if (!saved.apiKey) toggleSettings(true);
-});
+}
+
+// ─── AUTH ────────────────────────────────────────────────────────────────────
+
+let authMode = 'login';
+
+function switchAuthTab(mode) {
+  authMode = mode;
+  document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
+  document.getElementById('tabRegister').classList.toggle('active', mode === 'register');
+  document.getElementById('authFormRegisterName').style.display = mode === 'register' ? '' : 'none';
+  document.getElementById('authSubmit').textContent = mode === 'login' ? 'Se connecter' : 'Créer mon compte';
+  document.getElementById('authError').style.display = 'none';
+}
+
+async function submitAuth() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const name = document.getElementById('authName').value.trim();
+  const errEl = document.getElementById('authError');
+  const btn = document.getElementById('authSubmit');
+
+  if (!email || !password) { showAuthError('Email et mot de passe requis'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '…';
+  errEl.style.display = 'none';
+
+  try {
+    const url = authMode === 'login' ? '/api/auth/login' : '/api/auth/register';
+    const body = authMode === 'login' ? { email, password } : { email, password, name };
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erreur inconnue');
+
+    localStorage.setItem('sonate_jwt', JSON.stringify(data));
+    initApp(data);
+  } catch (e) {
+    showAuthError(e.message);
+    btn.disabled = false;
+    btn.textContent = authMode === 'login' ? 'Se connecter' : 'Créer mon compte';
+  }
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('authError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function logout() {
+  localStorage.removeItem('sonate_jwt');
+  window.location.reload();
+}
+
+function getJwt() {
+  return JSON.parse(localStorage.getItem('sonate_jwt') || 'null');
+}
+
+// ─── REPORTS PANEL ───────────────────────────────────────────────────────────
+
+async function openReportsPanel() {
+  document.getElementById('reportsOverlay').classList.add('open');
+  await loadReportsList();
+}
+
+function closeReportsPanel(e) {
+  if (!e || e.target === document.getElementById('reportsOverlay')) {
+    document.getElementById('reportsOverlay').classList.remove('open');
+  }
+}
+
+async function loadReportsList() {
+  const jwt = getJwt();
+  if (!jwt) return;
+  const listEl = document.getElementById('reportsList');
+  listEl.innerHTML = '<div class="reports-empty">Chargement…</div>';
+
+  try {
+    const res = await fetch('/api/reports/list', {
+      headers: { 'Authorization': 'Bearer ' + jwt.token },
+    });
+    const data = await res.json();
+    if (!data.reports?.length) {
+      listEl.innerHTML = '<div class="reports-empty">Aucun rapport sauvegardé.</div>';
+      return;
+    }
+    listEl.innerHTML = data.reports.map(r => {
+      const statusColors = { draft: 'gray', sent: 'blue', signed: 'green' };
+      const statusLabels = { draft: 'Brouillon', sent: 'Envoyé', signed: 'Signé' };
+      const date = new Date(r.updatedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+      const slug = r.slug;
+      const origin = window.location.origin;
+      return `<div class="report-item" id="ri-${r.id}">
+        <div class="report-item-top" onclick="loadReportIntoApp('${r.id}')">
+          <span class="report-item-name">${r.clientName}</span>
+          <span class="badge badge-${statusColors[r.status] || 'gray'}">${statusLabels[r.status] || r.status}</span>
+        </div>
+        <div class="report-item-date">${date}</div>
+        <div class="report-item-bottom">
+          <span class="report-item-url">${r.clientUrl || ''}</span>
+          <div class="report-item-actions">
+            <select class="status-select" onchange="updateReportStatus('${r.id}', this.value)">
+              <option value="draft"${r.status==='draft'?' selected':''}>Brouillon</option>
+              <option value="sent"${r.status==='sent'?' selected':''}>Envoyé</option>
+              <option value="signed"${r.status==='signed'?' selected':''}>Signé</option>
+            </select>
+          </div>
+        </div>
+        <div class="report-slug-row">
+          <span class="report-slug-text" id="slug-${r.id}">${origin}/r/${slug}</span>
+          <button class="btn-copy" title="Copier le lien" onclick="copyText('${origin}/r/${slug}')">📋</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    listEl.innerHTML = '<div class="reports-empty">Erreur de chargement.</div>';
+  }
+}
+
+async function loadReportIntoApp(reportId) {
+  const jwt = getJwt();
+  if (!jwt) return;
+  // Find slug from the panel items
+  const slugEl = document.getElementById('slug-' + reportId);
+  if (!slugEl) return;
+  const slug = slugEl.textContent.split('/r/')[1];
+  const res = await fetch('/api/reports/' + slug);
+  if (!res.ok) return;
+  const { report } = await res.json();
+
+  document.getElementById('clientName').value = report.clientName;
+  document.getElementById('clientUrl').value = report.clientUrl || '';
+  window.currentReportId = reportId;
+
+  document.getElementById('welcomeState').style.display = 'none';
+  document.getElementById('progressState').style.display = 'none';
+  document.getElementById('resultState').style.display = '';
+  document.getElementById('resultTitle').textContent = 'Pré-audit — ' + report.clientName;
+  document.getElementById('resultDate').textContent = `Chargé le ${new Date().toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})}`;
+  document.getElementById('slidesContainer').innerHTML = renderSlides(report.content, {
+    clientName: report.clientName, clientUrl: report.clientUrl || '', consultant: '',
+  });
+
+  const origin = window.location.origin;
+  document.getElementById('reportLink').textContent = origin + '/r/' + slug;
+  document.getElementById('reportLinkContainer').style.display = 'flex';
+
+  closeReportsPanel();
+}
+
+async function updateReportStatus(reportId, status) {
+  const jwt = getJwt();
+  if (!jwt) return;
+  await fetch('/api/reports/update-status', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt.token },
+    body: JSON.stringify({ reportId, status }),
+  });
+  await loadReportsList();
+}
+
+// ─── SAVE REPORT ─────────────────────────────────────────────────────────────
+
+async function saveReport(slides) {
+  const jwt = getJwt();
+  if (!jwt) return;
+
+  try {
+    const res = await fetch('/api/reports/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt.token },
+      body: JSON.stringify({
+        clientName: document.getElementById('clientName').value,
+        clientUrl: document.getElementById('clientUrl').value,
+        content: slides,
+        reportId: window.currentReportId || null,
+      }),
+    });
+    const data = await res.json();
+    window.currentReportId = data.reportId;
+    const url = window.location.origin + '/r/' + data.slug;
+    document.getElementById('reportLink').textContent = url;
+    document.getElementById('reportLinkContainer').style.display = 'flex';
+  } catch (e) {
+    // silent fail — generation already succeeded
+  }
+}
+
+function copyReportLink() {
+  const url = document.getElementById('reportLink').textContent;
+  copyText(url);
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => showToast('Lien copié ✓'));
+}
+
+// ─── PUBLIC REPORT ROUTE ─────────────────────────────────────────────────────
+
+async function loadPublicReport(slug) {
+  document.getElementById('authScreen').style.display = 'none';
+  const res = await fetch('/api/reports/' + slug);
+  if (!res.ok) {
+    document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;color:#6b6b67;flex-direction:column;gap:12px">
+      <div style="font-size:48px">404</div>
+      <div>Rapport introuvable</div>
+      <a href="/" style="font-size:14px;color:#0f6e56">← Retour à l'accueil</a>
+    </div>`;
+    return;
+  }
+  const { report } = await res.json();
+
+  document.querySelector('.sidebar').style.display = 'none';
+  document.querySelector('header').style.display = 'none';
+  document.querySelector('.app').style.gridTemplateColumns = '1fr';
+
+  document.getElementById('welcomeState').style.display = 'none';
+  document.getElementById('resultState').style.display = '';
+  document.getElementById('resultTitle').textContent = 'Pré-audit — ' + report.clientName;
+  document.getElementById('resultDate').textContent = `Généré le ${new Date(report.createdAt).toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})}`;
+  document.getElementById('slidesContainer').innerHTML = renderSlides(report.content, {
+    clientName: report.clientName, clientUrl: report.clientUrl || '', consultant: '',
+  });
+}
 
 function updateApiStatus() {
   const key = document.getElementById('apiKey').value.trim();
@@ -897,11 +1292,14 @@ async function generate() {
     }
 
     // Render
+    window.currentReportId = null;
+    document.getElementById('reportLinkContainer').style.display = 'none';
     document.getElementById('progressState').style.display = 'none';
     document.getElementById('resultState').style.display = '';
     document.getElementById('resultTitle').textContent = `Pré-audit — ${clientName}`;
     document.getElementById('resultDate').textContent = `Généré le ${new Date().toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})} · ${model}`;
     document.getElementById('slidesContainer').innerHTML = renderSlides(slides, { clientName, clientUrl, consultant });
+    saveReport(slides);
 
   } catch(err) {
     document.getElementById('progressSteps').innerHTML = renderProgress(STEPS, null, 'analyse') +

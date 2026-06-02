@@ -607,11 +607,11 @@
     <div class="auth-error" id="authError"></div>
     <div id="authFormRegisterName" class="form-group" style="display:none">
       <label class="form-label">Nom</label>
-      <input type="text" id="authName" placeholder="Fabien Guilleux">
+      <input type="text" id="authName" placeholder="Prénom Nom">
     </div>
     <div class="form-group">
       <label class="form-label">Email</label>
-      <input type="email" id="authEmail" placeholder="fabien@sonate.group">
+      <input type="email" id="authEmail" placeholder="votre@email.com">
     </div>
     <div class="form-group">
       <label class="form-label">Mot de passe</label>
@@ -655,7 +655,7 @@
       <div class="section-title">Client</div>
       <div class="form-group">
         <label class="form-label">Nom de l'entreprise *</label>
-        <input type="text" id="clientName" placeholder="ex: Maison Catros-Gérand">
+        <input type="text" id="clientName" placeholder="Nom de l'entreprise">
       </div>
       <div class="form-group">
         <label class="form-label">URL du site *</label>
@@ -663,11 +663,11 @@
       </div>
       <div class="form-group">
         <label class="form-label">Secteur d'activité</label>
-        <input type="text" id="clientSector" placeholder="ex: E-commerce graines & semences">
+        <input type="text" id="clientSector" placeholder="Secteur d'activité">
       </div>
       <div class="form-group">
         <label class="form-label">Zone géographique</label>
-        <input type="text" id="clientGeo" placeholder="ex: France, Bretagne...">
+        <input type="text" id="clientGeo" placeholder="Zone géographique">
       </div>
 
       <hr class="divider">
@@ -738,7 +738,7 @@
     <div class="settings-panel" id="settingsPanel">
       <div class="form-group">
         <label class="form-label">Clé API OpenRouter</label>
-        <input type="password" id="apiKey" placeholder="sk-or-..." oninput="updateApiStatus()">
+        <input type="password" id="apiKey" placeholder="Clé API OpenRouter" oninput="updateApiStatus()">
         <div style="font-size:11px;color:var(--text-light);margin-top:4px">Stockée localement dans votre navigateur</div>
       </div>
       <div class="form-group">
@@ -748,7 +748,7 @@
       </div>
       <div class="form-group">
         <label class="form-label">Nom du commercial (signature)</label>
-        <input type="text" id="consultantName" placeholder="Fabien Guilleux" value="Fabien Guilleux">
+        <input type="text" id="consultantName" placeholder="Prénom Nom" value="">
       </div>
       <button class="btn btn-outline" style="width:100%;margin-top:4px" onclick="saveSettings()">Enregistrer</button>
     </div>

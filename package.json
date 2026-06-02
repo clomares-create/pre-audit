@@ -1,0 +1,11 @@
+{
+  "name": "pre-audit",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@libsql/client": "latest",
+    "bcryptjs": "latest",
+    "jsonwebtoken": "latest"
+  }
+}

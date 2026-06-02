@@ -912,6 +912,27 @@ async function generate() {
 }
 
 function buildPrompt({ clientName, clientUrl, sector, geo, services, meetingContent, briefContent, consultant }) {
+  const hasSeo = services.some(s => s.toLowerCase().includes('seo'));
+  const hasSea = services.some(s => s.toLowerCase().includes('sea'));
+  const hasGeo = services.some(s => s.toLowerCase().includes('geo'));
+
+  let sectionCounter = 3;
+  const geoSection = hasGeo ? `
+- type "section" — label = "0${sectionCounter}", title = "Analyse GEO", subtitle = "Visibilité sur les IA génératives (ChatGPT, Perplexity, Gemini...)", summary = null
+- type "geo" — présence IA actuelle, score, topics couverts vs manqués, concurrents IA. metrics obligatoires (score visibilité /100, topics couverts, topics manqués, mentions IA). summary obligatoire
+${(++sectionCounter, '')}` : '';
+  const seaSection = hasGeo
+    ? `- type "section" — label = "0${++sectionCounter}", title = "Référencement Payant", subtitle = "Comprendre les leviers Google Ads", summary = null
+- type "sea" — analyse concurrents sur Google Ads, stratégie recommandée. summary obligatoire
+- type "competition" — analyse des 3 principaux concurrents digitaux avec leurs forces/faiblesses. summary obligatoire`
+    : hasSea
+    ? `- type "section" — label = "0${sectionCounter}", title = "Référencement Payant", subtitle = "Comprendre les leviers Google Ads", summary = null
+- type "sea" — analyse concurrents sur Google Ads, stratégie recommandée. summary obligatoire
+- type "competition" — analyse des 3 principaux concurrents digitaux avec leurs forces/faiblesses. summary obligatoire`
+    : `- type "competition" — analyse des 3 principaux concurrents digitaux avec leurs forces/faiblesses. summary obligatoire`;
+
+  const proposalSectionLabel = String(sectionCounter + 1).padStart(2, '0');
+
   return `Tu es un expert en stratégie digitale de l'agence Sonate. Tu dois générer un pré-audit commercial complet pour un prospect.
 
 INFORMATIONS CLIENT :
@@ -922,47 +943,56 @@ INFORMATIONS CLIENT :
 - Services proposés : ${services.join(', ') || 'SEO, SEA'}
 - Commercial : ${consultant}
 
-${meetingContent ? `RAPPORT DE RÉUNION :\n${meetingContent.slice(0, 6000)}\n` : ''}
-${briefContent ? `BRIEF COMPLÉMENTAIRE :\n${briefContent.slice(0, 3000)}\n` : ''}
+${meetingContent ? `RAPPORT DE RÉUNION :\n${meetingContent.slice(0, 6000)}\n` : ''}${briefContent ? `BRIEF COMPLÉMENTAIRE :\n${briefContent.slice(0, 3000)}\n` : ''}
+INSTRUCTIONS STRICTES :
+Retourne UNIQUEMENT un tableau JSON valide. Aucun texte avant ou après. Aucune balise markdown.
+IMPORTANT JSON : Dans les champs "body", utilise UNIQUEMENT des guillemets simples pour les attributs HTML (ex: href='url'). Ne mets jamais de guillemets doubles à l'intérieur des valeurs JSON. Pas de retours à la ligne littéraux dans les valeurs.
 
-INSTRUCTIONS :
-Génère un pré-audit complet en JSON. Retourne UNIQUEMENT un tableau JSON valide, sans texte avant ni après, sans balises markdown.
-IMPORTANT JSON : Dans le champ "body", utilise UNIQUEMENT des guillemets simples pour les attributs HTML (ex: href='url', class='foo'). Ne mets jamais de guillemets doubles à l'intérieur des valeurs de chaînes JSON. N'utilise pas de retours à la ligne littéraux dans les valeurs JSON.
-
-Le tableau doit contenir entre 10 et 15 slides selon les services proposés. Chaque slide a le format :
+Le tableau contient entre 18 et 25 objets. Chaque objet a ce format :
 {
-  "type": "cover" | "intro" | "metrics" | "seo" | "technical" | "content" | "sea" | "geo" | "competition" | "roadmap" | "pricing" | "closing",
-  "label": "Section courte (ex: Analyse SEO)",
-  "title": "Titre principal",
-  "subtitle": "Sous-titre ou phrase d'accroche",
-  "body": "Contenu HTML riche avec <ul><li>, <strong>, etc.",
-  "metrics": [{"value":"XX%","label":"Description","trend":"up|down|neutral"}],
-  "scores": [{"label":"Indicateur","score":75,"max":100,"color":"green|amber|red"}],
-  "badges": [{"text":"Label","color":"green|amber|red|blue|gray"}],
+  "type": string,
+  "label": string,
+  "title": string,
+  "subtitle": string,
+  "body": string (HTML) ou null,
+  "metrics": [{"value":"XX","label":"Description","trend":"up|down|neutral","trendLabel":""}] ou null,
+  "scores": [{"label":"Indicateur","score":75,"max":100,"color":"green|amber|red"}] ou null,
+  "badges": [{"text":"Label","color":"green|amber|red|blue|gray"}] ou null,
+  "summary": string ou null,
   "accentColor": "green|amber|red|blue"
 }
 
-Slides OBLIGATOIRES dans cet ordre :
-1. cover : Page de couverture avec le nom du client et la date du jour (${new Date().toLocaleDateString('fr-FR')})
-2. intro : Contexte de l'entreprise, ce que Sonate a observé
-3. technical : Performance technique du site (vitesse, mobile, UX) — invente des données plausibles basées sur le secteur
-4. metrics : Trafic et positionnement SEO actuels — données estimées cohérentes avec le secteur
-5. seo (si SEO coché) : Analyse SEO détaillée et opportunités
-6. content (si SEO coché) : Stratégie de contenu recommandée
-7. competition : Analyse des principaux concurrents
-8. sea (si SEA coché) : Opportunités SEA et Google Ads
-9. geo (si GEO coché) : Visibilité dans les IA génératives (Perplexity, ChatGPT, Gemini)
-10. roadmap : Plan d'action à 3-6 mois
-11. pricing : Proposition tarifaire détaillée (setup + mensuel pour chaque service)
-12. closing : Prochaines étapes et contact
+Le champ "summary" est une phrase courte (1-2 lignes max) résumant le point clé. Il est OBLIGATOIRE sur les types : intro, technical, metrics, seo, content, sea, geo, competition, roadmap. Il est null sur : cover, sommaire, section, pricing, closing.
 
-Pour le pricing, base-toi sur ces tarifs Sonate :
-- SEO : setup 1400€ + 700€/mois
-- SEA : setup 1400€ + 400€/mois
-- GEO : setup 800€ + 300€/mois
-- Contenu : setup 600€ + 400€/mois
+STRUCTURE OBLIGATOIRE DANS CET ORDRE :
 
-Rédige en français, ton professionnel et expert. Les données chiffrées doivent être réalistes et cohérentes avec le secteur "${sector || 'digital'}".`;
+1. type "cover" — title = "${clientName}", subtitle = "Pré-audit digital · ${new Date().toLocaleDateString('fr-FR', {month:'long', year:'numeric'})}", label = "PRÉ-AUDIT", body = null, summary = null
+
+2. type "sommaire" — title = "Sommaire", body = liste HTML <ol><li> des chapitres du document (utiliser les titres des parties de type "section" qui suivent), summary = null
+
+3. type "section" — label = "01", title = "Algorithme & Méthodologie", subtitle = "Comprendre les leviers du référencement naturel", body = null, summary = null
+
+4. type "intro" — contexte de l'entreprise, ce que Sonate a observé. summary obligatoire.
+
+5. type "section" — label = "02", title = "Technique SEO", subtitle = "Audit technique du site ${clientUrl}", body = null, summary = null
+
+6. type "technical" — performance technique, vitesse, mobile. scores obligatoires : Performance mobile /100, Performance desktop /100, Accessibilité /100, SEO technique /100. summary obligatoire.
+
+7. type "section" — label = "03", title = "Trafic & Concurrence", subtitle = "Positionnement marché et opportunités", body = null, summary = null
+
+8. type "metrics" — trafic SEO actuel estimé. metrics obligatoires : visites organiques/mois, mots-clés positionnés, autorité de domaine, trafic de marque %. summary obligatoire.
+
+${hasSeo ? `9. type "section" — label = "04", title = "Stratégie de Contenu", subtitle = "Méthodologie pour gagner des positions", body = null, summary = null
+10. type "seo" — analyse SEO détaillée, opportunités mots-clés, potentiel. summary obligatoire.
+11. type "content" — stratégie de contenu recommandée, méthode Sonate. summary obligatoire.
+` : ''}${geoSection}${seaSection}
+
+- type "section" — label = "${proposalSectionLabel}", title = "Notre Proposition", subtitle = "Équipe, budget, prochaines étapes", body = null, summary = null
+- type "roadmap" — plan d'action à 3 mois, 3 phases distinctes. summary obligatoire.
+- type "pricing" — proposition tarifaire détaillée. Le body doit contenir deux blocs HTML distincts : PHASE 1 SETUP (frais uniques) et PHASE 2 RUN (mensuel récurrent), avec les montants pour chaque service inclus. Tarifs Sonate : SEO setup 1 400 € HT + 700 € HT/mois · SEA setup 1 400 € HT + 400 € HT/mois · GEO setup 800 € HT + 300 € HT/mois · Contenu setup 600 € HT + 400 € HT/mois. summary = total setup et total mensuel en une phrase.
+- type "closing" — prochaines étapes (3 étapes numérotées), contact du commercial ${consultant}. summary = null.
+
+Rédige en français. Ton professionnel et expert. Données chiffrées réalistes et cohérentes avec le secteur "${sector || 'digital'}".`;
 }
 
 function renderSlides(slides, { clientName, clientUrl, consultant }) {

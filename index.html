@@ -735,14 +735,33 @@ async function generate() {
     // Parse JSON from response
     let slides;
     try {
-      const jsonMatch = raw.match(/```json\s*([\s\S]*?)```/) || raw.match(/(\{[\s\S]*\})/);
-      const jsonStr = jsonMatch ? jsonMatch[1] : raw;
+      let jsonStr = raw;
+      const mdMatch = raw.match(/```json\s*([\s\S]*?)```/);
+      if (mdMatch) {
+        jsonStr = mdMatch[1];
+      } else {
+        const arrMatch = raw.match(/\[[\s\S]*\]/);
+        const objMatch = raw.match(/\{[\s\S]*\}/);
+        if (arrMatch) jsonStr = arrMatch[0];
+        else if (objMatch) jsonStr = objMatch[0];
+      }
       slides = JSON.parse(jsonStr);
     } catch(e) {
-      // Try to find JSON array directly
-      const arrMatch = raw.match(/\[[\s\S]*\]/);
-      if (arrMatch) { slides = JSON.parse(arrMatch[0]); }
-      else { throw new Error('Impossible de parser la réponse JSON du modèle.'); }
+      // Attempt to repair common JSON issues caused by unescaped quotes in HTML bodies
+      try {
+        let jsonStr = raw;
+        const mdMatch = raw.match(/```json\s*([\s\S]*?)```/);
+        if (mdMatch) jsonStr = mdMatch[1];
+        else { const m = raw.match(/\[[\s\S]*\]/); if (m) jsonStr = m[0]; }
+        // Replace double-quoted HTML attributes with single-quoted ones inside JSON string values
+        const repaired = jsonStr.replace(/"body"\s*:\s*"([\s\S]*?)(?<!\\)"/g, (match, body) => {
+          const fixed = body.replace(/"/g, "'");
+          return `"body": "${fixed}"`;
+        });
+        slides = JSON.parse(repaired);
+      } catch(e2) {
+        throw new Error('Impossible de parser la réponse JSON du modèle. Réessayez ou changez de modèle.');
+      }
     }
 
     // Render
@@ -777,6 +796,7 @@ ${briefContent ? `BRIEF COMPLÉMENTAIRE :\n${briefContent.slice(0, 3000)}\n` : '
 
 INSTRUCTIONS :
 Génère un pré-audit complet en JSON. Retourne UNIQUEMENT un tableau JSON valide, sans texte avant ni après, sans balises markdown.
+IMPORTANT JSON : Dans le champ "body", utilise UNIQUEMENT des guillemets simples pour les attributs HTML (ex: href='url', class='foo'). Ne mets jamais de guillemets doubles à l'intérieur des valeurs de chaînes JSON. N'utilise pas de retours à la ligne littéraux dans les valeurs JSON.
 
 Le tableau doit contenir entre 10 et 15 slides selon les services proposés. Chaque slide a le format :
 {

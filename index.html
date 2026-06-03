@@ -496,6 +496,14 @@
   .svc-card .svc-check { width: 18px; height: 18px; border-radius: 4px; border: 2px solid currentColor; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; }
   .svc-card.active .svc-check::after { content: '✓'; }
 
+  /* PAGESPEED SCREENSHOTS */
+  .psi-screenshots { display: flex; gap: 16px; margin-top: 1.25rem; }
+  .psi-shot { flex: 1; min-width: 0; }
+  .psi-shot-label { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-light); margin-bottom: 6px; }
+  .psi-shot img { width: 100%; border-radius: 6px; border: 1px solid var(--border); display: block; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .psi-shot-mobile img { max-width: 160px; }
+  .psi-shot-desktop img { width: 100%; }
+
   /* MODEL SELECT */
   .model-input-row { display: flex; gap: 8px; }
   .model-input-row input { flex: 1; }
@@ -1013,6 +1021,7 @@ async function loadReportIntoApp(reportId) {
   document.getElementById('resultState').style.display = '';
   document.getElementById('resultTitle').textContent = 'Pré-audit — ' + report.clientName;
   document.getElementById('resultDate').textContent = `Chargé le ${new Date().toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})}`;
+  window.__pagespeedScreenshots = null;
   document.getElementById('slidesContainer').innerHTML = renderSlides(report.content, {
     clientName: report.clientName, clientUrl: report.clientUrl || '', consultant: '',
   });
@@ -1468,6 +1477,7 @@ async function confirmAndGenerate() {
     document.getElementById('resultState').style.display = '';
     document.getElementById('resultTitle').textContent = `Pré-audit — ${clientName}`;
     document.getElementById('resultDate').textContent = `Généré le ${new Date().toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})} · ${model}`;
+    window.__pagespeedScreenshots = pagespeedData ? { mobile: pagespeedData.mobile.screenshot, desktop: pagespeedData.desktop.screenshot } : null;
     document.getElementById('slidesContainer').innerHTML = renderSlides(slides, { clientName, clientUrl, consultant });
     saveReport(slides);
 
@@ -1499,6 +1509,7 @@ async function fetchPageSpeed(url, apiKey) {
     lcp: data.lighthouseResult?.audits?.['largest-contentful-paint']?.displayValue || null,
     cls: data.lighthouseResult?.audits?.['cumulative-layout-shift']?.displayValue || null,
     tbt: data.lighthouseResult?.audits?.['total-blocking-time']?.displayValue || null,
+    screenshot: data.lighthouseResult?.audits?.['final-screenshot']?.details?.data || null,
   });
 
   return { mobile: extract(mobile), desktop: extract(desktop) };
@@ -1716,6 +1727,17 @@ function renderSlide(s, idx, clientName, consultant) {
   }
 
   if (s.body) content += `<div class="slide-body">${s.body}</div>`;
+
+  // PageSpeed screenshots — injected only on the technical slide when data is available
+  if (s.type === 'technical' && window.__pagespeedScreenshots) {
+    const { mobile, desktop } = window.__pagespeedScreenshots;
+    if (mobile || desktop) {
+      content += `<div class="psi-screenshots">`;
+      if (desktop) content += `<div class="psi-shot psi-shot-desktop"><div class="psi-shot-label">Desktop</div><img src="${desktop}" alt="Aperçu desktop"></div>`;
+      if (mobile) content += `<div class="psi-shot psi-shot-mobile"><div class="psi-shot-label">Mobile</div><img src="${mobile}" alt="Aperçu mobile"></div>`;
+      content += `</div>`;
+    }
+  }
 
   if (s.summary) {
     content += `<div class="summary-block">

@@ -1470,6 +1470,34 @@ async function confirmAndGenerate() {
       }
     }
 
+    // If PageSpeed failed, inject a static error slide where "technical" would be
+    if (!pagespeedData) {
+      const techErrorSlide = {
+        type: 'technical',
+        label: 'Technique SEO',
+        title: 'Performance & Vitesse',
+        subtitle: `Audit technique du site ${clientUrl}`,
+        scores: null,
+        metrics: null,
+        badges: null,
+        body: `<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;font-size:13px">
+          <span style="font-size:20px">⚠️</span>
+          <div><strong>Données indisponibles</strong><br>L'API PageSpeed Insights n'a pas pu être contactée pour ce site. Configurez une clé API Google dans les paramètres pour obtenir les scores réels de performance.</div>
+        </div>`,
+        summary: 'Les données de performance n\'ont pas pu être récupérées via PageSpeed Insights.',
+        accentColor: 'red',
+      };
+      // Insert after the "02 Technique SEO" section slide
+      const sectionIdx = slides.findIndex(s => s.type === 'section' && s.label === '02');
+      if (sectionIdx !== -1) {
+        slides.splice(sectionIdx + 1, 0, techErrorSlide);
+      } else {
+        // fallback: insert after intro
+        const introIdx = slides.findIndex(s => s.type === 'intro');
+        slides.splice(introIdx !== -1 ? introIdx + 1 : 2, 0, techErrorSlide);
+      }
+    }
+
     // Render
     window.currentReportId = null;
     document.getElementById('reportLinkContainer').style.display = 'none';
@@ -1580,7 +1608,7 @@ STRUCTURE OBLIGATOIRE DANS CET ORDRE :
 
 5. type "section" — label = "02", title = "Technique SEO", subtitle = "Audit technique du site ${clientUrl}", body = null, summary = null
 
-6. type "technical" — performance technique, vitesse, mobile. scores obligatoires : Performance mobile /100, Performance desktop /100, Accessibilité /100, SEO technique /100. summary obligatoire.${pagespeedData ? `
+${pagespeedData ? `6. type "technical" — performance technique, vitesse, mobile. scores obligatoires basés sur les données réelles ci-dessous. summary obligatoire.
 DONNÉES RÉELLES PAGESPEED INSIGHTS (utilise EXACTEMENT ces valeurs dans les scores) :
 - Performance mobile : ${pagespeedData.mobile.performance}/100
 - Performance desktop : ${pagespeedData.desktop.performance}/100
@@ -1588,7 +1616,7 @@ DONNÉES RÉELLES PAGESPEED INSIGHTS (utilise EXACTEMENT ces valeurs dans les sc
 - SEO technique Lighthouse : ${pagespeedData.mobile.seo}/100 (mobile) · ${pagespeedData.desktop.seo}/100 (desktop) — utilise la moyenne arrondie
 - Core Web Vitals mobile : FCP ${pagespeedData.mobile.fcp || 'N/A'} · LCP ${pagespeedData.mobile.lcp || 'N/A'} · CLS ${pagespeedData.mobile.cls || 'N/A'} · TBT ${pagespeedData.mobile.tbt || 'N/A'}
 - Core Web Vitals desktop : FCP ${pagespeedData.desktop.fcp || 'N/A'} · LCP ${pagespeedData.desktop.lcp || 'N/A'} · CLS ${pagespeedData.desktop.cls || 'N/A'} · TBT ${pagespeedData.desktop.tbt || 'N/A'}
-Mentionne les Core Web Vitals dans le body de la slide.` : ''}
+Mentionne les Core Web Vitals dans le body de la slide.` : `6. NE PAS générer de slide de type "technical". Cette slide sera injectée séparément avec les données réelles. Passe directement au point 7.`}
 
 7. type "section" — label = "03", title = "Trafic & Concurrence", subtitle = "Positionnement marché et opportunités", body = null, summary = null
 

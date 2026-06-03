@@ -496,6 +496,15 @@
   .svc-card .svc-check { width: 18px; height: 18px; border-radius: 4px; border: 2px solid currentColor; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; }
   .svc-card.active .svc-check::after { content: '✓'; }
 
+  /* COMPETITOR CHIPS */
+  .competitor-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1rem; min-height: 36px; }
+  .comp-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--white); border: 1.5px solid var(--green-dark); border-radius: 20px; padding: 5px 12px; font-size: 13px; font-weight: 500; color: var(--green-dark); }
+  .comp-chip-remove { cursor: pointer; font-size: 15px; line-height: 1; color: var(--text-light); background: none; border: none; padding: 0; }
+  .comp-chip-remove:hover { color: #dc2626; }
+  .comp-add-row { display: flex; gap: 8px; }
+  .comp-add-row input { flex: 1; }
+  .comp-add-row button { flex-shrink: 0; }
+
   /* PAGESPEED SCREENSHOTS */
   .psi-screenshots { display: flex; gap: 16px; margin-top: 1.25rem; }
   .psi-shot { flex: 1; min-width: 0; }
@@ -694,6 +703,11 @@
         <label class="form-label">Zone géographique</label>
         <input type="text" id="clientGeo" placeholder="Zone géographique">
       </div>
+      <div class="form-group">
+        <label class="form-label">Concurrents connus <span style="font-weight:400;color:var(--text-light)">(optionnel)</span></label>
+        <input type="text" id="clientCompetitors" placeholder="ex: concurrent1.fr, concurrent2.fr">
+        <div style="font-size:11px;color:var(--text-light);margin-top:4px">Séparés par des virgules. L'IA complétera si besoin.</div>
+      </div>
 
       <hr class="divider">
       <div class="section-title">Rapport de réunion (Gemini / autre)</div>
@@ -796,9 +810,21 @@
         <div class="progress-title" id="progressTitle">Génération en cours...</div>
         <div class="progress-steps" id="progressSteps"></div>
         <div id="confirmServices" style="display:none;margin-top:1.5rem">
-          <div style="font-size:14px;color:var(--text);margin-bottom:1rem">L'IA a détecté les expertises suivantes. Vous pouvez ajuster avant de lancer la génération.</div>
+          <div style="font-size:14px;color:var(--text);margin-bottom:1rem">L'IA a détecté les expertises suivantes. Vous pouvez ajuster avant de continuer.</div>
           <div id="confirmServicesList" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.5rem"></div>
           <div style="display:flex;gap:10px">
+            <button class="btn btn-outline" style="flex:1" onclick="resetApp()">← Annuler</button>
+            <button class="btn btn-primary" style="flex:2" onclick="detectCompetitors()">Continuer →</button>
+          </div>
+        </div>
+        <div id="confirmCompetitors" style="display:none;margin-top:1.5rem">
+          <div style="font-size:14px;color:var(--text);margin-bottom:1rem">Concurrents identifiés pour l'analyse. Ajoutez ou supprimez avant de générer.</div>
+          <div class="competitor-chips" id="competitorChips"></div>
+          <div class="comp-add-row">
+            <input type="text" id="competitorInput" placeholder="Ajouter un concurrent (ex: site.fr)" onkeydown="if(event.key==='Enter')addCompetitorChip()">
+            <button class="btn btn-outline" onclick="addCompetitorChip()">+ Ajouter</button>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:1rem">
             <button class="btn btn-outline" style="flex:1" onclick="resetApp()">← Annuler</button>
             <button class="btn btn-primary" style="flex:2" onclick="confirmAndGenerate()">Générer le pré-audit →</button>
           </div>
@@ -1328,6 +1354,7 @@ async function generate() {
   const consultant = document.getElementById('consultantName').value.trim() || 'Fabien Guilleux';
   const sector = document.getElementById('clientSector').value.trim();
   const geo = document.getElementById('clientGeo').value.trim();
+  const competitorsRaw = document.getElementById('clientCompetitors').value.trim();
   const meetingContent = getContent('meeting');
   const briefContent = getContent('brief');
 
@@ -1374,7 +1401,7 @@ Réponds UNIQUEMENT avec un tableau JSON des services détectés, parmi : ["SEO"
   }
 
   // Step 2: show confirmation screen
-  _pendingContext = { clientName, clientUrl, sector, geo, meetingContent, briefContent, consultant, model, apiKey, settings };
+  _pendingContext = { clientName, clientUrl, sector, geo, competitorsRaw, meetingContent, briefContent, consultant, model, apiKey, settings };
 
   document.getElementById('progressSteps').innerHTML = renderProgress(STEPS, null, null).replace('pending', 'done'); // show all steps greyed
   document.getElementById('progressSteps').innerHTML = STEPS.filter(s => s.id !== 'detect').map(s => `<div class="progress-step pending"><div class="step-icon pending">○</div><div><div class="step-label">${s.label}</div><div class="step-sub">${s.sub}</div></div></div>`).join('');
@@ -1390,8 +1417,86 @@ Réponds UNIQUEMENT avec un tableau JSON des services détectés, parmi : ["SEO"
   document.getElementById('confirmServices').style.display = '';
 }
 
+function renderCompetitorChips(competitors) {
+  document.getElementById('competitorChips').innerHTML = competitors.map((c, i) =>
+    `<span class="comp-chip">${c}<button class="comp-chip-remove" onclick="removeCompetitorChip(${i})" title="Supprimer">×</button></span>`
+  ).join('');
+}
+
+function getCompetitorChips() {
+  return [...document.querySelectorAll('#competitorChips .comp-chip')].map(el => el.childNodes[0].textContent.trim());
+}
+
+function removeCompetitorChip(idx) {
+  const current = getCompetitorChips();
+  current.splice(idx, 1);
+  renderCompetitorChips(current);
+}
+
+function addCompetitorChip() {
+  const input = document.getElementById('competitorInput');
+  const val = input.value.trim().replace(/,/g, '');
+  if (!val) return;
+  const current = getCompetitorChips();
+  if (!current.includes(val)) {
+    current.push(val);
+    renderCompetitorChips(current);
+  }
+  input.value = '';
+}
+
+async function detectCompetitors() {
+  const { clientName, clientUrl, sector, geo, competitorsRaw, meetingContent, briefContent, model, apiKey } = _pendingContext;
+
+  document.getElementById('confirmServices').style.display = 'none';
+  document.getElementById('progressTitle').textContent = 'Détection des concurrents...';
+  document.getElementById('progressSteps').innerHTML = STEPS.filter(s => s.id !== 'detect').map(s =>
+    `<div class="progress-step pending"><div class="step-icon pending">○</div><div><div class="step-label">${s.label}</div><div class="step-sub">${s.sub}</div></div></div>`
+  ).join('');
+
+  // Parse manually entered competitors
+  const manualCompetitors = competitorsRaw ? competitorsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+  let detectedCompetitors = [...manualCompetitors];
+
+  try {
+    const detectPrompt = `Tu es un expert en stratégie digitale. Identifie les principaux concurrents en ligne de cette entreprise.
+
+Informations :
+- Nom : ${clientName}
+- URL : ${clientUrl}
+- Secteur : ${sector || 'Non précisé'}
+- Zone géographique : ${geo || 'France'}
+${manualCompetitors.length ? `- Concurrents déjà identifiés : ${manualCompetitors.join(', ')}` : ''}
+${meetingContent ? `\nExtrait du rapport de réunion :\n${meetingContent.slice(0, 3000)}` : ''}
+
+Propose une liste de concurrents digitaux (sites web). Inclus les concurrents déjà identifiés et complète avec d'autres pertinents.
+Réponds UNIQUEMENT avec un tableau JSON de domaines. Exemple : ["concurrent1.fr","concurrent2.com","concurrent3.fr"]. 5 concurrents maximum. Aucun texte avant ou après.`;
+
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://sonate.group', 'X-Title': 'Sonate Pre-audit Generator' },
+      body: JSON.stringify({ model, max_tokens: 150, messages: [{ role: 'user', content: detectPrompt }] })
+    });
+    const data = await res.json();
+    const raw = data.choices?.[0]?.message?.content || '';
+    const match = raw.match(/\[[\s\S]*?\]/);
+    if (match) {
+      const parsed = JSON.parse(match[0]);
+      if (Array.isArray(parsed) && parsed.length) detectedCompetitors = parsed;
+    }
+  } catch (e) {
+    // use manual ones or empty
+  }
+
+  renderCompetitorChips(detectedCompetitors);
+  document.getElementById('progressTitle').textContent = 'Concurrents identifiés — confirmez avant de générer';
+  document.getElementById('confirmCompetitors').style.display = '';
+}
+
 async function confirmAndGenerate() {
   const { clientName, clientUrl, sector, geo, meetingContent, briefContent, consultant, model, apiKey, settings } = _pendingContext;
+  const confirmedCompetitors = getCompetitorChips();
 
   const selectedIds = ALL_SERVICES.filter(s => document.getElementById('svc-card-' + s.id)?.classList.contains('active')).map(s => s.id);
   const services = ALL_SERVICES.filter(s => selectedIds.includes(s.id)).map(s => s.label);
@@ -1416,7 +1521,7 @@ async function confirmAndGenerate() {
     sitemapData = await fetchSitemapData(clientUrl);
   } catch (e) { /* continue without */ }
 
-  const prompt = buildPrompt({ clientName, clientUrl, sector, geo, services, meetingContent, briefContent, consultant, pagespeedData, sitemapData });
+  const prompt = buildPrompt({ clientName, clientUrl, sector, geo, services, meetingContent, briefContent, consultant, pagespeedData, sitemapData, competitors: confirmedCompetitors });
 
   try {
     progressUpdate('analyse');
@@ -1648,7 +1753,7 @@ async function fetchSitemapData(siteUrl) {
   return { totalUrls, sampleUrls, topPatterns, mostRecent, sitemapUrl };
 }
 
-function buildPrompt({ clientName, clientUrl, sector, geo, services, meetingContent, briefContent, consultant, pagespeedData, sitemapData }) {
+function buildPrompt({ clientName, clientUrl, sector, geo, services, meetingContent, briefContent, consultant, pagespeedData, sitemapData, competitors }) {
   const hasSeo = services.some(s => s.toLowerCase().includes('seo'));
   const hasSea = services.some(s => s.toLowerCase().includes('sea'));
   const hasGeo = services.some(s => s.toLowerCase().includes('geo'));
@@ -1661,12 +1766,12 @@ ${(++sectionCounter, '')}` : '';
   const seaSection = hasGeo
     ? `- type "section" — label = "0${++sectionCounter}", title = "Référencement Payant", subtitle = "Comprendre les leviers Google Ads", summary = null
 - type "sea" — analyse concurrents sur Google Ads, stratégie recommandée. summary obligatoire
-- type "competition" — analyse des 3 principaux concurrents digitaux avec leurs forces/faiblesses. summary obligatoire`
+- type "competition" — analyse des concurrents digitaux${competitors?.length ? ` suivants (utilise EXACTEMENT ces concurrents, dans cet ordre) : ${competitors.join(', ')}` : ' (les 3 principaux)'}. Forces/faiblesses pour chacun. summary obligatoire`
     : hasSea
     ? `- type "section" — label = "0${sectionCounter}", title = "Référencement Payant", subtitle = "Comprendre les leviers Google Ads", summary = null
 - type "sea" — analyse concurrents sur Google Ads, stratégie recommandée. summary obligatoire
-- type "competition" — analyse des 3 principaux concurrents digitaux avec leurs forces/faiblesses. summary obligatoire`
-    : `- type "competition" — analyse des 3 principaux concurrents digitaux avec leurs forces/faiblesses. summary obligatoire`;
+- type "competition" — analyse des concurrents digitaux${competitors?.length ? ` suivants (utilise EXACTEMENT ces concurrents, dans cet ordre) : ${competitors.join(', ')}` : ' (les 3 principaux)'}. Forces/faiblesses pour chacun. summary obligatoire`
+    : `- type "competition" — analyse des concurrents digitaux${competitors?.length ? ` suivants (utilise EXACTEMENT ces concurrents, dans cet ordre) : ${competitors.join(', ')}` : ' (les 3 principaux)'}. Forces/faiblesses pour chacun. summary obligatoire`;
 
   const proposalSectionLabel = String(sectionCounter + 1).padStart(2, '0');
 

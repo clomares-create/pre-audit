@@ -1828,7 +1828,7 @@ DONNÉES RÉELLES PAGESPEED INSIGHTS (utilise EXACTEMENT ces valeurs dans les sc
 - Core Web Vitals desktop : FCP ${pagespeedData.desktop.fcp || 'N/A'} · LCP ${pagespeedData.desktop.lcp || 'N/A'} · CLS ${pagespeedData.desktop.cls || 'N/A'} · TBT ${pagespeedData.desktop.tbt || 'N/A'}
 Mentionne les Core Web Vitals dans le body de la slide.` : `6. NE PAS générer de slide de type "technical". Cette slide sera injectée séparément avec les données réelles. Passe directement au point 7.`}
 
-7. type "section" — label = "03", title = "Trafic & Concurrence", subtitle = "Positionnement marché et opportunités", body = null, summary = null
+7. type "section" — label = "03", title = "Indexation & Structure", subtitle = "Analyse de la couverture d'indexation", body = null, summary = null
 
 ${sitemapData ? `8. type "indexation" — analyse de l'indexation et de la structure du site. NE PAS inventer de données. Utilise UNIQUEMENT les données réelles ci-dessous pour le body et les metrics.
 DONNÉES RÉELLES SITEMAP :
@@ -1838,8 +1838,6 @@ DONNÉES RÉELLES SITEMAP :
 - Principales sections (préfixes d'URL) : ${sitemapData.topPatterns.map(([k, v]) => `/${k} (${v} pages)`).join(' · ')}
 - Exemples d'URLs : ${sitemapData.sampleUrls.slice(0, 5).join(' · ')}
 summary obligatoire.` : `8. NE PAS générer de slide de type "indexation". Cette slide sera injectée séparément. Passe directement au point 9.`}
-
-9. type "metrics" — trafic SEO actuel estimé. metrics obligatoires : visites organiques/mois, mots-clés positionnés, autorité de domaine, trafic de marque %. summary obligatoire.
 
 ${hasSeo ? `9. type "section" — label = "04", title = "Stratégie de Contenu", subtitle = "Méthodologie pour gagner des positions", body = null, summary = null
 10. type "seo" — analyse SEO détaillée, opportunités mots-clés, potentiel. summary obligatoire.

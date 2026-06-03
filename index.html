@@ -1273,6 +1273,7 @@ async function printPDF() {
 const STEPS = [
   { id: 'detect', label: 'Détection des expertises', sub: 'Analyse du contexte et des besoins' },
   { id: 'pagespeed', label: 'Mesure de performance', sub: 'PageSpeed Insights mobile & desktop' },
+  { id: 'sitemap', label: 'Analyse du sitemap', sub: 'Indexation & structure des URLs' },
   { id: 'analyse', label: 'Analyse du site client', sub: 'Contexte, secteur, positionnement' },
   { id: 'seo', label: 'Stratégie SEO & technique', sub: 'Audit, potentiel, recommandations' },
   { id: 'sea', label: 'Stratégie SEA & concurrents', sub: 'Analyse compétitive, opportunités' },
@@ -1409,7 +1410,13 @@ async function confirmAndGenerate() {
     pagespeedData = await fetchPageSpeed(clientUrl, pagespeedKey);
   } catch (e) { /* continue without */ }
 
-  const prompt = buildPrompt({ clientName, clientUrl, sector, geo, services, meetingContent, briefContent, consultant, pagespeedData });
+  progressUpdate('sitemap');
+  let sitemapData = null;
+  try {
+    sitemapData = await fetchSitemapData(clientUrl);
+  } catch (e) { /* continue without */ }
+
+  const prompt = buildPrompt({ clientName, clientUrl, sector, geo, services, meetingContent, briefContent, consultant, pagespeedData, sitemapData });
 
   try {
     progressUpdate('analyse');
@@ -1467,6 +1474,29 @@ async function confirmAndGenerate() {
       } catch(e2) {
         const preview = raw.slice(0, 300).replace(/</g, '&lt;');
         throw new Error(`JSON invalide (${e2.message}). Début de la réponse : ${preview}`);
+      }
+    }
+
+    // If sitemap failed, inject a static error slide where "indexation" would be
+    if (!sitemapData) {
+      const sitemapErrorSlide = {
+        type: 'indexation',
+        label: 'Indexation',
+        title: 'Structure & Indexation',
+        subtitle: `Analyse du sitemap — ${clientUrl}`,
+        scores: null,
+        metrics: null,
+        badges: null,
+        body: `<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;font-size:13px">
+          <span style="font-size:20px">⚠️</span>
+          <div><strong>Sitemap introuvable ou inaccessible</strong><br>Aucun fichier sitemap.xml n'a pu être récupéré sur ce site. Le site utilise peut-être un sitemap non standard, ou le fichier est protégé.</div>
+        </div>`,
+        summary: 'Le sitemap du site n\'a pas pu être analysé — données d\'indexation indisponibles.',
+        accentColor: 'red',
+      };
+      const section03Idx = slides.findIndex(s => s.type === 'section' && s.label === '03');
+      if (section03Idx !== -1) {
+        slides.splice(section03Idx + 1, 0, sitemapErrorSlide);
       }
     }
 
@@ -1543,7 +1573,82 @@ async function fetchPageSpeed(url, apiKey) {
   return { mobile: extract(mobile), desktop: extract(desktop) };
 }
 
-function buildPrompt({ clientName, clientUrl, sector, geo, services, meetingContent, briefContent, consultant, pagespeedData }) {
+async function fetchSitemapData(siteUrl) {
+  const base = new URL(siteUrl.startsWith('http') ? siteUrl : 'https://' + siteUrl);
+  const origin = base.origin;
+
+  // Try common sitemap locations via allorigins proxy (CORS workaround)
+  const candidates = [
+    `${origin}/sitemap.xml`,
+    `${origin}/sitemap_index.xml`,
+    `${origin}/sitemap/sitemap.xml`,
+  ];
+
+  const proxy = (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+
+  let xmlText = null;
+  let sitemapUrl = null;
+
+  // 1. Try robots.txt first to find declared sitemap
+  try {
+    const robotsRes = await fetch(proxy(`${origin}/robots.txt`), { signal: AbortSignal.timeout(6000) });
+    const robotsJson = await robotsRes.json();
+    const match = robotsJson.contents?.match(/Sitemap:\s*(\S+)/i);
+    if (match) candidates.unshift(match[1]);
+  } catch (e) { /* ignore */ }
+
+  for (const url of candidates) {
+    try {
+      const res = await fetch(proxy(url), { signal: AbortSignal.timeout(8000) });
+      const json = await res.json();
+      if (json.contents && json.contents.includes('<url')) {
+        xmlText = json.contents;
+        sitemapUrl = url;
+        break;
+      }
+      // Sitemap index — fetch first child sitemap
+      if (json.contents && json.contents.includes('<sitemap>')) {
+        const childMatch = json.contents.match(/<loc>(.*?)<\/loc>/);
+        if (childMatch) {
+          const childRes = await fetch(proxy(childMatch[1]), { signal: AbortSignal.timeout(8000) });
+          const childJson = await childRes.json();
+          if (childJson.contents?.includes('<url')) {
+            xmlText = childJson.contents;
+            sitemapUrl = childMatch[1];
+            break;
+          }
+        }
+      }
+    } catch (e) { /* try next */ }
+  }
+
+  if (!xmlText) throw new Error('Sitemap introuvable');
+
+  // Count URLs and extract sample
+  const urlMatches = [...xmlText.matchAll(/<loc>(.*?)<\/loc>/g)];
+  const totalUrls = urlMatches.length;
+  const sampleUrls = urlMatches.slice(0, 10).map(m => m[1].replace(origin, ''));
+
+  // Detect URL patterns (blog, product, category…)
+  const patterns = {};
+  urlMatches.forEach(m => {
+    const path = m[1].replace(origin, '').split('/').filter(Boolean);
+    if (path.length > 0) {
+      const key = path[0];
+      patterns[key] = (patterns[key] || 0) + 1;
+    }
+  });
+  const topPatterns = Object.entries(patterns).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  // Check lastmod freshness
+  const lastmodMatches = [...xmlText.matchAll(/<lastmod>(.*?)<\/lastmod>/g)];
+  const lastmods = lastmodMatches.map(m => m[1]).filter(Boolean).sort().reverse();
+  const mostRecent = lastmods[0] || null;
+
+  return { totalUrls, sampleUrls, topPatterns, mostRecent, sitemapUrl };
+}
+
+function buildPrompt({ clientName, clientUrl, sector, geo, services, meetingContent, briefContent, consultant, pagespeedData, sitemapData }) {
   const hasSeo = services.some(s => s.toLowerCase().includes('seo'));
   const hasSea = services.some(s => s.toLowerCase().includes('sea'));
   const hasGeo = services.some(s => s.toLowerCase().includes('geo'));
@@ -1620,7 +1725,16 @@ Mentionne les Core Web Vitals dans le body de la slide.` : `6. NE PAS générer 
 
 7. type "section" — label = "03", title = "Trafic & Concurrence", subtitle = "Positionnement marché et opportunités", body = null, summary = null
 
-8. type "metrics" — trafic SEO actuel estimé. metrics obligatoires : visites organiques/mois, mots-clés positionnés, autorité de domaine, trafic de marque %. summary obligatoire.
+${sitemapData ? `8. type "indexation" — analyse de l'indexation et de la structure du site. NE PAS inventer de données. Utilise UNIQUEMENT les données réelles ci-dessous pour le body et les metrics.
+DONNÉES RÉELLES SITEMAP :
+- URL du sitemap : ${sitemapData.sitemapUrl}
+- Nombre de pages déclarées : ${sitemapData.totalUrls}
+- Dernière mise à jour déclarée : ${sitemapData.mostRecent || 'inconnue'}
+- Principales sections (préfixes d'URL) : ${sitemapData.topPatterns.map(([k, v]) => `/${k} (${v} pages)`).join(' · ')}
+- Exemples d'URLs : ${sitemapData.sampleUrls.slice(0, 5).join(' · ')}
+summary obligatoire.` : `8. NE PAS générer de slide de type "indexation". Cette slide sera injectée séparément. Passe directement au point 9.`}
+
+9. type "metrics" — trafic SEO actuel estimé. metrics obligatoires : visites organiques/mois, mots-clés positionnés, autorité de domaine, trafic de marque %. summary obligatoire.
 
 ${hasSeo ? `9. type "section" — label = "04", title = "Stratégie de Contenu", subtitle = "Méthodologie pour gagner des positions", body = null, summary = null
 10. type "seo" — analyse SEO détaillée, opportunités mots-clés, potentiel. summary obligatoire.

@@ -484,6 +484,18 @@
   }
   @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
+  /* SERVICE CONFIRM CARDS */
+  .svc-card {
+    border: 2px solid var(--border); border-radius: var(--radius);
+    padding: 10px 14px; cursor: pointer; user-select: none;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; font-weight: 500; color: var(--text);
+    background: var(--white); transition: all 0.15s;
+  }
+  .svc-card.active { border-color: var(--green-dark); background: rgba(18,60,51,0.06); color: var(--green-dark); }
+  .svc-card .svc-check { width: 18px; height: 18px; border-radius: 4px; border: 2px solid currentColor; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; }
+  .svc-card.active .svc-check::after { content: '✓'; }
+
   /* MODEL SELECT */
   .model-input-row { display: flex; gap: 8px; }
   .model-input-row input { flex: 1; }
@@ -711,23 +723,6 @@
         <textarea id="briefText" placeholder="Besoins, objectifs, contexte..."></textarea>
       </div>
 
-      <hr class="divider">
-      <div class="section-title">Services proposés</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-          <input type="checkbox" id="svcSeo" checked> SEO
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-          <input type="checkbox" id="svcSea"> SEA
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-          <input type="checkbox" id="svcGeo"> GEO / IA
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-          <input type="checkbox" id="svcContent"> Contenu
-        </label>
-      </div>
-
       <div style="margin-top:1.5rem">
         <button class="btn btn-primary btn-lg" style="width:100%" onclick="generate()" id="generateBtn">
           Générer le pré-audit
@@ -790,8 +785,16 @@
     </div>
     <div id="progressState" style="display:none">
       <div class="progress-container">
-        <div class="progress-title">Génération en cours...</div>
+        <div class="progress-title" id="progressTitle">Génération en cours...</div>
         <div class="progress-steps" id="progressSteps"></div>
+        <div id="confirmServices" style="display:none;margin-top:1.5rem">
+          <div style="font-size:14px;color:var(--text);margin-bottom:1rem">L'IA a détecté les expertises suivantes. Vous pouvez ajuster avant de lancer la génération.</div>
+          <div id="confirmServicesList" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.5rem"></div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-outline" style="flex:1" onclick="resetApp()">← Annuler</button>
+            <button class="btn btn-primary" style="flex:2" onclick="confirmAndGenerate()">Générer le pré-audit →</button>
+          </div>
+        </div>
       </div>
     </div>
     <div id="resultState" style="display:none">
@@ -1259,7 +1262,7 @@ async function printPDF() {
 
 // Progress steps definition
 const STEPS = [
-  { id: 'parse', label: 'Lecture des documents', sub: 'Analyse du rapport et du brief' },
+  { id: 'detect', label: 'Détection des expertises', sub: 'Analyse du contexte et des besoins' },
   { id: 'pagespeed', label: 'Mesure de performance', sub: 'PageSpeed Insights mobile & desktop' },
   { id: 'analyse', label: 'Analyse du site client', sub: 'Contexte, secteur, positionnement' },
   { id: 'seo', label: 'Stratégie SEO & technique', sub: 'Audit, potentiel, recommandations' },
@@ -1287,6 +1290,21 @@ function renderProgress(steps, currentId, errorId) {
   }).join('');
 }
 
+// Shared context set by generate(), used by confirmAndGenerate()
+let _pendingContext = null;
+
+const ALL_SERVICES = [
+  { id: 'SEO', label: 'SEO', sub: 'Référencement naturel' },
+  { id: 'SEA', label: 'SEA / Google Ads', sub: 'Référencement payant' },
+  { id: 'GEO', label: 'GEO / Visibilité IA', sub: 'Présence dans les IA génératives' },
+  { id: 'Contenu', label: 'Stratégie de contenu', sub: 'Création & optimisation éditoriale' },
+];
+
+function toggleSvcCard(id) {
+  const el = document.getElementById('svc-card-' + id);
+  el.classList.toggle('active');
+}
+
 async function generate() {
   const settings = JSON.parse(localStorage.getItem('sonate_settings') || '{}');
   const apiKey = settings.apiKey || document.getElementById('apiKey').value.trim();
@@ -1302,30 +1320,85 @@ async function generate() {
   const geo = document.getElementById('clientGeo').value.trim();
   const meetingContent = getContent('meeting');
   const briefContent = getContent('brief');
-  const svcSeo = document.getElementById('svcSeo').checked;
-  const svcSea = document.getElementById('svcSea').checked;
-  const svcGeo = document.getElementById('svcGeo').checked;
-  const svcContent = document.getElementById('svcContent').checked;
-  const services = [svcSeo && 'SEO', svcSea && 'SEA / Google Ads', svcGeo && 'GEO / Visibilité IA', svcContent && 'Stratégie de contenu'].filter(Boolean);
 
   // Show progress
   document.getElementById('welcomeState').style.display = 'none';
   document.getElementById('progressState').style.display = '';
   document.getElementById('resultState').style.display = 'none';
-  document.getElementById('progressSteps').innerHTML = renderProgress(STEPS, 'parse', null);
+  document.getElementById('progressTitle').textContent = 'Analyse en cours...';
+  document.getElementById('confirmServices').style.display = 'none';
+  document.getElementById('progressSteps').innerHTML = renderProgress(STEPS, 'detect', null);
 
   const progressUpdate = (stepId) => {
     document.getElementById('progressSteps').innerHTML = renderProgress(STEPS, stepId, null);
   };
 
+  // Step 1: detect services via LLM
+  let detectedServices = ['SEO'];
+  try {
+    const detectPrompt = `Tu es un expert en stratégie digitale. Analyse les informations suivantes d'un prospect et détermine quels services digitaux sont pertinents à lui proposer parmi : SEO, SEA, GEO, Contenu.
+
+Informations client :
+- Nom : ${clientName}
+- URL : ${clientUrl}
+- Secteur : ${sector || 'Non précisé'}
+- Zone géographique : ${geo || 'France'}
+${meetingContent ? `\nRapport de réunion :\n${meetingContent.slice(0, 4000)}` : ''}${briefContent ? `\nBrief :\n${briefContent.slice(0, 2000)}` : ''}
+
+Réponds UNIQUEMENT avec un tableau JSON des services détectés, parmi : ["SEO","SEA","GEO","Contenu"]. Exemple : ["SEO","SEA"]. Aucun texte avant ou après.`;
+
+    const detectRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://sonate.group', 'X-Title': 'Sonate Pre-audit Generator' },
+      body: JSON.stringify({ model, max_tokens: 100, messages: [{ role: 'user', content: detectPrompt }] })
+    });
+    const detectData = await detectRes.json();
+    const raw = detectData.choices?.[0]?.message?.content || '';
+    const match = raw.match(/\[[\s\S]*?\]/);
+    if (match) {
+      const parsed = JSON.parse(match[0]);
+      if (Array.isArray(parsed) && parsed.length) detectedServices = parsed;
+    }
+  } catch(e) {
+    // fallback to SEO only
+  }
+
+  // Step 2: show confirmation screen
+  _pendingContext = { clientName, clientUrl, sector, geo, meetingContent, briefContent, consultant, model, apiKey, settings };
+
+  document.getElementById('progressSteps').innerHTML = renderProgress(STEPS, null, null).replace('pending', 'done'); // show all steps greyed
+  document.getElementById('progressSteps').innerHTML = STEPS.filter(s => s.id !== 'detect').map(s => `<div class="progress-step pending"><div class="step-icon pending">○</div><div><div class="step-label">${s.label}</div><div class="step-sub">${s.sub}</div></div></div>`).join('');
+
+  document.getElementById('confirmServicesList').innerHTML = ALL_SERVICES.map(s =>
+    `<div class="svc-card${detectedServices.includes(s.id) ? ' active' : ''}" id="svc-card-${s.id}" onclick="toggleSvcCard('${s.id}')">
+      <div class="svc-check"></div>
+      <div><div>${s.label}</div><div style="font-size:11px;color:var(--text-light);font-weight:400">${s.sub}</div></div>
+    </div>`
+  ).join('');
+
+  document.getElementById('progressTitle').textContent = 'Expertises détectées — confirmez avant de générer';
+  document.getElementById('confirmServices').style.display = '';
+}
+
+async function confirmAndGenerate() {
+  const { clientName, clientUrl, sector, geo, meetingContent, briefContent, consultant, model, apiKey, settings } = _pendingContext;
+
+  const selectedIds = ALL_SERVICES.filter(s => document.getElementById('svc-card-' + s.id)?.classList.contains('active')).map(s => s.id);
+  const services = ALL_SERVICES.filter(s => selectedIds.includes(s.id)).map(s => s.label);
+
+  document.getElementById('confirmServices').style.display = 'none';
+  document.getElementById('progressTitle').textContent = 'Génération en cours...';
+  document.getElementById('progressSteps').innerHTML = renderProgress(STEPS.filter(s => s.id !== 'detect'), 'pagespeed', null);
+
+  const progressUpdate = (stepId) => {
+    document.getElementById('progressSteps').innerHTML = renderProgress(STEPS.filter(s => s.id !== 'detect'), stepId, null);
+  };
+
   let pagespeedData = null;
   try {
-    progressUpdate('pagespeed');
     const pagespeedKey = settings.pagespeedKey || document.getElementById('pagespeedKey').value.trim();
     pagespeedData = await fetchPageSpeed(clientUrl, pagespeedKey);
-  } catch (e) {
-    // PageSpeed failed — continue without real data, LLM will estimate
-  }
+  } catch (e) { /* continue without */ }
 
   const prompt = buildPrompt({ clientName, clientUrl, sector, geo, services, meetingContent, briefContent, consultant, pagespeedData });
 
@@ -1399,7 +1472,8 @@ async function generate() {
     saveReport(slides);
 
   } catch(err) {
-    document.getElementById('progressSteps').innerHTML = renderProgress(STEPS, null, 'analyse') +
+    const genSteps = STEPS.filter(s => s.id !== 'detect');
+    document.getElementById('progressSteps').innerHTML = renderProgress(genSteps, null, 'analyse') +
       `<div style="color:#dc2626;font-size:13px;padding:10px 14px;background:#fef2f2;border-radius:8px;border:1px solid #fca5a5;margin-top:8px">
         ⚠️ ${err.message}
       </div>`;

@@ -2153,7 +2153,13 @@ async function confirmAndGenerate() {
             { name: 'Fabien GUILLEUX', photo: null },
           ],
         },
-        { type: 'seo-equipe-experte', photos: [null, null, null, null, null, null] }
+        { type: 'seo-equipe-experte', photos: [null, null, null, null, null, null] },
+        {
+          type: 'seo-geo-budget',
+          subtitle: 'Un investissement structuré en deux temps : un démarrage stratégique + un accompagnement mensuel.',
+          setup: { badge: 'PHASE 1 · SETUP', title: 'Paramétrage SEO', price: '1 400 €', items: ['Analyse sémantique', 'Analyse concurrentielle', 'Analyse Google Search Console', 'Création de livrables stratégiques'] },
+          run: { badge: 'PHASE 2 · RUN', title: 'Travaux mensuels', price: '700 € / mois', note: 'Pilotage continu de la performance', items: ['Recommandations techniques & données structurées (interne, externe ou sous traitant)', 'Performances du serveur et du CMS', 'Sélection de mots-clés & cocon sémantique', 'Rédaction de pages produits, blog, actualités', 'Maillage interne & pilotage des performances'] }
+        }
       );
     }
 
@@ -3596,6 +3602,59 @@ function renderSlide(s, idx, clientName, consultant) {
       <div class="slide-inner">
         <div class="slide-title">Stratégie proposée · ${monthYearCap}</div>
         <div class="strat-team-grid">${memberHtml}</div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // SEO-GEO BUDGET — slide budget deux colonnes, chiffres et texte éditables
+  if (s.type === 'seo-geo-budget') {
+    const setup = s.setup || {};
+    const run = s.run || {};
+    const mkText = (val, placeholder, path) => editable
+      ? `<span contenteditable="true" style="outline:none;min-width:20px;display:inline;" data-placeholder="${placeholder}" oninput="(function(el){const p=${JSON.stringify(path)};let t=window.__currentSlides?.[${idx}];if(!t)return;p.slice(0,-1).forEach(k=>{if(!t[k])t[k]={};t=t[k];});t[p[p.length-1]]=el.textContent;})(this)">${val||''}</span>`
+      : `<span>${val||''}</span>`;
+    const mkBlock = (val, placeholder, path) => editable
+      ? `<div contenteditable="true" style="outline:none;min-height:1em;" data-placeholder="${placeholder}" oninput="(function(el){const p=${JSON.stringify(path)};let t=window.__currentSlides?.[${idx}];if(!t)return;p.slice(0,-1).forEach(k=>{if(!t[k])t[k]={};t=t[k];});t[p[p.length-1]]=el.textContent;})(this)">${val||''}</div>`
+      : `<div>${val||''}</div>`;
+    const mkList = (items, side) => {
+      const listItems = (Array.isArray(items) && items.length ? items : ['']).map((item, ii) =>
+        editable
+          ? `<li contenteditable="true" style="outline:none;min-width:20px;" oninput="(function(el){if(!Array.isArray(window.__currentSlides?.[${idx}]?.${side}?.items))window.__currentSlides[${idx}].${side}.items=[''];window.__currentSlides[${idx}].${side}.items[${ii}]=el.textContent;})(this)">${item}</li>`
+          : `<li>${item}</li>`
+      ).join('');
+      const addBtn = editable ? `<button onclick="(function(){if(!Array.isArray(window.__currentSlides?.[${idx}]?.${side}?.items))window.__currentSlides[${idx}].${side}.items=[];window.__currentSlides[${idx}].${side}.items.push('');renderSlides();})()" style="margin-top:6px;font-size:11px;background:rgba(255,255,255,0.15);color:inherit;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;">+ item</button>` : '';
+      return `<ul style="margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:0.3rem;font-size:13px;">${listItems}</ul>${addBtn}`;
+    };
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">SEO-GEO · Le budget</div>
+        ${editable
+          ? `<div contenteditable="true" class="slide-subtitle" style="font-style:italic;outline:none;" oninput="if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].subtitle=this.textContent">${s.subtitle||''}</div>`
+          : s.subtitle ? `<div class="slide-subtitle" style="font-style:italic;">${s.subtitle}</div>` : ''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-top:1rem;flex:1;min-height:0;">
+          <!-- PHASE 1 SETUP -->
+          <div style="background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:1.5rem;display:flex;flex-direction:column;gap:0.8rem;">
+            <div style="display:inline-block;background:var(--orange);color:#fff;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;letter-spacing:0.08em;width:fit-content;">
+              ${mkText(setup.badge,'PHASE 1 · SETUP',['setup','badge'])}
+            </div>
+            <div style="font-size:17px;font-weight:700;color:var(--green-dark);">${mkText(setup.title,'Titre','setup.title'.split('.'))}</div>
+            <div style="font-size:36px;font-weight:800;color:var(--orange);line-height:1;">${mkBlock(setup.price,'1 400 €',['setup','price'])}</div>
+            ${mkList(setup.items, 'setup')}
+          </div>
+          <!-- PHASE 2 RUN -->
+          <div style="background:var(--green-dark);color:#fff;border-radius:14px;padding:1.5rem;display:flex;flex-direction:column;gap:0.8rem;">
+            <div style="display:inline-block;background:var(--orange);color:#fff;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;letter-spacing:0.08em;width:fit-content;">
+              ${mkText(run.badge,'PHASE 2 · RUN',['run','badge'])}
+            </div>
+            <div style="font-size:17px;font-weight:700;color:#fff;">${mkText(run.title,'Titre',['run','title'])}</div>
+            <div style="font-size:36px;font-weight:800;color:var(--orange);line-height:1;">${mkBlock(run.price,'700 € / mois',['run','price'])}</div>
+            ${run.note || editable ? `<div style="font-size:12px;font-style:italic;color:rgba(255,255,255,0.7);">${editable?`<span contenteditable="true" style="outline:none;" oninput="if(window.__currentSlides?.[${idx}]?.run)window.__currentSlides[${idx}].run.note=this.textContent">${run.note||''}</span>`:(run.note||'')}</div>` : ''}
+            ${mkList(run.items, 'run')}
+          </div>
+        </div>
       </div>
       ${footer(false)}
     </div>`;

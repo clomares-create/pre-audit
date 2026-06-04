@@ -803,6 +803,95 @@
   .sonate-tagline-bar { width: 60px; height: 4px; background: #e85d2a; border-radius: 2px; margin-bottom: 18px; }
   .sonate-tagline-sub { font-size: 16px; font-style: italic; color: rgba(255,255,255,0.7); position: relative; }
 
+  /* RÉFÉRENCES CLIENTS SEO */
+  .ref-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 10px; }
+  .ref-header-left { flex: 1; }
+  .ref-subtitle { font-style: italic; color: #888; font-size: 13px; margin: 4px 0 12px; }
+  .ref-badge {
+    display: inline-block; background: #123C34; color: #fff;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+    padding: 5px 12px; border-radius: 20px; text-transform: uppercase;
+  }
+  .ref-logo-area {
+    width: 200px; min-height: 70px; flex-shrink: 0;
+    border-radius: 10px; overflow: hidden; background: #f0ece4;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative;
+  }
+  .ref-logo-area img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
+  .ref-logo-placeholder { font-size: 11px; color: #aaa; text-align: center; padding: 10px; }
+  .ref-logo-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.3); opacity: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 11px; font-weight: 600; transition: opacity 0.2s;
+  }
+  .ref-logo-area:hover .ref-logo-overlay { opacity: 1; }
+  .ref-body { display: flex; gap: 12px; margin-top: 14px; align-items: stretch; }
+  .ref-positions {
+    flex: 1.4; border: 2px solid #e0dbd2; border-radius: 12px; padding: 14px 16px;
+    font-size: 12px; line-height: 1.6; color: #333;
+  }
+  .ref-positions-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: #999; text-transform: uppercase; margin-bottom: 8px; }
+  .ref-positions h4 { font-size: 13px; font-weight: 700; color: #1a1a18; margin: 8px 0 4px; }
+  .ref-positions ul { margin: 0 0 4px 16px; padding: 0; }
+  .ref-kpis { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .ref-kpi-card {
+    flex: 1; border: 2px solid #123C34; border-radius: 12px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 12px 10px; text-align: center; gap: 6px;
+  }
+  .ref-kpi-card.dark { background: #123C34; }
+  .ref-kpi-num { font-size: 32px; font-weight: 900; color: #e85d2a; line-height: 1; }
+  .ref-kpi-label { font-size: 11px; color: #666; line-height: 1.3; }
+  .ref-kpi-card.dark .ref-kpi-label { color: rgba(255,255,255,0.75); }
+  .ref-kpis-row { display: flex; gap: 10px; flex: 1; }
+  .ref-result {
+    margin-top: 12px; background: #123C34; border-left: 4px solid #e85d2a;
+    border-radius: 8px; padding: 12px 16px;
+    font-size: 13px; color: #fff; line-height: 1.5; font-weight: 500;
+  }
+
+  /* TESTIMONIALS */
+  .ref-testi-intro { font-style: italic; color: #888; font-size: 13px; margin: 4px 0 18px; }
+  .ref-testi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .ref-testi-card {
+    background: #fff; border: 1px solid #e8e4db; border-radius: 12px; padding: 16px;
+  }
+  .ref-testi-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .ref-testi-avatar {
+    width: 36px; height: 36px; border-radius: 50%; background: #123C34;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 700; color: #fff; flex-shrink: 0; overflow: hidden;
+  }
+  .ref-testi-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .ref-testi-name { font-size: 14px; font-weight: 700; color: #1a1a18; }
+  .ref-testi-count { font-size: 11px; color: #999; }
+  .ref-testi-stars { color: #f59e0b; font-size: 13px; margin-bottom: 4px; }
+  .ref-testi-when { font-size: 11px; color: #999; margin-left: 6px; }
+  .ref-testi-text { font-size: 12px; color: #444; line-height: 1.6; margin-bottom: 8px; }
+  .ref-testi-visited { font-size: 11px; color: #999; }
+
+  /* STRATÉGIE PROPOSÉE */
+  .strat-date { font-size: 22px; font-weight: 700; color: #1a1a18; margin: 4px 0 20px; }
+  .strat-team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .strat-member-card {
+    background: #123C34; border-radius: 16px; padding: 16px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .strat-member-photo {
+    width: 100%; aspect-ratio: 3/4; border-radius: 10px; overflow: hidden;
+    background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; position: relative;
+  }
+  .strat-member-photo img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .strat-member-photo-placeholder { color: rgba(255,255,255,0.4); font-size: 12px; text-align: center; padding: 10px; }
+  .strat-member-photo-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.3); opacity: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 11px; font-weight: 600; transition: opacity 0.2s;
+  }
+  .strat-member-photo:hover .strat-member-photo-overlay { opacity: 1; }
+  .strat-member-name { font-size: 18px; font-weight: 700; color: #fff; text-align: center; }
+
   /* ALGO SEO SLIDE */
   .algo-seo-intro { font-style: italic; color: #666; font-size: 14px; margin: 8px 0 24px; line-height: 1.6; }
   .algo-seo-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-bottom: 24px; }
@@ -1901,6 +1990,57 @@ async function confirmAndGenerate() {
       { type: 'sonate-tagline' }
     );
 
+    // Inject "Références clients SEO" section — SEO only, always last
+    if (hasSeo) {
+      const refLabel = String(slides.filter(s => s.type === 'section').length + 1).padStart(2, '0');
+      slides.push(
+        { type: 'section', label: refLabel, title: 'Références clients SEO', subtitle: 'Études de cas & témoignages' },
+        {
+          type: 'sonate-ref',
+          title: 'Référence client · SANTAROME',
+          subtitle: 'Laboratoire de compléments alimentaires · SEO + SEA + Développement web',
+          badge: 'SANTÉ / E-COMMERCE',
+          logo: null,
+          positions: `<h4>Requêtes commerciales :</h4><ul><li>Gummies : 1ère position</li><li>Sève de bouleau bio : 1ère position</li><li>Gummies cheveux : 7ème position</li></ul><h4>Requêtes informatives :</h4><ul><li>Camomille : 1ère position</li><li>Echinacea : 1ère position</li><li>Harpagophytum : 4ème position</li></ul>`,
+          kpis: [
+            { value: '+662%', label: 'Trafic organique<br>(sept 2022 → sept 2023)', dark: false },
+            { value: '496K', label: 'Clics générés par le blog (jan-oct 2023)', dark: true },
+            { value: '+37%', label: 'CA en ligne SEO<br>(sept 2022 → sept 2023)', dark: false },
+          ],
+          result: 'Résultat : un site multiplié par 7 en trafic organique en 12 mois, devenu leader sur ses requêtes phares.',
+        },
+        {
+          type: 'sonate-ref',
+          title: 'Référence client · Gestion Crédit Expert',
+          subtitle: 'Cabinet de recouvrement de créances · SEO + Développement web',
+          badge: 'B2B · FINANCE',
+          logo: null,
+          positions: `<h4>Mots-clés business :</h4><ul><li>Cabinet de recouvrement de créances : 3ème position</li></ul><h4>Mots-clés informatifs :</h4><ul><li>Certificat d'irrécouvrabilité : 1ère position</li><li>Loi gayssot transport : 2ème position</li><li>Calcul DSO : 3ème position</li></ul>`,
+          kpis: [
+            { value: '798', label: 'Mots-clés en TOP 20 (juin 2023)', dark: false },
+            { value: '90%', label: 'Score de santé SEO après refonte (vs 79% avant)', dark: true },
+            { value: '+7,36%', label: 'Visibilité depuis janvier 2023', dark: false },
+          ],
+          result: 'Refonte SEO réussie : score de santé qui passe de 79% à 90% et visibilité en croissance constante.',
+        },
+        {
+          type: 'sonate-testimonials',
+          testimonials: [
+            { name: 'Srm Tp', count: 6, when: 'il y a 6 mois', text: 'Je tiens a féliciter l\'équipe pour l\'écoute la patience et leur réactivité ++++ qu\'il on eu pour comprendre et répondre à mon besoin. Julien Aaron Margaut bravo à vous pour votre travail je ne regrette pas et je recommande.', visited: 'Visité en octobre 2025', avatar: null },
+            { name: 'Christele Le Guillouzer', count: 1, when: 'il y a 6 mois', text: '✨ Une collaboration de qualité ✨\n\nJ\'ai eu le plaisir de travailler avec Wedig plusieurs années et je ne peux que recommander leurs services. Tout au long de notre collaboration, j\'ai particulièrement apprécié leur professionnalisme, leur réactivité et leur capacité à comprendre nos besoins.\n\nUne expérience très positive que je recommande sans hésitation !', visited: 'Visité en octobre 2025', avatar: null },
+            { name: 'Maxime Vadrot', count: 8, when: 'il y a un an', text: 'Wedig nous accompagne depuis plusieurs années sur nos campagnes SEA. Les résultats sont exceptionnels. L\'équipe est au top avec de vrais bons conseils, ils ne nous laissent pas "seuls" grâce à des rapports mensuels + des accompagnements en visio de qualité. Je recommande fortement !', visited: 'Visité en février 2025', avatar: null },
+          ],
+        },
+        {
+          type: 'sonate-strategie',
+          members: [
+            { name: 'Benjamin MOUSTIC', photo: null },
+            { name: 'Fabien GUILLEUX', photo: null },
+          ],
+        }
+      );
+    }
+
     // Render
     window.currentReportId = null;
     document.getElementById('reportLinkContainer').style.display = 'none';
@@ -2146,6 +2286,41 @@ function uploadChartImage(idx) {
       debounceSave();
     };
     reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function uploadRefLogo(idx) {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = (e) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (window.__currentSlides?.[idx]) window.__currentSlides[idx].logo = ev.target.result;
+      const cn = document.getElementById('clientName')?.value || '';
+      const cu = document.getElementById('clientUrl')?.value || '';
+      document.getElementById('slidesContainer').innerHTML = renderSlides(window.__currentSlides, { clientName: cn, clientUrl: cu, consultant: '' });
+      debounceSave();
+    };
+    reader.readAsDataURL(e.target.files[0]);
+  };
+  input.click();
+}
+
+function uploadStratPhoto(idx, memberIdx) {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = (e) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (window.__currentSlides?.[idx]?.members?.[memberIdx])
+        window.__currentSlides[idx].members[memberIdx].photo = ev.target.result;
+      const cn = document.getElementById('clientName')?.value || '';
+      const cu = document.getElementById('clientUrl')?.value || '';
+      document.getElementById('slidesContainer').innerHTML = renderSlides(window.__currentSlides, { clientName: cn, clientUrl: cu, consultant: '' });
+      debounceSave();
+    };
+    reader.readAsDataURL(e.target.files[0]);
   };
   input.click();
 }
@@ -2536,6 +2711,106 @@ function renderSlide(s, idx, clientName, consultant) {
           </div>
         </div>
         <div class="algo-seo-summary">SEO : ensemble des techniques pour positionner un site dans les premiers résultats de Google.</div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // RÉFÉRENCE CLIENT — étude de cas (Santarome, GCE…)
+  if (s.type === 'sonate-ref') {
+    const refEditable = !!window.__editableSlides;
+    const logoHtml = s.logo
+      ? `<div class="ref-logo-area"${refEditable ? ` onclick="uploadRefLogo(${idx})"` : ''}>
+          <img src="${s.logo}" alt="Logo">
+          ${refEditable ? `<div class="ref-logo-overlay">🔄 Remplacer</div>` : ''}
+        </div>`
+      : refEditable
+        ? `<div class="ref-logo-area" onclick="uploadRefLogo(${idx})">
+            <div class="ref-logo-placeholder">📎 Logo client</div>
+            <div class="ref-logo-overlay">📎 Ajouter le logo</div>
+          </div>`
+        : `<div class="ref-logo-area" style="cursor:default"><div class="ref-logo-placeholder">—</div></div>`;
+    const kpisHtml = (s.kpis || []).map((k, ki) => `
+      <div class="ref-kpi-card${k.dark ? ' dark' : ''}">
+        <div class="ref-kpi-num">${k.value}</div>
+        <div class="ref-kpi-label">${k.label}</div>
+      </div>`).join('');
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="ref-header">
+          <div class="ref-header-left">
+            <div class="slide-title">${s.title || ''}</div>
+            <div class="ref-subtitle">${s.subtitle || ''}</div>
+            ${s.badge ? `<span class="ref-badge">${s.badge}</span>` : ''}
+          </div>
+          ${logoHtml}
+        </div>
+        <div class="ref-body">
+          <div class="ref-positions">
+            <div class="ref-positions-label">Positionnements clés</div>
+            ${s.positions || ''}
+          </div>
+          <div class="ref-kpis-row">${kpisHtml}</div>
+        </div>
+        ${s.result ? `<div class="ref-result">${s.result}</div>` : ''}
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // TÉMOIGNAGES CLIENTS
+  if (s.type === 'sonate-testimonials') {
+    const testiCards = (s.testimonials || []).map(t => `
+      <div class="ref-testi-card">
+        <div class="ref-testi-header">
+          <div class="ref-testi-avatar">${t.avatar ? `<img src="${t.avatar}" alt="${t.name}">` : t.name[0]}</div>
+          <div><div class="ref-testi-name">${t.name}</div><div class="ref-testi-count">${t.count} avis</div></div>
+        </div>
+        <div class="ref-testi-stars">★★★★★ <span class="ref-testi-when">${t.when}</span></div>
+        <div class="ref-testi-text">${t.text}</div>
+        <div class="ref-testi-visited">${t.visited}</div>
+      </div>`).join('');
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">Référence client · Témoignages</div>
+        <div class="ref-testi-intro">Ce que disent nos clients de notre accompagnement.</div>
+        <div class="ref-testi-grid">${testiCards}</div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // STRATÉGIE PROPOSÉE — photos consultants
+  if (s.type === 'sonate-strategie') {
+    const stratEditable = !!window.__editableSlides;
+    const monthYear = new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    const monthYearCap = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
+    const memberHtml = (s.members || []).map((m, mi) => {
+      const photoHtml = m.photo
+        ? `<div class="strat-member-photo"${stratEditable ? ` onclick="uploadStratPhoto(${idx},${mi})"` : ''}>
+            <img src="${m.photo}" alt="${m.name}">
+            ${stratEditable ? `<div class="strat-member-photo-overlay">🔄 Remplacer</div>` : ''}
+          </div>`
+        : stratEditable
+          ? `<div class="strat-member-photo" onclick="uploadStratPhoto(${idx},${mi})">
+              <div class="strat-member-photo-placeholder">📸 Photo</div>
+              <div class="strat-member-photo-overlay">📸 Ajouter</div>
+            </div>`
+          : `<div class="strat-member-photo" style="cursor:default"><div class="strat-member-photo-placeholder">—</div></div>`;
+      return `<div class="strat-member-card">
+        ${photoHtml}
+        <div class="strat-member-name">${m.name}</div>
+      </div>`;
+    }).join('');
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-inner">
+        <div class="slide-title">Stratégie proposée · ${monthYearCap}</div>
+        <div class="strat-team-grid">${memberHtml}</div>
       </div>
       ${footer(false)}
     </div>`;

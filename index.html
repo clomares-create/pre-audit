@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sonate — Générateur Pré-audit</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -600,9 +600,13 @@
     width: 100%; max-width: 400px; box-shadow: 0 8px 32px rgba(18,60,51,0.1);
   }
   .auth-logo {
-    width: 48px; height: 48px; background: var(--green-dark);
-    border-radius: 12px; display: flex; align-items: center; justify-content: center;
-    font-size: 22px; font-weight: 700; color: #9fe1cb; margin-bottom: 1.5rem;
+    margin-bottom: 1.5rem; line-height: 1;
+  }
+  .auth-logo-text {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 900; font-size: 42px;
+    color: var(--green-dark); letter-spacing: -1px;
+    line-height: 1;
   }
   .auth-title { font-size: 22px; font-weight: 700; color: var(--green-dark); margin-bottom: 4px; }
   .auth-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 1.5rem; }
@@ -1119,7 +1123,7 @@
 <!-- AUTH SCREEN -->
 <div class="auth-screen" id="authScreen">
   <div class="auth-card">
-    <div class="auth-logo">S</div>
+    <div class="auth-logo"><span class="auth-logo-text">Sonate</span></div>
     <div class="auth-title">Sonate · Pré-audit</div>
     <div class="auth-sub">Connectez-vous pour générer et sauvegarder vos rapports.</div>
     <div class="auth-tabs">

@@ -2029,6 +2029,26 @@ async function confirmAndGenerate() {
           { type: 'netlinking-concurrence', title: 'Netlinking · Popularité de la concurrence', subtitle: 'Stratégie de netlinking pour renforcer la puissance et la popularité du site avec différents types de backlinks selon votre profil actuel et celui de vos concurrents.', image: null, summary: '' }
         );
       }
+
+      // Inject GEO slides after section "07" (Analyse GEO)
+      const sec07Idx = slides.findIndex(s => s.type === 'section' && s.label === '07');
+      if (sec07Idx !== -1) {
+        // Remove any AI-generated geo slide right after section 07
+        if (slides[sec07Idx + 1] && slides[sec07Idx + 1].type === 'geo') {
+          slides.splice(sec07Idx + 1, 1);
+        }
+        slides.splice(sec07Idx + 1, 0,
+          { type: 'geo-overview' },
+          { type: 'geo-contexte', geoTopics: '', geoMetrics: { trafficPct: '', ecommerce: '', mentions: '', citations: '', pages: '', score: '' }, summary: '' },
+          { type: 'geo-presence', metrics: { topicsCoverts: '', topicsSans: '', urlsCitees: '', scoreMax: '' }, summary: '' },
+          { type: 'geo-plateforme', metrics: { mentionsChatgpt: '', mentionsGemini: '' }, image: null, summary: '' },
+          { type: 'geo-synthese', topic: { score: '', name: '', country: '', mentions: '', volume: '', note: '' }, source: { domain: '', url: '', type: '', prompts: '' }, summary: '' },
+          { type: 'geo-sources', subtitle: '', rows: [] },
+          { type: 'geo-opportunites', subtitle: '', rows: [] },
+          { type: 'geo-concurrence', competitors: [] },
+          { type: 'geo-recommandations', subtitle: '', actions: [] }
+        );
+      }
     }
 
     // Inject PSI technical slide after section "03"
@@ -2132,6 +2152,13 @@ async function confirmAndGenerate() {
             { name: 'Benjamin MOUSTIC', photo: null },
             { name: 'Fabien GUILLEUX', photo: null },
           ],
+        },
+        { type: 'seo-equipe-experte', photos: [null, null, null, null, null, null] },
+        {
+          type: 'seo-geo-budget',
+          subtitle: 'Un investissement structuré en deux temps : un démarrage stratégique + un accompagnement mensuel.',
+          setup: { badge: 'PHASE 1 · SETUP', title: 'Paramétrage SEO', price: '1 400 €', items: ['Analyse sémantique', 'Analyse concurrentielle', 'Analyse Google Search Console', 'Création de livrables stratégiques'] },
+          run: { badge: 'PHASE 2 · RUN', title: 'Travaux mensuels', price: '700 € / mois', note: 'Pilotage continu de la performance', items: ['Recommandations techniques & données structurées (interne, externe ou sous traitant)', 'Performances du serveur et du CMS', 'Sélection de mots-clés & cocon sémantique', 'Rédaction de pages produits, blog, actualités', 'Maillage interne & pilotage des performances'] }
         }
       );
     }
@@ -2289,9 +2316,8 @@ function buildPrompt({ clientName, clientUrl, sector, geo, services, meetingCont
 9. type "section" — label = "06", title = "Votre netlinking VS la concurrence", subtitle = "Analyse du profil de liens entrants", body = null, summary = null
     NE PAS générer de slide de contenu pour cette section — le contenu sera injecté séparément.
 
-12. type "section" — label = "07", title = "Analyse GEO", subtitle = "Visibilité sur les IA génératives (ChatGPT, Perplexity, Gemini...)", body = null, summary = null
-
-13. type "geo" — présence IA actuelle, score de visibilité, topics couverts vs manqués, concurrents présents dans les réponses IA. metrics obligatoires (score visibilité /100, topics couverts, topics manqués, mentions IA). summary obligatoire.
+12. type "section" — label = "07", title = "Analyse GEO", subtitle = "Visibilité sur les IA génératives : ChatGPT, Perplexity, Gemini, Claude…", body = null, summary = null
+    NE PAS générer de slide de contenu pour cette section — le contenu sera injecté séparément.
 ` : `
 3. type "section" — label = "01", title = "Contexte & Objectifs", subtitle = "Analyse du positionnement et des enjeux", body = null, summary = null
 
@@ -2455,6 +2481,29 @@ function uploadTeamPhoto(idx) {
     reader.onload = (ev) => {
       const base64 = ev.target.result;
       if (window.__currentSlides?.[idx]) window.__currentSlides[idx].image = base64;
+      const clientName = document.getElementById('clientName')?.value || '';
+      const clientUrl = document.getElementById('clientUrl')?.value || '';
+      document.getElementById('slidesContainer').innerHTML = renderSlides(window.__currentSlides, { clientName, clientUrl, consultant: '' });
+      debounceSave();
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function uploadEquipePhoto(idx, photoIdx) {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = ev.target.result;
+      if (window.__currentSlides?.[idx]) {
+        if (!Array.isArray(window.__currentSlides[idx].photos)) window.__currentSlides[idx].photos = [null,null,null,null,null,null];
+        window.__currentSlides[idx].photos[photoIdx] = base64;
+      }
       const clientName = document.getElementById('clientName')?.value || '';
       const clientUrl = document.getElementById('clientUrl')?.value || '';
       document.getElementById('slidesContainer').innerHTML = renderSlides(window.__currentSlides, { clientName, clientUrl, consultant: '' });
@@ -2662,6 +2711,388 @@ function renderSlide(s, idx, clientName, consultant) {
         </div>
       </div>
       ${footer(true)}
+    </div>`;
+  }
+
+  // GEO OVERVIEW — slide statique "Analyse GEO · Vue d'ensemble" (6 cards)
+  if (s.type === 'geo-overview') {
+    const geoCards = [
+      { num: '01', title: 'Contexte & GEO', sub: 'Enjeux 2025-2026', dark: true },
+      { num: '02', title: 'Présence IA actuelle', sub: 'Topics couverts', dark: false },
+      { num: '03', title: 'Sources citées', sub: 'Top URLs & insights', dark: false },
+      { num: '04', title: 'Opportunités', sub: 'Topics manqués', dark: false },
+      { num: '05', title: 'Concurrence IA', sub: 'Mentions et leaders', dark: true },
+      { num: '06', title: 'Recommandations', sub: 'Plan d\'action prioritaire', dark: false },
+    ];
+    const cardsHtml = geoCards.map(c => `
+      <div style="background:${c.dark ? 'var(--green-dark)' : '#fff'};border:1.5px solid ${c.dark ? 'transparent' : 'var(--border)'};border-radius:14px;padding:1.4rem 1.6rem;display:flex;flex-direction:column;gap:0.5rem;">
+        <div style="font-size:22px;font-weight:700;color:var(--orange);">${c.num}</div>
+        <div style="font-size:16px;font-weight:700;color:${c.dark ? '#fff' : 'var(--green-dark)'};">${c.title}</div>
+        <div style="font-size:12px;color:${c.dark ? 'rgba(255,255,255,0.65)' : 'var(--text-light)'};">${c.sub}</div>
+      </div>`).join('');
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">Analyse GEO · Vue d'ensemble</div>
+        <div class="slide-subtitle" style="font-style:italic;">Visibilité sur les IA génératives : ChatGPT, Perplexity, Gemini, Claude…</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1rem;">${cardsHtml}</div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // GEO CONTEXTE — "01 · Contexte & GEO · Enjeux 2025-2026"
+  if (s.type === 'geo-contexte') {
+    const m = s.metrics || {};
+    const mkField = (val, placeholder, field, style='') =>
+      editable
+        ? `<span contenteditable="true" data-placeholder="${placeholder}" style="display:inline-block;min-width:40px;border-bottom:1px dashed #bbb;outline:none;${style}" oninput="(function(el){if(window.__currentSlides?.[${idx}]){if(!window.__currentSlides[${idx}].metrics)window.__currentSlides[${idx}].metrics={};window.__currentSlides[${idx}].metrics['${field}']=el.textContent;}})(this)">${val||''}</span>`
+        : `<span>${val||'—'}</span>`;
+    const mkText = (val, placeholder, field, cls='') =>
+      editable
+        ? `<div contenteditable="true" class="${cls}" data-placeholder="${placeholder}" style="outline:none;min-height:1.2em;" oninput="(function(el){if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}]['${field}']=el.innerHTML;})(this)">${val||''}</div>`
+        : `<div class="${cls}">${val||''}</div>`;
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">01 · Contexte & GEO · Enjeux 2025-2026</div>
+        <div class="slide-subtitle" style="font-style:italic;">Pourquoi la visibilité dans les IA génératives devient incontournable.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-top:1rem;flex:1;min-height:0;">
+          <div style="display:flex;flex-direction:column;gap:0.8rem;">
+            <div style="background:#fff;border:1.5px solid var(--border);border-left:4px solid var(--orange);border-radius:8px;padding:1.2rem;flex:1;">
+              <div style="font-size:15px;font-weight:700;color:var(--green-dark);margin-bottom:0.7rem;">Generative Engine Optimization</div>
+              ${mkText(s.geoTopics, 'Description du GEO…', 'geoTopics', '')}
+            </div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" style="height:22px;object-fit:contain;" onerror="this.style.display='none'">
+              <span style="font-size:18px;">🅷</span>
+              <span style="font-size:18px;background:#6e5cf6;color:#fff;border-radius:6px;padding:1px 6px;font-weight:700;font-size:13px;">✳</span>
+              <span style="font-size:18px;background:#10a37f;color:#fff;border-radius:50%;padding:2px 7px;font-weight:700;font-size:13px;">G</span>
+              <span style="font-size:18px;background:#d97706;color:#fff;border-radius:8px;padding:2px 7px;font-size:13px;">✳</span>
+              <span style="font-size:18px;">✦</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.7rem;">
+            <div style="background:#fff;border:1.5px solid var(--border);border-left:3px solid var(--orange);border-radius:8px;padding:0.9rem 1rem;">
+              <div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:0.3rem;">🔍 Part de trafic IA en hausse</div>
+              ${mkText(s.metrics?.trafficPct, 'Texte explicatif…', 'trafficPct', '')}
+            </div>
+            <div style="background:#fff;border:1.5px solid var(--border);border-left:3px solid var(--orange);border-radius:8px;padding:0.9rem 1rem;">
+              <div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:0.3rem;">🛒 Enjeu e-commerce fort</div>
+              ${mkText(s.metrics?.ecommerce, 'Texte explicatif…', 'ecommerce', '')}
+            </div>
+            <div style="background:#fff;border:1.5px solid var(--border);border-left:3px solid var(--orange);border-radius:8px;padding:0.9rem 1rem;">
+              <div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:0.3rem;">📊 Métriques de mesure (source : Semrush)</div>
+              ${mkText(s.metrics?.score, 'Mentions IA, Citations, Pages citées, Score…', 'score', '')}
+            </div>
+          </div>
+        </div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // GEO PRESENCE — "02 · Présence IA actuelle · Topics couverts"
+  if (s.type === 'geo-presence') {
+    const m = s.metrics || {};
+    const mkNum = (val, field) => editable
+      ? `<div contenteditable="true" style="font-size:42px;font-weight:800;color:var(--orange);outline:none;min-width:40px;text-align:center;" oninput="(function(el){if(!window.__currentSlides?.[${idx}].metrics)window.__currentSlides[${idx}].metrics={};window.__currentSlides[${idx}].metrics['${field}']=el.textContent;})(this)">${val||''}</div>`
+      : `<div style="font-size:42px;font-weight:800;color:var(--orange);text-align:center;">${val||'—'}</div>`;
+    const kpiCards = [
+      { field: 'topicsCoverts', label: 'Topics avec<br>présence IA', dark: false },
+      { field: 'topicsSans',    label: 'Topics sans<br>présence', dark: true },
+      { field: 'urlsCitees',    label: 'URLs sources<br>citées', dark: false },
+      { field: 'scoreMax',      label: 'Score visibilité<br>max', dark: true },
+    ];
+    const cardsHtml = kpiCards.map(c => `
+      <div style="background:${c.dark?'var(--green-dark)':'#fff'};border:1.5px solid ${c.dark?'transparent':'var(--border)'};border-radius:12px;padding:1.2rem 0.8rem;display:flex;flex-direction:column;align-items:center;gap:0.5rem;">
+        ${mkNum(m[c.field], c.field)}
+        <div style="font-size:13px;font-weight:600;color:${c.dark?'#fff':'var(--green-dark)'};text-align:center;line-height:1.3;">${c.label}</div>
+      </div>`).join('');
+    const summaryHtml = editable
+      ? `<div class="summary-block"><div contenteditable="true" class="summary-text" data-placeholder="Saisir le commentaire analytique…" style="outline:none;" oninput="(function(el){if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].summary=el.innerHTML;})(this)">${s.summary||''}</div></div>`
+      : s.summary ? `<div class="summary-block"><div class="summary-text">${s.summary}</div></div>` : '';
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">02 · Présence IA actuelle · Topics couverts</div>
+        ${editable || s.subtitle ? `<div class="slide-subtitle" style="font-style:italic;">${s.subtitle||'État des lieux des thématiques sur lesquelles votre site apparaît dans les réponses IA.'}</div>` : ''}
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:1rem;">${cardsHtml}</div>
+        ${summaryHtml}
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // GEO PLATEFORME — "02 · Analyse par plateforme IA"
+  if (s.type === 'geo-plateforme') {
+    const m = s.metrics || {};
+    const mkNum = (val, field) => editable
+      ? `<div contenteditable="true" style="font-size:42px;font-weight:800;color:var(--orange);outline:none;min-width:40px;" oninput="(function(el){if(!window.__currentSlides?.[${idx}].metrics)window.__currentSlides[${idx}].metrics={};window.__currentSlides[${idx}].metrics['${field}']=el.textContent;})(this)">${val||''}</div>`
+      : `<div style="font-size:42px;font-weight:800;color:var(--orange);">${val||'—'}</div>`;
+    const imageHtml = s.image
+      ? `<div class="chart-img-wrap"${editable?` onclick="uploadChartImage(${idx})"`:''}>
+          <img src="${s.image}" alt="Analyse plateforme IA">
+          ${editable?`<div class="chart-img-overlay">🔄 Remplacer l'image</div>`:''}
+        </div>`
+      : editable
+        ? `<div class="chart-placeholder" onclick="uploadChartImage(${idx})">
+            <div style="text-align:center">
+              <div style="font-size:28px;margin-bottom:8px">📊</div>
+              <div style="font-weight:600;margin-bottom:4px">Uploader le graphique</div>
+              <div style="font-size:12px;opacity:0.65">Courbes Mentions / Citations / Pages (Semrush)</div>
+            </div>
+          </div>`
+        : `<div class="chart-placeholder chart-placeholder-static" style="cursor:default;pointer-events:none"><span style="color:#ccc;font-size:13px">Aucune image</span></div>`;
+    const summaryHtml = editable
+      ? `<div class="summary-block"><div contenteditable="true" class="summary-text" data-placeholder="Répartition par LLM…" style="outline:none;" oninput="(function(el){if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].summary=el.innerHTML;})(this)">${s.summary||''}</div></div>`
+      : s.summary ? `<div class="summary-block"><div class="summary-text">${s.summary}</div></div>` : '';
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">02 · Analyse par plateforme IA</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:1rem;margin-top:1.2rem;align-items:start;">
+          <div style="background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:1.2rem;display:flex;flex-direction:column;align-items:center;gap:0.5rem;">
+            <div style="font-size:32px;">💬</div>
+            ${mkNum(m.mentionsChatgpt, 'mentionsChatgpt')}
+            <div style="font-size:13px;font-weight:600;color:var(--green-dark);text-align:center;">Mentions<br>ChatGPT</div>
+          </div>
+          <div style="background:var(--green-dark);border-radius:12px;padding:1.2rem;display:flex;flex-direction:column;align-items:center;gap:0.5rem;">
+            <div style="font-size:32px;">✦</div>
+            ${mkNum(m.mentionsGemini, 'mentionsGemini')}
+            <div style="font-size:13px;font-weight:600;color:#fff;text-align:center;">Mentions<br>Gemini</div>
+          </div>
+          <div id="chart-area-${idx}" style="height:220px;">${imageHtml}</div>
+        </div>
+        ${summaryHtml}
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // GEO SYNTHESE — "03 · Synthèse présence IA"
+  if (s.type === 'geo-synthese') {
+    const t = s.topic || {};
+    const src = s.source || {};
+    const mkF = (val, placeholder, obj, field) => editable
+      ? `<span contenteditable="true" data-placeholder="${placeholder}" style="outline:none;border-bottom:1px dashed #bbb;min-width:30px;display:inline-block;" oninput="(function(el){if(window.__currentSlides?.[${idx}]){if(!window.__currentSlides[${idx}]['${obj}'])window.__currentSlides[${idx}]['${obj}']={};window.__currentSlides[${idx}]['${obj}']['${field}']=el.textContent;}})(this)">${val||''}</span>`
+      : `<span>${val||'—'}</span>`;
+    const summaryHtml = editable
+      ? `<div class="summary-block"><div contenteditable="true" class="summary-text" data-placeholder="Commentaire analytique…" style="outline:none;" oninput="(function(el){if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].summary=el.innerHTML;})(this)">${s.summary||''}</div></div>`
+      : s.summary ? `<div class="summary-block"><div class="summary-text">${s.summary}</div></div>` : '';
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">03 · Synthèse présence IA</div>
+        <div style="font-size:12px;color:var(--text-light);font-style:italic;margin-bottom:0.8rem;">Topic avec présence IA détectée</div>
+        <div style="background:#fff;border:1.5px solid var(--border);border-left:4px solid var(--orange);border-radius:8px;padding:1rem 1.2rem;display:flex;align-items:center;gap:1.2rem;margin-bottom:1rem;">
+          <div style="background:var(--orange);color:#fff;border-radius:50%;width:52px;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;">
+            <div style="font-size:16px;font-weight:800;line-height:1;">${mkF(t.score,'Score','topic','score')}</div>
+            <div style="font-size:10px;line-height:1;">/100</div>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:15px;font-weight:700;color:var(--green-dark);margin-bottom:0.4rem;">${mkF(t.name,'Nom du topic','topic','name')}</div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+              <span style="background:var(--green-dark);color:#fff;border-radius:20px;padding:3px 10px;font-size:11px;">🇫🇷 ${mkF(t.country,'France','topic','country')}</span>
+              <span style="background:var(--green-dark);color:#fff;border-radius:20px;padding:3px 10px;font-size:11px;">${mkF(t.mentions,'1','topic','mentions')} mention IA</span>
+              <span style="background:var(--green-dark);color:#fff;border-radius:20px;padding:3px 10px;font-size:11px;">${mkF(t.volume,'974','topic','volume')} rech./mois</span>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--text-light);font-style:italic;max-width:180px;text-align:right;">${mkF(t.note,'Note contextuelle…','topic','note')}</div>
+        </div>
+        <div style="font-size:12px;color:var(--text-light);font-style:italic;margin-bottom:0.6rem;">Sources et pages citées par les IA</div>
+        <div style="background:#fff;border:1.5px solid var(--border);border-left:4px solid var(--orange);border-radius:8px;padding:1rem 1.2rem;display:flex;align-items:center;gap:1.2rem;margin-bottom:1rem;">
+          <div style="flex:1;">
+            <div style="font-size:15px;font-weight:700;color:var(--green-dark);">${mkF(src.domain,'domaine.fr','source','domain')}</div>
+            <div style="font-size:11px;color:var(--text-light);">${mkF(src.url,'https://…','source','url')} · ${mkF(src.type,'Fiche produit','source','type')}</div>
+          </div>
+          <div style="background:var(--orange);color:#fff;border-radius:50%;width:48px;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;text-align:center;">
+            <div style="font-size:16px;font-weight:800;">${mkF(src.prompts,'1','source','prompts')}</div>
+            <div style="font-size:10px;">prompt</div>
+          </div>
+        </div>
+        ${summaryHtml}
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // GEO SOURCES — "03 · URLs sources citées par les IA" (tableau éditable)
+  if (s.type === 'geo-sources') {
+    const rows = Array.isArray(s.rows) && s.rows.length ? s.rows : [
+      { topic: '', prompts: '', url: '', dark: false },
+    ];
+    const addRow = `if(window.__currentSlides?.[${idx}]){if(!Array.isArray(window.__currentSlides[${idx}].rows))window.__currentSlides[${idx}].rows=[];window.__currentSlides[${idx}].rows.push({topic:'',prompts:'',url:'',dark:false});renderSlides();}`;
+    const rowsHtml = rows.map((r, ri) => {
+      const bg = r.dark ? 'var(--green-dark)' : '#fff';
+      const fg = r.dark ? '#fff' : 'var(--text)';
+      const promptsBg = r.prompts && (parseInt(r.prompts) >= 2) ? 'var(--orange)' : (r.dark ? 'rgba(255,255,255,0.15)' : 'var(--green-light)');
+      const promptsFg = r.prompts && (parseInt(r.prompts) >= 2) ? '#fff' : (r.dark ? '#fff' : 'var(--green-dark)');
+      const mkCell = (val, field) => editable
+        ? `<td style="padding:0.55rem 0.8rem;color:${fg};" contenteditable="true" oninput="(function(el){if(window.__currentSlides?.[${idx}]?.rows?.[${ri}])window.__currentSlides[${idx}].rows[${ri}]['${field}']=el.textContent;})(this)">${val||''}</td>`
+        : `<td style="padding:0.55rem 0.8rem;color:${fg};">${val||''}</td>`;
+      const toggleDark = editable ? ` onclick="(function(){if(window.__currentSlides?.[${idx}]?.rows?.[${ri}]){window.__currentSlides[${idx}].rows[${ri}].dark=!window.__currentSlides[${idx}].rows[${ri}].dark;renderSlides();}})()"` : '';
+      return `<tr style="background:${bg};border-bottom:1px solid rgba(0,0,0,0.06);"${toggleDark}>
+        ${mkCell(r.topic, 'topic')}
+        <td style="padding:0.55rem 0.8rem;text-align:center;">
+          ${editable
+            ? `<span contenteditable="true" style="background:${promptsBg};color:${promptsFg};border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;outline:none;display:inline-block;" oninput="(function(el){if(window.__currentSlides?.[${idx}]?.rows?.[${ri}])window.__currentSlides[${idx}].rows[${ri}].prompts=el.textContent;})(this)">${r.prompts||''}</span> <span style="font-size:11px;color:${r.dark?'rgba(255,255,255,0.6)':'var(--text-light)'};">prompt${(r.prompts||'')!='1'?'s':''}</span>`
+            : `<span style="background:${promptsBg};color:${promptsFg};border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;">${r.prompts||'—'}</span> <span style="font-size:11px;color:${r.dark?'rgba(255,255,255,0.6)':'var(--text-light)'};">prompt${(r.prompts||'')!='1'?'s':''}</span>`}
+        </td>
+        ${mkCell(r.url ? `../${r.url.replace(/.*\//,'')}` : '', 'url')}
+      </tr>`;
+    }).join('');
+    const addBtn = editable ? `<button onclick="${addRow}" style="margin-top:0.6rem;font-size:11px;background:var(--green-light);color:var(--green-dark);border:none;border-radius:6px;padding:4px 10px;cursor:pointer;">+ Ajouter une ligne</button>` : '';
+    const subtitleVal = s.subtitle || (editable ? '' : '');
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">03 · URLs sources citées par les IA</div>
+        ${editable
+          ? `<div contenteditable="true" class="slide-subtitle" style="font-style:italic;outline:none;" oninput="if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].subtitle=this.textContent">${subtitleVal}</div>`
+          : subtitleVal ? `<div class="slide-subtitle" style="font-style:italic;">${subtitleVal}</div>` : ''}
+        <table style="width:100%;border-collapse:collapse;border-radius:10px;overflow:hidden;font-size:13px;margin-top:0.8rem;">
+          <thead>
+            <tr style="background:var(--orange);color:#fff;">
+              <th style="padding:0.6rem 0.8rem;text-align:left;font-weight:600;">Topic (Page citée)</th>
+              <th style="padding:0.6rem 0.8rem;text-align:center;font-weight:600;">Prompts IA</th>
+              <th style="padding:0.6rem 0.8rem;text-align:left;font-weight:600;">URL</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+        ${addBtn}
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // GEO OPPORTUNITES — "04 · Opportunités manquées" (tableau éditable)
+  if (s.type === 'geo-opportunites') {
+    const rows = Array.isArray(s.rows) && s.rows.length ? s.rows : [
+      { topic: '', volume: '', concurrent: '', dark: false },
+    ];
+    const addRow = `if(window.__currentSlides?.[${idx}]){if(!Array.isArray(window.__currentSlides[${idx}].rows))window.__currentSlides[${idx}].rows=[];window.__currentSlides[${idx}].rows.push({topic:'',volume:'',concurrent:'',dark:false});renderSlides();}`;
+    const rowsHtml = rows.map((r, ri) => {
+      const bg = r.dark ? 'var(--green-dark)' : '#fff';
+      const fg = r.dark ? '#fff' : 'var(--text)';
+      const mkCell = (val, field) => editable
+        ? `<td style="padding:0.55rem 0.8rem;color:${fg};" contenteditable="true" oninput="(function(el){if(window.__currentSlides?.[${idx}]?.rows?.[${ri}])window.__currentSlides[${idx}].rows[${ri}]['${field}']=el.textContent;})(this)">${val||''}</td>`
+        : `<td style="padding:0.55rem 0.8rem;color:${fg};">${val||''}</td>`;
+      const toggleDark = editable ? ` onclick="(function(){if(window.__currentSlides?.[${idx}]?.rows?.[${ri}]){window.__currentSlides[${idx}].rows[${ri}].dark=!window.__currentSlides[${idx}].rows[${ri}].dark;renderSlides();}})()"` : '';
+      return `<tr style="background:${bg};border-bottom:1px solid rgba(0,0,0,0.06);"${toggleDark}>
+        ${mkCell(r.topic, 'topic')}
+        ${mkCell(r.volume, 'volume')}
+        ${mkCell(r.concurrent, 'concurrent')}
+      </tr>`;
+    }).join('');
+    const addBtn = editable ? `<button onclick="${addRow}" style="margin-top:0.6rem;font-size:11px;background:var(--green-light);color:var(--green-dark);border:none;border-radius:6px;padding:4px 10px;cursor:pointer;">+ Ajouter une ligne</button>` : '';
+    const subtitleVal = s.subtitle || '';
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">04 · Opportunités manquées</div>
+        ${editable
+          ? `<div contenteditable="true" class="slide-subtitle" style="font-style:italic;outline:none;" oninput="if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].subtitle=this.textContent">${subtitleVal}</div>`
+          : subtitleVal ? `<div class="slide-subtitle" style="font-style:italic;">${subtitleVal}</div>` : ''}
+        <table style="width:100%;border-collapse:collapse;border-radius:10px;overflow:hidden;font-size:13px;margin-top:0.8rem;">
+          <thead>
+            <tr style="background:var(--orange);color:#fff;">
+              <th style="padding:0.6rem 0.8rem;text-align:left;font-weight:600;">Topic (Opportunité)</th>
+              <th style="padding:0.6rem 0.8rem;text-align:left;font-weight:600;">Volume/mois</th>
+              <th style="padding:0.6rem 0.8rem;text-align:left;font-weight:600;">Concurrent IA leader</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+        ${addBtn}
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // GEO CONCURRENCE — "05 · Analyse concurrentielle IA" (cartes rangs éditables)
+  if (s.type === 'geo-concurrence') {
+    const competitors = Array.isArray(s.competitors) && s.competitors.length ? s.competitors : [
+      { rank: '#1', domain: '', badge: '', mentions: '', description: '' },
+    ];
+    const addComp = `if(window.__currentSlides?.[${idx}]){if(!Array.isArray(window.__currentSlides[${idx}].competitors))window.__currentSlides[${idx}].competitors=[];const n=window.__currentSlides[${idx}].competitors.length+1;window.__currentSlides[${idx}].competitors.push({rank:'#'+n,domain:'',badge:'',mentions:'',description:''});renderSlides();}`;
+    const cardsHtml = competitors.map((c, ci) => {
+      const mkF = (val, field, style='') => editable
+        ? `<span contenteditable="true" style="outline:none;border-bottom:1px dashed #bbb;min-width:20px;display:inline-block;${style}" oninput="(function(el){if(window.__currentSlides?.[${idx}]?.competitors?.[${ci}])window.__currentSlides[${idx}].competitors[${ci}]['${field}']=el.textContent;})(this)">${val||''}</span>`
+        : `<span>${val||'—'}</span>`;
+      return `<div style="background:#fff;border:1.5px solid var(--border);border-left:4px solid var(--orange);border-radius:10px;padding:1rem 1.2rem;display:flex;align-items:flex-start;gap:1rem;">
+        <div style="background:var(--orange);color:#fff;border-radius:50%;width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0;">${mkF(c.rank,'rank','font-weight:700;font-size:15px;border:none;')}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:15px;font-weight:700;color:var(--green-dark);margin-bottom:0.4rem;">${mkF(c.domain,'domaine.com','font-size:15px;font-weight:700;')}</div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">
+            <span style="background:var(--green-dark);color:#fff;border-radius:20px;padding:3px 10px;font-size:11px;">${mkF(c.badge,'Label','font-size:11px;')}</span>
+            <span style="background:var(--green-dark);color:#fff;border-radius:20px;padding:3px 10px;font-size:11px;">${mkF(c.mentions,'0','font-size:11px;')} mentions IA</span>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text-light);font-style:italic;max-width:40%;text-align:right;line-height:1.4;">${mkF(c.description,'Description…','font-size:12px;font-style:italic;text-align:right;')}</div>
+      </div>`;
+    }).join('');
+    const addBtn = editable ? `<button onclick="${addComp}" style="margin-top:0.6rem;font-size:11px;background:var(--green-light);color:var(--green-dark);border:none;border-radius:6px;padding:4px 10px;cursor:pointer;">+ Ajouter un concurrent</button>` : '';
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">05 · Analyse concurrentielle IA</div>
+        <div style="display:flex;flex-direction:column;gap:0.7rem;margin-top:0.8rem;">${cardsHtml}</div>
+        ${addBtn}
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // GEO RECOMMANDATIONS — "06 · Recommandations GEO prioritaires" (grille 2×2 éditables)
+  if (s.type === 'geo-recommandations') {
+    const impactColors = { 'Impact immédiat': '#e74c3c', 'Impact fort': '#e8622a', 'Impact moyen': '#e8622a', 'Impact long terme': '#1a5446' };
+    const defaultActions = [
+      { num: '1', impact: 'Impact immédiat', title: '', body: '' },
+      { num: '2', impact: 'Impact fort',     title: '', body: '' },
+      { num: '3', impact: 'Impact moyen',    title: '', body: '' },
+      { num: '4', impact: 'Impact long terme', title: '', body: '' },
+    ];
+    const actions = Array.isArray(s.actions) && s.actions.length ? s.actions : defaultActions;
+    const subtitleVal = s.subtitle || '';
+    const cardsHtml = actions.map((a, ai) => {
+      const borderColor = impactColors[a.impact] || 'var(--orange)';
+      const bgCircle = impactColors[a.impact] || 'var(--orange)';
+      const mkF = (val, field, tag='span', style='') => editable
+        ? `<${tag} contenteditable="true" style="outline:none;display:block;${style}" oninput="(function(el){if(window.__currentSlides?.[${idx}]?.actions?.[${ai}])window.__currentSlides[${idx}].actions[${ai}]['${field}']=el.textContent;})(this)">${val||''}</${tag}>`
+        : `<${tag} style="${style}">${val||''}</${tag}>`;
+      const impactHtml = editable
+        ? `<span contenteditable="true" style="background:${borderColor}22;color:${borderColor};border:1px solid ${borderColor};border-radius:20px;padding:2px 10px;font-size:11px;outline:none;display:inline-block;" oninput="(function(el){if(window.__currentSlides?.[${idx}]?.actions?.[${ai}]){window.__currentSlides[${idx}].actions[${ai}].impact=el.textContent;}})(this)">${a.impact||''}</span>`
+        : `<span style="background:${borderColor}22;color:${borderColor};border:1px solid ${borderColor};border-radius:20px;padding:2px 10px;font-size:11px;">${a.impact||''}</span>`;
+      return `<div style="background:#fff;border:1.5px solid var(--border);border-top:3px solid ${borderColor};border-radius:10px;padding:1rem 1.2rem;">
+        <div style="display:flex;align-items:center;gap:0.7rem;margin-bottom:0.7rem;">
+          <div style="background:${bgCircle};color:#fff;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">${a.num||ai+1}</div>
+          ${impactHtml}
+        </div>
+        ${mkF(a.title, 'title', 'div', 'font-size:14px;font-weight:700;color:var(--green-dark);margin-bottom:0.4rem;')}
+        ${mkF(a.body, 'body', 'div', 'font-size:12px;color:var(--text-light);line-height:1.5;')}
+      </div>`;
+    }).join('');
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">06 · Recommandations GEO prioritaires</div>
+        ${editable
+          ? `<div contenteditable="true" class="slide-subtitle" style="font-style:italic;outline:none;" oninput="if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].subtitle=this.textContent">${subtitleVal}</div>`
+          : subtitleVal ? `<div class="slide-subtitle" style="font-style:italic;">${subtitleVal}</div>` : ''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;margin-top:0.8rem;">${cardsHtml}</div>
+      </div>
+      ${footer(false)}
     </div>`;
   }
 
@@ -3171,6 +3602,89 @@ function renderSlide(s, idx, clientName, consultant) {
       <div class="slide-inner">
         <div class="slide-title">Stratégie proposée · ${monthYearCap}</div>
         <div class="strat-team-grid">${memberHtml}</div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // SEO-GEO BUDGET — slide budget deux colonnes, chiffres et texte éditables
+  if (s.type === 'seo-geo-budget') {
+    const setup = s.setup || {};
+    const run = s.run || {};
+    const mkText = (val, placeholder, path) => editable
+      ? `<span contenteditable="true" style="outline:none;min-width:20px;display:inline;" data-placeholder="${placeholder}" oninput="(function(el){const p=${JSON.stringify(path)};let t=window.__currentSlides?.[${idx}];if(!t)return;p.slice(0,-1).forEach(k=>{if(!t[k])t[k]={};t=t[k];});t[p[p.length-1]]=el.textContent;})(this)">${val||''}</span>`
+      : `<span>${val||''}</span>`;
+    const mkBlock = (val, placeholder, path) => editable
+      ? `<div contenteditable="true" style="outline:none;min-height:1em;" data-placeholder="${placeholder}" oninput="(function(el){const p=${JSON.stringify(path)};let t=window.__currentSlides?.[${idx}];if(!t)return;p.slice(0,-1).forEach(k=>{if(!t[k])t[k]={};t=t[k];});t[p[p.length-1]]=el.textContent;})(this)">${val||''}</div>`
+      : `<div>${val||''}</div>`;
+    const mkList = (items, side) => {
+      const listItems = (Array.isArray(items) && items.length ? items : ['']).map((item, ii) =>
+        editable
+          ? `<li contenteditable="true" style="outline:none;min-width:20px;" oninput="(function(el){if(!Array.isArray(window.__currentSlides?.[${idx}]?.${side}?.items))window.__currentSlides[${idx}].${side}.items=[''];window.__currentSlides[${idx}].${side}.items[${ii}]=el.textContent;})(this)">${item}</li>`
+          : `<li>${item}</li>`
+      ).join('');
+      const addBtn = editable ? `<button onclick="(function(){if(!Array.isArray(window.__currentSlides?.[${idx}]?.${side}?.items))window.__currentSlides[${idx}].${side}.items=[];window.__currentSlides[${idx}].${side}.items.push('');renderSlides();})()" style="margin-top:6px;font-size:11px;background:rgba(255,255,255,0.15);color:inherit;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;">+ item</button>` : '';
+      return `<ul style="margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:0.3rem;font-size:13px;">${listItems}</ul>${addBtn}`;
+    };
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">SEO-GEO · Le budget</div>
+        ${editable
+          ? `<div contenteditable="true" class="slide-subtitle" style="font-style:italic;outline:none;" oninput="if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].subtitle=this.textContent">${s.subtitle||''}</div>`
+          : s.subtitle ? `<div class="slide-subtitle" style="font-style:italic;">${s.subtitle}</div>` : ''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-top:1rem;flex:1;min-height:0;">
+          <!-- PHASE 1 SETUP -->
+          <div style="background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:1.5rem;display:flex;flex-direction:column;gap:0.8rem;">
+            <div style="display:inline-block;background:var(--orange);color:#fff;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;letter-spacing:0.08em;width:fit-content;">
+              ${mkText(setup.badge,'PHASE 1 · SETUP',['setup','badge'])}
+            </div>
+            <div style="font-size:17px;font-weight:700;color:var(--green-dark);">${mkText(setup.title,'Titre','setup.title'.split('.'))}</div>
+            <div style="font-size:36px;font-weight:800;color:var(--orange);line-height:1;">${mkBlock(setup.price,'1 400 €',['setup','price'])}</div>
+            ${mkList(setup.items, 'setup')}
+          </div>
+          <!-- PHASE 2 RUN -->
+          <div style="background:var(--green-dark);color:#fff;border-radius:14px;padding:1.5rem;display:flex;flex-direction:column;gap:0.8rem;">
+            <div style="display:inline-block;background:var(--orange);color:#fff;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;letter-spacing:0.08em;width:fit-content;">
+              ${mkText(run.badge,'PHASE 2 · RUN',['run','badge'])}
+            </div>
+            <div style="font-size:17px;font-weight:700;color:#fff;">${mkText(run.title,'Titre',['run','title'])}</div>
+            <div style="font-size:36px;font-weight:800;color:var(--orange);line-height:1;">${mkBlock(run.price,'700 € / mois',['run','price'])}</div>
+            ${run.note || editable ? `<div style="font-size:12px;font-style:italic;color:rgba(255,255,255,0.7);">${editable?`<span contenteditable="true" style="outline:none;" oninput="if(window.__currentSlides?.[${idx}]?.run)window.__currentSlides[${idx}].run.note=this.textContent">${run.note||''}</span>`:(run.note||'')}</div>` : ''}
+            ${mkList(run.items, 'run')}
+          </div>
+        </div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // SEO ÉQUIPE EXPERTE — slide statique avec 6 photos uploadables
+  if (s.type === 'seo-equipe-experte') {
+    const photos = Array.isArray(s.photos) ? s.photos : [null,null,null,null,null,null];
+    const photosHtml = photos.map((p, pi) => {
+      if (p) {
+        return `<div style="flex:1;min-width:0;aspect-ratio:3/4;border-radius:8px;overflow:hidden;cursor:${editable?'pointer':'default'};" ${editable?`onclick="uploadEquipePhoto(${idx},${pi})"`:''}">
+          <img src="${p}" alt="Photo équipe" style="width:100%;height:100%;object-fit:cover;">
+        </div>`;
+      } else if (editable) {
+        return `<div onclick="uploadEquipePhoto(${idx},${pi})" style="flex:1;min-width:0;aspect-ratio:3/4;border-radius:8px;background:#e8e8e8;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:6px;">
+          <div style="font-size:24px;">📷</div>
+          <div style="font-size:10px;color:#999;text-align:center;">Photo</div>
+        </div>`;
+      } else {
+        return `<div style="flex:1;min-width:0;aspect-ratio:3/4;border-radius:8px;background:#e8e8e8;"></div>`;
+      }
+    }).join('');
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">SEO · Une équipe hyper experte</div>
+        <div style="font-size:17px;font-weight:700;color:var(--green-dark);margin-bottom:0.5rem;">La spécialisation comme garantie de la performance</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:1.5rem;">Les équipes SEO sont spécialisées dans la stratégie et la mise en place opérationnelle SEO-GEO. Chaque consultant présente une finesse d'analyse et d'intervention de haut niveau.</div>
+        <div style="display:flex;gap:1rem;align-items:flex-start;">${photosHtml}</div>
       </div>
       ${footer(false)}
     </div>`;

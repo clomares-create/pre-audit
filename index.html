@@ -624,6 +624,39 @@
   .report-link-label { font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
   .report-link-url { font-size: 12px; color: var(--green-dark); font-family: 'DM Mono', monospace; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+  /* ALGO SEO SLIDE */
+  .algo-seo-intro { font-style: italic; color: #666; font-size: 14px; margin: 8px 0 24px; line-height: 1.6; }
+  .algo-seo-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-bottom: 24px; }
+  .algo-seo-card {
+    border: 2px solid #1a3a2e;
+    border-radius: 12px;
+    padding: 24px 18px 20px;
+    text-align: center;
+    background: #f5f0e8;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .algo-seo-card.dark { background: #1a3a2e; color: white; }
+  .algo-seo-num {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: #e85d2a; color: white;
+    font-weight: 700; font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px; flex-shrink: 0;
+  }
+  .algo-seo-card-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; color: #1a3a2e; }
+  .algo-seo-card.dark .algo-seo-card-title { color: white; }
+  .algo-seo-card-subtitle { font-weight: 700; font-size: 13px; color: #e85d2a; margin-bottom: 12px; line-height: 1.3; }
+  .algo-seo-card.dark .algo-seo-card-subtitle { color: white; }
+  .algo-seo-card-body { font-size: 13px; color: #555; line-height: 1.55; }
+  .algo-seo-card.dark .algo-seo-card-body { color: #c8d4cc; }
+  .algo-seo-summary {
+    background: #1a3a2e; color: white;
+    border-left: 4px solid #e85d2a;
+    border-radius: 4px;
+    padding: 14px 18px;
+    font-size: 13px; font-style: italic; line-height: 1.6;
+  }
+
 </style>
 </head>
 <body>
@@ -1582,6 +1615,15 @@ async function confirmAndGenerate() {
       }
     }
 
+    // For SEO reports, inject the fixed "Fonctionnement de l'algorithme" slide after section "01"
+    const hasSeo = services.some(s => s.toLowerCase().includes('seo'));
+    if (hasSeo) {
+      const section01Idx = slides.findIndex(s => s.type === 'section' && s.label === '01');
+      if (section01Idx !== -1) {
+        slides.splice(section01Idx + 1, 0, { type: 'algo-seo' });
+      }
+    }
+
     // If sitemap failed, inject a static error slide where "indexation" would be
     if (!sitemapData) {
       const sitemapErrorSlide = {
@@ -1935,6 +1977,40 @@ function renderSlide(s, idx, clientName, consultant) {
         </div>
       </div>
       ${footer(true)}
+    </div>`;
+  }
+
+  // ALGO SEO — slide fixe "Fonctionnement de l'algorithme" (SEO uniquement)
+  if (s.type === 'algo-seo') {
+    return `<div class="slide slide-content">
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-label">Algorithme SEO</div>
+        <div class="slide-title">Fonctionnement de l'algorithme</div>
+        <div class="algo-seo-intro">Le SEO regroupe l'ensemble des techniques visant à positionner un site dans les premiers résultats de Google.</div>
+        <div class="algo-seo-grid">
+          <div class="algo-seo-card">
+            <div class="algo-seo-num">1</div>
+            <div class="algo-seo-card-title">Technique</div>
+            <div class="algo-seo-card-subtitle">Optimiser la lecture des robots Google</div>
+            <div class="algo-seo-card-body">Site SEO-friendly, sans pénalité, temps de chargement maîtrisé, données structurées valides.</div>
+          </div>
+          <div class="algo-seo-card dark">
+            <div class="algo-seo-num">2</div>
+            <div class="algo-seo-card-title">Contenu</div>
+            <div class="algo-seo-card-subtitle">Devenir leader sur la thématique</div>
+            <div class="algo-seo-card-body">Contenus riches, originaux, rafraîchis régulièrement pour favoriser le passage des robots.</div>
+          </div>
+          <div class="algo-seo-card">
+            <div class="algo-seo-num">3</div>
+            <div class="algo-seo-card-title">Netlinking</div>
+            <div class="algo-seo-card-subtitle">Gagner en popularité et autorité</div>
+            <div class="algo-seo-card-body">Profil de backlinks naturel : mix de liens variés pour signaler la légitimité du site.</div>
+          </div>
+        </div>
+        <div class="algo-seo-summary">SEO : ensemble des techniques pour positionner un site dans les premiers résultats de Google.</div>
+      </div>
+      ${footer(false)}
     </div>`;
   }
 

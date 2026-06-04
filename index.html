@@ -2042,7 +2042,11 @@ async function confirmAndGenerate() {
           { type: 'geo-contexte', geoTopics: '', geoMetrics: { trafficPct: '', ecommerce: '', mentions: '', citations: '', pages: '', score: '' }, summary: '' },
           { type: 'geo-presence', metrics: { topicsCoverts: '', topicsSans: '', urlsCitees: '', scoreMax: '' }, summary: '' },
           { type: 'geo-plateforme', metrics: { mentionsChatgpt: '', mentionsGemini: '' }, image: null, summary: '' },
-          { type: 'geo-synthese', topic: { score: '', name: '', country: '', mentions: '', volume: '', note: '' }, source: { domain: '', url: '', type: '', prompts: '' }, summary: '' }
+          { type: 'geo-synthese', topic: { score: '', name: '', country: '', mentions: '', volume: '', note: '' }, source: { domain: '', url: '', type: '', prompts: '' }, summary: '' },
+          { type: 'geo-sources', subtitle: '', rows: [] },
+          { type: 'geo-opportunites', subtitle: '', rows: [] },
+          { type: 'geo-concurrence', competitors: [] },
+          { type: 'geo-recommandations', subtitle: '', actions: [] }
         );
       }
     }
@@ -2883,6 +2887,180 @@ function renderSlide(s, idx, clientName, consultant) {
           </div>
         </div>
         ${summaryHtml}
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // GEO SOURCES — "03 · URLs sources citées par les IA" (tableau éditable)
+  if (s.type === 'geo-sources') {
+    const rows = Array.isArray(s.rows) && s.rows.length ? s.rows : [
+      { topic: '', prompts: '', url: '', dark: false },
+    ];
+    const addRow = `if(window.__currentSlides?.[${idx}]){if(!Array.isArray(window.__currentSlides[${idx}].rows))window.__currentSlides[${idx}].rows=[];window.__currentSlides[${idx}].rows.push({topic:'',prompts:'',url:'',dark:false});renderSlides();}`;
+    const rowsHtml = rows.map((r, ri) => {
+      const bg = r.dark ? 'var(--green-dark)' : '#fff';
+      const fg = r.dark ? '#fff' : 'var(--text)';
+      const promptsBg = r.prompts && (parseInt(r.prompts) >= 2) ? 'var(--orange)' : (r.dark ? 'rgba(255,255,255,0.15)' : 'var(--green-light)');
+      const promptsFg = r.prompts && (parseInt(r.prompts) >= 2) ? '#fff' : (r.dark ? '#fff' : 'var(--green-dark)');
+      const mkCell = (val, field) => editable
+        ? `<td style="padding:0.55rem 0.8rem;color:${fg};" contenteditable="true" oninput="(function(el){if(window.__currentSlides?.[${idx}]?.rows?.[${ri}])window.__currentSlides[${idx}].rows[${ri}]['${field}']=el.textContent;})(this)">${val||''}</td>`
+        : `<td style="padding:0.55rem 0.8rem;color:${fg};">${val||''}</td>`;
+      const toggleDark = editable ? ` onclick="(function(){if(window.__currentSlides?.[${idx}]?.rows?.[${ri}]){window.__currentSlides[${idx}].rows[${ri}].dark=!window.__currentSlides[${idx}].rows[${ri}].dark;renderSlides();}})()"` : '';
+      return `<tr style="background:${bg};border-bottom:1px solid rgba(0,0,0,0.06);"${toggleDark}>
+        ${mkCell(r.topic, 'topic')}
+        <td style="padding:0.55rem 0.8rem;text-align:center;">
+          ${editable
+            ? `<span contenteditable="true" style="background:${promptsBg};color:${promptsFg};border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;outline:none;display:inline-block;" oninput="(function(el){if(window.__currentSlides?.[${idx}]?.rows?.[${ri}])window.__currentSlides[${idx}].rows[${ri}].prompts=el.textContent;})(this)">${r.prompts||''}</span> <span style="font-size:11px;color:${r.dark?'rgba(255,255,255,0.6)':'var(--text-light)'};">prompt${(r.prompts||'')!='1'?'s':''}</span>`
+            : `<span style="background:${promptsBg};color:${promptsFg};border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;">${r.prompts||'—'}</span> <span style="font-size:11px;color:${r.dark?'rgba(255,255,255,0.6)':'var(--text-light)'};">prompt${(r.prompts||'')!='1'?'s':''}</span>`}
+        </td>
+        ${mkCell(r.url ? `../${r.url.replace(/.*\//,'')}` : '', 'url')}
+      </tr>`;
+    }).join('');
+    const addBtn = editable ? `<button onclick="${addRow}" style="margin-top:0.6rem;font-size:11px;background:var(--green-light);color:var(--green-dark);border:none;border-radius:6px;padding:4px 10px;cursor:pointer;">+ Ajouter une ligne</button>` : '';
+    const subtitleVal = s.subtitle || (editable ? '' : '');
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">03 · URLs sources citées par les IA</div>
+        ${editable
+          ? `<div contenteditable="true" class="slide-subtitle" style="font-style:italic;outline:none;" oninput="if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].subtitle=this.textContent">${subtitleVal}</div>`
+          : subtitleVal ? `<div class="slide-subtitle" style="font-style:italic;">${subtitleVal}</div>` : ''}
+        <table style="width:100%;border-collapse:collapse;border-radius:10px;overflow:hidden;font-size:13px;margin-top:0.8rem;">
+          <thead>
+            <tr style="background:var(--orange);color:#fff;">
+              <th style="padding:0.6rem 0.8rem;text-align:left;font-weight:600;">Topic (Page citée)</th>
+              <th style="padding:0.6rem 0.8rem;text-align:center;font-weight:600;">Prompts IA</th>
+              <th style="padding:0.6rem 0.8rem;text-align:left;font-weight:600;">URL</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+        ${addBtn}
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // GEO OPPORTUNITES — "04 · Opportunités manquées" (tableau éditable)
+  if (s.type === 'geo-opportunites') {
+    const rows = Array.isArray(s.rows) && s.rows.length ? s.rows : [
+      { topic: '', volume: '', concurrent: '', dark: false },
+    ];
+    const addRow = `if(window.__currentSlides?.[${idx}]){if(!Array.isArray(window.__currentSlides[${idx}].rows))window.__currentSlides[${idx}].rows=[];window.__currentSlides[${idx}].rows.push({topic:'',volume:'',concurrent:'',dark:false});renderSlides();}`;
+    const rowsHtml = rows.map((r, ri) => {
+      const bg = r.dark ? 'var(--green-dark)' : '#fff';
+      const fg = r.dark ? '#fff' : 'var(--text)';
+      const mkCell = (val, field) => editable
+        ? `<td style="padding:0.55rem 0.8rem;color:${fg};" contenteditable="true" oninput="(function(el){if(window.__currentSlides?.[${idx}]?.rows?.[${ri}])window.__currentSlides[${idx}].rows[${ri}]['${field}']=el.textContent;})(this)">${val||''}</td>`
+        : `<td style="padding:0.55rem 0.8rem;color:${fg};">${val||''}</td>`;
+      const toggleDark = editable ? ` onclick="(function(){if(window.__currentSlides?.[${idx}]?.rows?.[${ri}]){window.__currentSlides[${idx}].rows[${ri}].dark=!window.__currentSlides[${idx}].rows[${ri}].dark;renderSlides();}})()"` : '';
+      return `<tr style="background:${bg};border-bottom:1px solid rgba(0,0,0,0.06);"${toggleDark}>
+        ${mkCell(r.topic, 'topic')}
+        ${mkCell(r.volume, 'volume')}
+        ${mkCell(r.concurrent, 'concurrent')}
+      </tr>`;
+    }).join('');
+    const addBtn = editable ? `<button onclick="${addRow}" style="margin-top:0.6rem;font-size:11px;background:var(--green-light);color:var(--green-dark);border:none;border-radius:6px;padding:4px 10px;cursor:pointer;">+ Ajouter une ligne</button>` : '';
+    const subtitleVal = s.subtitle || '';
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">04 · Opportunités manquées</div>
+        ${editable
+          ? `<div contenteditable="true" class="slide-subtitle" style="font-style:italic;outline:none;" oninput="if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].subtitle=this.textContent">${subtitleVal}</div>`
+          : subtitleVal ? `<div class="slide-subtitle" style="font-style:italic;">${subtitleVal}</div>` : ''}
+        <table style="width:100%;border-collapse:collapse;border-radius:10px;overflow:hidden;font-size:13px;margin-top:0.8rem;">
+          <thead>
+            <tr style="background:var(--orange);color:#fff;">
+              <th style="padding:0.6rem 0.8rem;text-align:left;font-weight:600;">Topic (Opportunité)</th>
+              <th style="padding:0.6rem 0.8rem;text-align:left;font-weight:600;">Volume/mois</th>
+              <th style="padding:0.6rem 0.8rem;text-align:left;font-weight:600;">Concurrent IA leader</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+        ${addBtn}
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // GEO CONCURRENCE — "05 · Analyse concurrentielle IA" (cartes rangs éditables)
+  if (s.type === 'geo-concurrence') {
+    const competitors = Array.isArray(s.competitors) && s.competitors.length ? s.competitors : [
+      { rank: '#1', domain: '', badge: '', mentions: '', description: '' },
+    ];
+    const addComp = `if(window.__currentSlides?.[${idx}]){if(!Array.isArray(window.__currentSlides[${idx}].competitors))window.__currentSlides[${idx}].competitors=[];const n=window.__currentSlides[${idx}].competitors.length+1;window.__currentSlides[${idx}].competitors.push({rank:'#'+n,domain:'',badge:'',mentions:'',description:''});renderSlides();}`;
+    const cardsHtml = competitors.map((c, ci) => {
+      const mkF = (val, field, style='') => editable
+        ? `<span contenteditable="true" style="outline:none;border-bottom:1px dashed #bbb;min-width:20px;display:inline-block;${style}" oninput="(function(el){if(window.__currentSlides?.[${idx}]?.competitors?.[${ci}])window.__currentSlides[${idx}].competitors[${ci}]['${field}']=el.textContent;})(this)">${val||''}</span>`
+        : `<span>${val||'—'}</span>`;
+      return `<div style="background:#fff;border:1.5px solid var(--border);border-left:4px solid var(--orange);border-radius:10px;padding:1rem 1.2rem;display:flex;align-items:flex-start;gap:1rem;">
+        <div style="background:var(--orange);color:#fff;border-radius:50%;width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0;">${mkF(c.rank,'rank','font-weight:700;font-size:15px;border:none;')}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:15px;font-weight:700;color:var(--green-dark);margin-bottom:0.4rem;">${mkF(c.domain,'domaine.com','font-size:15px;font-weight:700;')}</div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">
+            <span style="background:var(--green-dark);color:#fff;border-radius:20px;padding:3px 10px;font-size:11px;">${mkF(c.badge,'Label','font-size:11px;')}</span>
+            <span style="background:var(--green-dark);color:#fff;border-radius:20px;padding:3px 10px;font-size:11px;">${mkF(c.mentions,'0','font-size:11px;')} mentions IA</span>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text-light);font-style:italic;max-width:40%;text-align:right;line-height:1.4;">${mkF(c.description,'Description…','font-size:12px;font-style:italic;text-align:right;')}</div>
+      </div>`;
+    }).join('');
+    const addBtn = editable ? `<button onclick="${addComp}" style="margin-top:0.6rem;font-size:11px;background:var(--green-light);color:var(--green-dark);border:none;border-radius:6px;padding:4px 10px;cursor:pointer;">+ Ajouter un concurrent</button>` : '';
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">05 · Analyse concurrentielle IA</div>
+        <div style="display:flex;flex-direction:column;gap:0.7rem;margin-top:0.8rem;">${cardsHtml}</div>
+        ${addBtn}
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // GEO RECOMMANDATIONS — "06 · Recommandations GEO prioritaires" (grille 2×2 éditables)
+  if (s.type === 'geo-recommandations') {
+    const impactColors = { 'Impact immédiat': '#e74c3c', 'Impact fort': '#e8622a', 'Impact moyen': '#e8622a', 'Impact long terme': '#1a5446' };
+    const defaultActions = [
+      { num: '1', impact: 'Impact immédiat', title: '', body: '' },
+      { num: '2', impact: 'Impact fort',     title: '', body: '' },
+      { num: '3', impact: 'Impact moyen',    title: '', body: '' },
+      { num: '4', impact: 'Impact long terme', title: '', body: '' },
+    ];
+    const actions = Array.isArray(s.actions) && s.actions.length ? s.actions : defaultActions;
+    const subtitleVal = s.subtitle || '';
+    const cardsHtml = actions.map((a, ai) => {
+      const borderColor = impactColors[a.impact] || 'var(--orange)';
+      const bgCircle = impactColors[a.impact] || 'var(--orange)';
+      const mkF = (val, field, tag='span', style='') => editable
+        ? `<${tag} contenteditable="true" style="outline:none;display:block;${style}" oninput="(function(el){if(window.__currentSlides?.[${idx}]?.actions?.[${ai}])window.__currentSlides[${idx}].actions[${ai}]['${field}']=el.textContent;})(this)">${val||''}</${tag}>`
+        : `<${tag} style="${style}">${val||''}</${tag}>`;
+      const impactHtml = editable
+        ? `<span contenteditable="true" style="background:${borderColor}22;color:${borderColor};border:1px solid ${borderColor};border-radius:20px;padding:2px 10px;font-size:11px;outline:none;display:inline-block;" oninput="(function(el){if(window.__currentSlides?.[${idx}]?.actions?.[${ai}]){window.__currentSlides[${idx}].actions[${ai}].impact=el.textContent;}})(this)">${a.impact||''}</span>`
+        : `<span style="background:${borderColor}22;color:${borderColor};border:1px solid ${borderColor};border-radius:20px;padding:2px 10px;font-size:11px;">${a.impact||''}</span>`;
+      return `<div style="background:#fff;border:1.5px solid var(--border);border-top:3px solid ${borderColor};border-radius:10px;padding:1rem 1.2rem;">
+        <div style="display:flex;align-items:center;gap:0.7rem;margin-bottom:0.7rem;">
+          <div style="background:${bgCircle};color:#fff;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">${a.num||ai+1}</div>
+          ${impactHtml}
+        </div>
+        ${mkF(a.title, 'title', 'div', 'font-size:14px;font-weight:700;color:var(--green-dark);margin-bottom:0.4rem;')}
+        ${mkF(a.body, 'body', 'div', 'font-size:12px;color:var(--text-light);line-height:1.5;')}
+      </div>`;
+    }).join('');
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">06 · Recommandations GEO prioritaires</div>
+        ${editable
+          ? `<div contenteditable="true" class="slide-subtitle" style="font-style:italic;outline:none;" oninput="if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].subtitle=this.textContent">${subtitleVal}</div>`
+          : subtitleVal ? `<div class="slide-subtitle" style="font-style:italic;">${subtitleVal}</div>` : ''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;margin-top:0.8rem;">${cardsHtml}</div>
       </div>
       ${footer(false)}
     </div>`;

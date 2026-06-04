@@ -1887,12 +1887,12 @@ async function confirmAndGenerate() {
       slides.splice(sec03PsiIdx + 1, 0, ...toInjectAfterSec03);
     }
 
-    // Always inject "Un groupe 100% digital" section just before "Notre Proposition"
+    // Always inject "Un groupe 100% digital" section just after "Notre Proposition"
     const proposalIdx = slides.findIndex(s => s.type === 'section' && (s.title || '').includes('Proposition'));
-    const groupInsertAt = proposalIdx !== -1 ? proposalIdx : slides.length;
-    const groupLabel = proposalIdx !== -1
-      ? String(parseInt(slides[proposalIdx].label || '99') - 1).padStart(2, '0')
-      : String(slides.filter(s => s.type === 'section').length + 1).padStart(2, '0');
+    const groupInsertAt = proposalIdx !== -1
+      ? slides.findIndex((s, i) => i > proposalIdx && s.type === 'closing') + 1 || slides.length
+      : slides.length;
+    const groupLabel = String(slides.filter(s => s.type === 'section').length + 1).padStart(2, '0');
     slides.splice(groupInsertAt, 0,
       { type: 'section', label: groupLabel, title: 'Un groupe 100% digital', subtitle: 'Votre croissance est clé' },
       { type: 'sonate-group' },
@@ -2032,8 +2032,7 @@ function buildPrompt({ clientName, clientUrl, sector, geo, services, meetingCont
   const hasSeo = services.some(s => s.toLowerCase().includes('seo'));
   const hasSea = services.some(s => s.toLowerCase().includes('sea'));
 
-  // +1 because "Un groupe 100% digital" is always injected just before Notre Proposition
-  const proposalLabel = hasSeo ? '09' : (hasSea ? '04' : '03');
+  const proposalLabel = hasSeo ? '08' : (hasSea ? '03' : '02');
 
   const seoStructure = hasSeo ? `
 3. type "section" — label = "01", title = "Contexte & Objectifs", subtitle = "Analyse du positionnement et des enjeux", body = null, summary = null

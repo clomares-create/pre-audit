@@ -2020,6 +2020,7 @@ async function confirmAndGenerate() {
 
     // Compute service flags for static injections
     const hasSeo = services.some(s => s.toLowerCase().includes('seo'));
+    const hasSea = services.some(s => s.toLowerCase().includes('sea'));
 
     // STATIC INJECTIONS (SEO reports only)
     if (hasSeo) {

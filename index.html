@@ -1652,7 +1652,7 @@ async function saveSettings() {
   if (_workspace?.isOwner) {
     const jwt = getJwt();
     if (jwt) {
-      await fetch('/api/workspace/settings', {
+      await fetch('/api/workspace?action=settings', {
         method: 'PATCH',
         headers: { 'Authorization': 'Bearer ' + jwt.token, 'Content-Type': 'application/json' },
         body: JSON.stringify({ api_key: settings.apiKey, pagespeed_key: settings.pagespeedKey })
@@ -1672,7 +1672,7 @@ async function loadWorkspace() {
   const jwt = getJwt();
   if (!jwt) return;
   try {
-    const res = await fetch('/api/workspace/me', { headers: { 'Authorization': 'Bearer ' + jwt.token } });
+    const res = await fetch('/api/workspace?action=me', { headers: { 'Authorization': 'Bearer ' + jwt.token } });
     const data = await res.json();
     _workspace = data.workspace;
     renderWorkspacePanel();
@@ -1713,7 +1713,7 @@ async function generateInviteLink() {
   const jwt = getJwt();
   if (!jwt) return;
   try {
-    const res = await fetch('/api/workspace/invite', {
+    const res = await fetch('/api/workspace?action=invite', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + jwt.token, 'Content-Type': 'application/json' }
     });
@@ -1728,7 +1728,7 @@ async function joinWorkspace(token) {
   const jwt = getJwt();
   if (!jwt) return;
   try {
-    const res = await fetch('/api/workspace/join', {
+    const res = await fetch('/api/workspace?action=join', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + jwt.token, 'Content-Type': 'application/json' },
       body: JSON.stringify({ token })

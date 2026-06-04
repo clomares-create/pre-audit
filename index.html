@@ -2082,12 +2082,28 @@ async function confirmAndGenerate() {
 
     // STATIC INJECTIONS (SEA reports)
     if (hasSea) {
-      // Inject sea-ref-payant slides after section "02" (Référencement Payant)
+      // Inject all SEA slides after section "02" (Référencement Payant)
       const seaSec02Idx = slides.findIndex(s => s.type === 'section' && s.label === '02' && (s.title || '').toLowerCase().includes('payant'));
       if (seaSec02Idx !== -1) {
+        // Remove any LLM-generated sea / competition slides right after section 02 (replaced by static slides)
+        let rmCount = 0;
+        while (slides[seaSec02Idx + 1 + rmCount] && ['sea','competition','sea-strategie'].includes(slides[seaSec02Idx + 1 + rmCount].type)) rmCount++;
+        if (rmCount) slides.splice(seaSec02Idx + 1, rmCount);
+
         slides.splice(seaSec02Idx + 1, 0,
+          // 1. Image slides (duplicable — market + competitors)
           { type: 'sea-ref-payant', sectionLabel: '02', commentTitle: 'Le marché', commentText: 'Google présente ses emplacements dédiés au e-commerce sur une grande majorité de requêtes du secteur', image: null },
-          { type: 'sea-ref-payant', sectionLabel: '02', commentTitle: '', commentText: '', image: null }
+          { type: 'sea-ref-payant', sectionLabel: '02', commentTitle: '', commentText: '', image: null },
+          // 2. Investir pour vendre
+          { type: 'sea-strategie', sectionLabel: '02', supports: 'Google Ads', emplacements: 'Google Shopping, Google Display, Google Search', requetes: 'expression générique, expression longue traîne', objectifs: 'Vendre', zone: geo || 'France', periode: 'année (à définir)', duree: '(à définir)' },
+          // 3. La stratégie
+          { type: 'sea-la-strategie', sectionLabel: '02' },
+          // 4. Les retours
+          { type: 'sea-les-retours', sectionLabel: '02' },
+          // 5. Nos actions
+          { type: 'sea-nos-actions', sectionLabel: '02' },
+          // 6. Équipe experte SEA
+          { type: 'sea-equipe-experte', photos: [null, null, null, null, null, null] }
         );
       }
     }
@@ -2424,22 +2440,7 @@ function buildPrompt({ clientName, clientUrl, sector, geo, services, meetingCont
 4. type "intro" — contexte de l'entreprise, ce que Sonate a observé. summary obligatoire.
 ${hasSea ? `
 5. type "section" — label = "02", title = "Référencement Payant", subtitle = "Comprendre les leviers Google Ads", body = null, summary = null
-   NE PAS générer de slide de contenu pour cette section — le contenu sera injecté séparément.
-   SAUF : génère une slide de type "sea-strategie" avec les champs suivants déduits du contexte client :
-   {
-     "type": "sea-strategie",
-     "supports": "Google Ads",
-     "emplacements": "Google Shopping, Google Search, Google Display",
-     "requetes": "expression générique, expression longue traîne",
-     "objectifs": "[déduit du secteur et des besoins]",
-     "zone": "[zone géographique du client]",
-     "periode": "[période recommandée ex: toute l'année / saisonnière]",
-     "duree": "[durée recommandée ex: 6 mois, à définir]"
-   }
-
-6. type "sea" — analyse concurrents sur Google Ads, stratégie recommandée. summary obligatoire.
-
-7. type "competition" — analyse des concurrents digitaux${competitors?.length ? ` suivants : ${competitors.join(', ')}` : ' (les 3 principaux)'}. Forces/faiblesses pour chacun. summary obligatoire.
+   NE PAS générer de slide de contenu pour cette section — tout le contenu sera injecté séparément.
 ` : ''}`;
 
   return `Tu es un expert en stratégie digitale de l'agence Sonate. Tu dois générer un pré-audit commercial complet pour un prospect.
@@ -2473,8 +2474,7 @@ Chaque objet slide a ce format :
 
 Le champ "summary" (1-2 lignes max) est OBLIGATOIRE sur : intro, seo, content, sea, geo, competition. Il est null sur : cover, sommaire, section, pricing.
 
-IMPORTANT : Ne génère JAMAIS de slide de type "metrics" ni "technical" ni "indexation" — ces types sont injectés séparément.
-Pour le type "sea-strategie", utilise ce format spécifique (pas le format générique) : {"type":"sea-strategie","supports":"...","emplacements":"...","requetes":"...","objectifs":"...","zone":"...","periode":"...","duree":"..."}
+IMPORTANT : Ne génère JAMAIS de slide de type "metrics" ni "technical" ni "indexation" ni "sea-strategie" ni "sea-ref-payant" ni "sea-la-strategie" ni "sea-les-retours" ni "sea-nos-actions" ni "sea-equipe-experte" — ces types sont injectés séparément.
 
 STRUCTURE OBLIGATOIRE DANS CET ORDRE :
 
@@ -3952,6 +3952,114 @@ function renderSlide(s, idx, clientName, consultant) {
         <div class="sonate-tagline-sub">Une expertise globale, des résultats mesurables, une équipe engagée.</div>
       </div>
       ${footer(true)}
+    </div>`;
+  }
+
+  // SEA LA STRATEGIE — slide statique "La stratégie"
+  if (s.type === 'sea-la-strategie') {
+    const secLabel = s.sectionLabel || '02';
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">${secLabel} · Le référencement payant</div>
+        <div style="font-size:16px;font-weight:700;color:var(--green-dark);margin-bottom:1.5rem;">La stratégie</div>
+        <div style="display:flex;flex-direction:column;gap:1.4rem;">
+          <div style="font-size:16px;font-weight:700;color:var(--text);line-height:1.55;">Après avoir analysé le marché, les concurrents directs se positionnent sur des expressions clés choisies et identifiées comme des expressions clés longue traîne.</div>
+          <div style="font-size:15px;color:var(--text);line-height:1.65;">Nous recommandons de suivre, dans un premier temps, les logiques des concurrents. Leur stratégie est un signe d'apprentissage. Pour le pilotage, nous pourrons voir des données de la part des concurrents, notamment avec les taux d'impressions.</div>
+          <div style="font-size:15px;color:var(--text);line-height:1.65;">
+            <div style="margin-bottom:0.5rem;">Plusieurs stratégies sont possibles avec 3 grands emplacements :</div>
+            <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.3rem;">
+              <li style="display:flex;align-items:center;gap:0.6rem;"><span style="color:var(--text-light);">-</span> Google Search</li>
+              <li style="display:flex;align-items:center;gap:0.6rem;"><span style="color:var(--text-light);">-</span> Google Shopping</li>
+              <li style="display:flex;align-items:center;gap:0.6rem;"><span style="color:var(--text-light);">-</span> Google Pmax</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // SEA LES RETOURS — slide statique "Les retours"
+  if (s.type === 'sea-les-retours') {
+    const secLabel = s.sectionLabel || '02';
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">${secLabel} · Le référencement payant</div>
+        <div style="font-size:16px;font-weight:700;color:var(--green-dark);margin-bottom:1.5rem;">Les retours</div>
+        <div style="display:flex;flex-direction:column;gap:1.6rem;">
+          <div style="font-size:16px;font-weight:700;color:var(--text);line-height:1.55;">Afin que les campagnes soient bénéfiques à l'entreprise, nous devons avoir un pilotage de la performance. Plusieurs indicateurs sont mesurables et vont permettre d'être en autonomie dans les arbitrages des campagnes.</div>
+          <div style="font-size:15px;color:var(--text);line-height:1.7;">
+            <div style="margin-bottom:0.8rem;">2 questions :</div>
+            <div style="margin-bottom:0.6rem;">1- Combien êtes vous prêt à investir pour chaque vente ?</div>
+            <div>2- Devons nous intégrer les commandes des nouveaux clients à la rentabilité de la première vente ?</div>
+          </div>
+        </div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // SEA NOS ACTIONS — slide statique "Nos actions" (liste imbriquée)
+  if (s.type === 'sea-nos-actions') {
+    const secLabel = s.sectionLabel || '02';
+    const actions = [
+      { title: 'Optimisation des campagnes', items: ['Nettoyage des mots clés', 'Recommandations landing page', 'Audiences', 'Stratégie de diffusion', 'Tracking et vérification régulière', 'Connexion et contrôle de la qualité sur le CRM'] },
+      { title: 'Reporting des campagnes', items: ['Support Looker personnalisé', 'Visio de présentation et de réflexions stratégiques'] },
+      { title: 'Insights créatifs', items: ['AB tester', 'Apport d\'idées', 'Veille concurrentielle'] },
+    ];
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">${secLabel} · Le référencement payant</div>
+        <div style="font-size:16px;font-weight:700;color:var(--green-dark);margin-bottom:1.2rem;">Nos actions</div>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.9rem;">
+          ${actions.map(a => `
+            <li>
+              <div style="display:flex;align-items:center;gap:0.6rem;font-size:15px;font-weight:700;color:var(--text);margin-bottom:0.35rem;">
+                <span style="width:8px;height:8px;border-radius:50%;background:var(--text);flex-shrink:0;display:inline-block;"></span>
+                ${a.title}
+              </div>
+              <ul style="list-style:none;padding:0;margin:0 0 0 1.4rem;display:flex;flex-direction:column;gap:0.2rem;">
+                ${a.items.map(item => `
+                  <li style="display:flex;align-items:center;gap:0.6rem;font-size:14px;color:var(--text);line-height:1.5;">
+                    <span style="width:5px;height:5px;border-radius:50%;border:1.5px solid var(--text);flex-shrink:0;display:inline-block;"></span>
+                    ${item}
+                  </li>`).join('')}
+              </ul>
+            </li>`).join('')}
+        </ul>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // SEA EQUIPE EXPERTE — "SEA · Une équipe hyper experte" (6 photos uploadables)
+  if (s.type === 'sea-equipe-experte') {
+    const photos = Array.isArray(s.photos) ? s.photos : [null, null, null, null, null, null];
+    const photosHtml = photos.map((p, pi) => {
+      if (p) {
+        return `<div style="flex:1;min-width:0;aspect-ratio:3/4;border-radius:8px;overflow:hidden;cursor:${editable?'pointer':'default'};" ${editable?`onclick="uploadEquipePhoto(${idx},${pi})"`:''}><img src="${p}" style="width:100%;height:100%;object-fit:cover;"></div>`;
+      }
+      return `<div onclick="uploadEquipePhoto(${idx},${pi})" style="flex:1;min-width:0;aspect-ratio:3/4;border-radius:8px;background:#e8e8e8;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:6px;">
+        <div style="font-size:22px;">👤</div>
+        <div style="font-size:10px;color:#999;text-align:center;">Ajouter<br>une photo</div>
+      </div>`;
+    }).join('');
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">SEA · Une équipe hyper experte</div>
+        <div style="font-size:16px;font-weight:700;color:var(--green-dark);margin-bottom:0.6rem;">La spécialisation comme garantie de la performance</div>
+        <div style="font-size:14px;color:var(--text);line-height:1.6;margin-bottom:1.4rem;">Les équipes paid media sont spécialisées dans la stratégie et la mise en place opérationnelle SEA-SMA. Chaque consultant présente une finesse d'analyse et d'intervention de haut niveau.</div>
+        <div style="display:flex;gap:1rem;align-items:stretch;">${photosHtml}</div>
+      </div>
+      ${footer(false)}
     </div>`;
   }
 

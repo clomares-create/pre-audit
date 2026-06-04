@@ -2444,8 +2444,16 @@ async function aiDetectCompetitors() {
   const btn = document.getElementById('aiDetectBtn');
   const status = document.getElementById('aiDetectStatus');
   btn.disabled = true;
-  btn.textContent = '⏳ Recherche…';
+  btn.textContent = '⏳ Recherche en cours…';
   status.style.display = '';
+  status.textContent = 'Analyse en cours, patientez…';
+
+  if (!apiKey) {
+    status.textContent = '⚠️ Clé API manquante — configurez-la dans les Paramètres.';
+    btn.disabled = false;
+    btn.textContent = '🔍 Identifier les concurrents avec l\'IA';
+    return;
+  }
 
   try {
     const detectPrompt = `Tu es un expert en stratégie digitale. Identifie les principaux concurrents en ligne de cette entreprise.
@@ -2469,12 +2477,31 @@ Propose une liste de concurrents digitaux. Réponds UNIQUEMENT avec un tableau J
     const raw = data.choices?.[0]?.message?.content || '';
     const match = raw.match(/\[[\s\S]*?\]/);
     if (match) {
-      const parsed = JSON.parse(match[0]);
-      if (Array.isArray(parsed) && parsed.length) renderCompetitorChips(parsed);
+      try {
+        const parsed = JSON.parse(match[0]);
+        if (Array.isArray(parsed) && parsed.length) {
+          renderCompetitorChips(parsed);
+          status.textContent = 'Concurrents identifiés par l\'IA — modifiez si besoin.';
+        } else {
+          status.textContent = 'L\'IA n\'a trouvé aucun concurrent. Essayez d\'ajouter plus d\'informations.';
+        }
+      } catch(parseErr) {
+        status.textContent = 'Réponse inattendue de l\'IA. Réessayez.';
+      }
+    } else if (data.error) {
+      status.textContent = `Erreur API : ${data.error?.message || 'inconnue'}`;
+    } else {
+      // Try to extract domains from plain text as fallback
+      const domains = [...raw.matchAll(/[\w-]+\.[\w]{2,}/g)].map(m => m[0]).slice(0, 5);
+      if (domains.length) {
+        renderCompetitorChips(domains);
+        status.textContent = 'Concurrents identifiés par l\'IA — modifiez si besoin.';
+      } else {
+        status.textContent = 'Aucun concurrent trouvé. Ajoutez-les manuellement.';
+      }
     }
-    status.textContent = 'Concurrents identifiés par l\'IA — modifiez si besoin.';
   } catch (e) {
-    status.textContent = 'Erreur lors de la détection. Vérifiez votre clé API.';
+    status.textContent = `Erreur : ${e.message || 'Vérifiez votre clé API et votre connexion.'}`;
   } finally {
     btn.disabled = false;
     btn.textContent = '🔍 Identifier les concurrents avec l\'IA';

@@ -1759,11 +1759,11 @@ async function confirmAndGenerate() {
       );
     }
 
-    // For SEO reports, inject the fixed "Fonctionnement de l'algorithme" slide after section "01"
+    // For SEO reports, inject the fixed "Fonctionnement de l'algorithme" slide after section "02"
     if (hasSeo) {
-      const section01Idx = slides.findIndex(s => s.type === 'section' && s.label === '01');
-      if (section01Idx !== -1) {
-        slides.splice(section01Idx + 1, 0, { type: 'algo-seo' });
+      const section02AlgoIdx = slides.findIndex(s => s.type === 'section' && s.label === '02');
+      if (section02AlgoIdx !== -1) {
+        slides.splice(section02AlgoIdx + 1, 0, { type: 'algo-seo' });
       }
     }
 
@@ -1784,13 +1784,13 @@ async function confirmAndGenerate() {
         summary: 'Le sitemap du site n\'a pas pu être analysé — données d\'indexation indisponibles.',
         accentColor: 'red',
       };
-      const section03Idx = slides.findIndex(s => s.type === 'section' && s.label === '03');
-      if (section03Idx !== -1) {
-        slides.splice(section03Idx + 1, 0, sitemapErrorSlide);
+      const section04Idx = slides.findIndex(s => s.type === 'section' && s.label === '04');
+      if (section04Idx !== -1) {
+        slides.splice(section04Idx + 1, 0, sitemapErrorSlide);
       }
     }
 
-    // Always inject the static technical slide after section "02"
+    // Always inject the static technical slide after section "03"
     const mkPsiSide = (d) => d ? {
       score: d.performance,
       fcp: d.fcp, fcpScore: d.fcpScore,
@@ -1806,9 +1806,9 @@ async function confirmAndGenerate() {
       subtitle: `Page d'accueil · ${clientUrl}`,
       psi: pagespeedData ? { mobile: mkPsiSide(pagespeedData.mobile), desktop: mkPsiSide(pagespeedData.desktop) } : null,
     };
-    const section02Idx = slides.findIndex(s => s.type === 'section' && s.label === '02');
-    if (section02Idx !== -1) {
-      slides.splice(section02Idx + 1, 0, techSlide);
+    const section03Idx = slides.findIndex(s => s.type === 'section' && s.label === '03');
+    if (section03Idx !== -1) {
+      slides.splice(section03Idx + 1, 0, techSlide);
     } else {
       const introIdx = slides.findIndex(s => s.type === 'intro');
       slides.splice(introIdx !== -1 ? introIdx + 1 : 2, 0, techSlide);
@@ -1946,17 +1946,18 @@ function buildPrompt({ clientName, clientUrl, sector, geo, services, meetingCont
   const hasSea = services.some(s => s.toLowerCase().includes('sea'));
   const hasGeo = services.some(s => s.toLowerCase().includes('geo'));
 
-  let sectionCounter = 3;
+  // Dynamic section counter starts after fixed sections 01–04 (+ 05 if hasSeo)
+  let sectionCounter = hasSeo ? 6 : 5;
   const geoSection = hasGeo ? `
-- type "section" — label = "0${sectionCounter}", title = "Analyse GEO", subtitle = "Visibilité sur les IA génératives (ChatGPT, Perplexity, Gemini...)", summary = null
+- type "section" — label = "${String(sectionCounter).padStart(2,'0')}", title = "Analyse GEO", subtitle = "Visibilité sur les IA génératives (ChatGPT, Perplexity, Gemini...)", summary = null
 - type "geo" — présence IA actuelle, score, topics couverts vs manqués, concurrents IA. metrics obligatoires (score visibilité /100, topics couverts, topics manqués, mentions IA). summary obligatoire
 ${(++sectionCounter, '')}` : '';
   const seaSection = hasGeo
-    ? `- type "section" — label = "0${++sectionCounter}", title = "Référencement Payant", subtitle = "Comprendre les leviers Google Ads", summary = null
+    ? `- type "section" — label = "${String(++sectionCounter).padStart(2,'0')}", title = "Référencement Payant", subtitle = "Comprendre les leviers Google Ads", summary = null
 - type "sea" — analyse concurrents sur Google Ads, stratégie recommandée. summary obligatoire
 - type "competition" — analyse des concurrents digitaux${competitors?.length ? ` suivants (utilise EXACTEMENT ces concurrents, dans cet ordre) : ${competitors.join(', ')}` : ' (les 3 principaux)'}. Forces/faiblesses pour chacun. summary obligatoire`
     : hasSea
-    ? `- type "section" — label = "0${sectionCounter}", title = "Référencement Payant", subtitle = "Comprendre les leviers Google Ads", summary = null
+    ? `- type "section" — label = "${String(sectionCounter).padStart(2,'0')}", title = "Référencement Payant", subtitle = "Comprendre les leviers Google Ads", summary = null
 - type "sea" — analyse concurrents sur Google Ads, stratégie recommandée. summary obligatoire
 - type "competition" — analyse des concurrents digitaux${competitors?.length ? ` suivants (utilise EXACTEMENT ces concurrents, dans cet ordre) : ${competitors.join(', ')}` : ' (les 3 principaux)'}. Forces/faiblesses pour chacun. summary obligatoire`
     : `- type "competition" — analyse des concurrents digitaux${competitors?.length ? ` suivants (utilise EXACTEMENT ces concurrents, dans cet ordre) : ${competitors.join(', ')}` : ' (les 3 principaux)'}. Forces/faiblesses pour chacun. summary obligatoire`;
@@ -2002,28 +2003,32 @@ STRUCTURE OBLIGATOIRE DANS CET ORDRE :
 
 2. type "sommaire" — title = "Sommaire", body = liste HTML <ol><li> des chapitres du document (utiliser les titres des parties de type "section" qui suivent), summary = null
 
-3. type "section" — label = "01", title = "Algorithme & Méthodologie", subtitle = "Comprendre les leviers du référencement naturel", body = null, summary = null
+3. type "section" — label = "01", title = "Contexte & Objectifs", subtitle = "Analyse du positionnement et des enjeux", body = null, summary = null
 
 4. type "intro" — contexte de l'entreprise, ce que Sonate a observé. summary obligatoire.
 
-5. type "section" — label = "02", title = "Technique SEO", subtitle = "Audit technique du site ${clientUrl}", body = null, summary = null
+5. type "section" — label = "02", title = "Algorithme", subtitle = "Comprendre les leviers du référencement naturel", body = null, summary = null
 
 6. NE PAS générer de slide de type "technical". Cette slide sera injectée séparément avec les données réelles PageSpeed Insights. Passe directement au point 7.
 
-7. type "section" — label = "03", title = "Indexation & Structure", subtitle = "Analyse de la couverture d'indexation", body = null, summary = null
+7. type "section" — label = "03", title = "Technique SEO", subtitle = "Audit technique du site ${clientUrl}", body = null, summary = null
 
-${sitemapData ? `8. type "indexation" — analyse de l'indexation et de la structure du site. NE PAS inventer de données. Utilise UNIQUEMENT les données réelles ci-dessous pour le body et les metrics.
+8. NE PAS générer de slide de type "technical". Cette slide sera injectée séparément. Passe directement au point 9.
+
+9. type "section" — label = "04", title = "Indexation & Structure", subtitle = "Analyse de la couverture d'indexation", body = null, summary = null
+
+${sitemapData ? `10. type "indexation" — analyse de l'indexation et de la structure du site. NE PAS inventer de données. Utilise UNIQUEMENT les données réelles ci-dessous pour le body et les metrics.
 DONNÉES RÉELLES SITEMAP :
 - URL du sitemap : ${sitemapData.sitemapUrl}
 - Nombre de pages déclarées : ${sitemapData.totalUrls}
 - Dernière mise à jour déclarée : ${sitemapData.mostRecent || 'inconnue'}
 - Principales sections (préfixes d'URL) : ${sitemapData.topPatterns.map(([k, v]) => `/${k} (${v} pages)`).join(' · ')}
 - Exemples d'URLs : ${sitemapData.sampleUrls.slice(0, 5).join(' · ')}
-summary obligatoire.` : `8. NE PAS générer de slide de type "indexation". Cette slide sera injectée séparément. Passe directement au point 9.`}
+summary obligatoire.` : `10. NE PAS générer de slide de type "indexation". Cette slide sera injectée séparément. Passe directement au point 11.`}
 
-${hasSeo ? `9. type "section" — label = "04", title = "Stratégie de Contenu", subtitle = "Méthodologie pour gagner des positions", body = null, summary = null
-10. type "seo" — analyse SEO détaillée, opportunités mots-clés, potentiel. summary obligatoire.
-11. type "content" — stratégie de contenu recommandée, méthode Sonate. summary obligatoire.
+${hasSeo ? `11. type "section" — label = "05", title = "Stratégie de Contenu", subtitle = "Méthodologie pour gagner des positions", body = null, summary = null
+12. type "seo" — analyse SEO détaillée, opportunités mots-clés, potentiel. summary obligatoire.
+13. type "content" — stratégie de contenu recommandée, méthode Sonate. summary obligatoire.
 ` : ''}${geoSection}${seaSection}
 
 - type "section" — label = "${proposalSectionLabel}", title = "Notre Proposition", subtitle = "Équipe, budget, prochaines étapes", body = null, summary = null

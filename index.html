@@ -1233,7 +1233,7 @@
           </div>
         </div>
         <div id="confirmCompetitors" style="display:none;margin-top:1.5rem">
-          <div style="font-size:14px;color:var(--text);margin-bottom:0.75rem">Concurrents pour l'analyse. Ajoutez ou supprimez avant de générer.</div>
+          <div style="font-size:14px;color:var(--text);margin-bottom:0.75rem">Domaines concurrents — ils apparaîtront sur la slide <strong>Trafic concurrence · Marché</strong>.</div>
           <div class="competitor-chips" id="competitorChips"></div>
           <div class="comp-add-row">
             <input type="text" id="competitorInput" placeholder="Ajouter un concurrent (ex: site.fr)" onkeydown="if(event.key==='Enter')addCompetitorChip()">
@@ -1862,6 +1862,13 @@ function removeCompetitorChip(idx) {
   renderCompetitorChips(current);
 }
 
+function updateVisibilityBar(idx, field, value) {
+  if (!window.__currentSlides?.[idx]) return;
+  if (!window.__currentSlides[idx].bars) window.__currentSlides[idx].bars = {};
+  window.__currentSlides[idx].bars[field] = value;
+  renderSlides();
+}
+
 function addCompetitorChip() {
   const input = document.getElementById('competitorInput');
   const val = input.value.trim().replace(/,/g, '');
@@ -1932,6 +1939,7 @@ Propose une liste de concurrents digitaux. Réponds UNIQUEMENT avec un tableau J
 async function confirmAndGenerate() {
   const { clientName, clientUrl, sector, geo, meetingContent, briefContent, consultant, model, apiKey, settings } = _pendingContext;
   const confirmedCompetitors = getCompetitorChips();
+  window._confirmedCompetitors = confirmedCompetitors;
 
   const selectedIds = ALL_SERVICES.filter(s => document.getElementById('svc-card-' + s.id)?.classList.contains('active')).map(s => s.id);
   const services = ALL_SERVICES.filter(s => selectedIds.includes(s.id)).map(s => s.label);
@@ -2042,9 +2050,9 @@ async function confirmAndGenerate() {
       const sec04Idx = slides.findIndex(s => s.type === 'section' && s.label === '04');
       if (sec04Idx !== -1) {
         slides.splice(sec04Idx + 1, 0,
-          { type: 'editable-chart', title: 'Trafic concurrence · Marché', subtitle: 'Estimation du trafic SEO généré par les concurrents', image: null, summary: '' },
+          { type: 'editable-chart', title: 'Trafic concurrence · Marché', subtitle: 'Estimation du trafic SEO généré par les concurrents', image: null, summary: '', competitors: confirmedCompetitors },
           { type: 'editable-chart', title: 'Performance de votre trafic SEO', subtitle: 'Estimation de votre trafic SEO actuel', image: null, summary: '' },
-          { type: 'editable-chart', title: 'Potentiel SEO · Visibilité actuelle vs potentielle', subtitle: 'Évolution attendue du portefeuille de mots-clés positionnés sur Google', image: null, summary: '' },
+          { type: 'seo-visibility-chart', title: 'Potentiel SEO · Visibilité actuelle vs potentielle', subtitle: 'Évolution attendue du portefeuille de mots-clés positionnés sur Google.', bars: { top3: '', basPage1: '', page2: '', page34: '', page59: '' } },
           { type: 'editable-chart', title: 'Potentiel SEO · Vue d\'ensemble des positions', subtitle: 'Répartition actuelle des mots-clés positionnés', image: null, summary: '' },
           { type: 'seo-top-keywords', title: 'Performances SEO · Vos principaux mots-clés', subtitle: 'Les principaux mots-clés générateurs de trafic naturel sur votre site.', image: null, comment: '' },
           { type: 'seo-keyword-potential', title: 'Potentiel mots-clés · [THÈME]', subtitle: 'Volume = recherches mensuelles · KD% = niveau de concurrence SEO', image: null }
@@ -2685,6 +2693,42 @@ function onSummaryEdit(idx, value) {
   debounceSave();
 }
 
+async function analyzeSlideImage(idx) {
+  const slide = window.__currentSlides?.[idx];
+  if (!slide?.image) return;
+  const { apiKey, model } = _pendingContext || {};
+  if (!apiKey) { alert('Clé API manquante'); return; }
+
+  const btn = document.getElementById(`ai-analyze-btn-${idx}`);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Analyse en cours…'; }
+
+  try {
+    const context = [slide.title, slide.subtitle].filter(Boolean).join(' — ');
+    const visionModel = (model || '').match(/gemini|claude|gpt-4o/) ? model : 'google/gemini-2.5-flash-preview';
+
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://sonate.group', 'X-Title': 'Sonate Pre-audit Generator' },
+      body: JSON.stringify({
+        model: visionModel,
+        max_tokens: 300,
+        messages: [{ role: 'user', content: [
+          { type: 'image_url', image_url: { url: slide.image } },
+          { type: 'text', text: `Tu es expert SEO chez Sonate Group. Analyse ce graphique (issu de Semrush, Ahrefs ou GSC).\nContexte de la slide : ${context}\nRédige une analyse concise (2-3 phrases) en français, orientée recommandation stratégique. Sois précis et actionnable. Commence directement par l'observation principale.` }
+        ]}]
+      })
+    });
+    const data = await res.json();
+    const analysis = data.choices?.[0]?.message?.content?.trim();
+    if (!analysis) throw new Error('Réponse vide');
+    window.__currentSlides[idx].summary = analysis;
+    renderSlides();
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = '✨ Analyser avec l\'IA'; }
+    alert('Erreur analyse image : ' + (e.message || 'inconnue'));
+  }
+}
+
 function psiTab(btn, uid, tab) {
   const widget = btn.closest('.psi-widget');
   widget.querySelectorAll('.psi-tab-btn').forEach(b => b.classList.remove('active'));
@@ -3019,8 +3063,9 @@ function renderSlide(s, idx, clientName, consultant) {
             </div>
           </div>`
         : `<div class="chart-placeholder chart-placeholder-static" style="cursor:default;pointer-events:none"><span style="color:#ccc;font-size:13px">Aucune image</span></div>`;
+    const aiBtn3 = editable && s.image ? `<button id="ai-analyze-btn-${idx}" onclick="analyzeSlideImage(${idx})" style="font-size:12px;background:var(--green-light);color:var(--green-dark);border:1px solid #b7d9c2;border-radius:6px;padding:4px 12px;cursor:pointer;margin-bottom:6px;display:block;">✨ Analyser avec l'IA</button>` : '';
     const summaryHtml = editable
-      ? `<div class="summary-block"><div contenteditable="true" class="summary-text" data-placeholder="Répartition par LLM…" style="outline:none;" oninput="(function(el){if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].summary=el.innerHTML;})(this)">${s.summary||''}</div></div>`
+      ? `${aiBtn3}<div class="summary-block"><div contenteditable="true" class="summary-text" data-placeholder="Répartition par LLM…" style="outline:none;" oninput="(function(el){if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].summary=el.innerHTML;})(this)">${s.summary||''}</div></div>`
       : s.summary ? `<div class="summary-block"><div class="summary-text">${s.summary}</div></div>` : '';
     return `<div class="slide slide-content">
       ${editToolbar}
@@ -3313,6 +3358,11 @@ function renderSlide(s, idx, clientName, consultant) {
       </div>
     </div>`;
 
+    const netlinkAiBtn = editable && s.image ? `<button id="ai-analyze-btn-${idx}" onclick="analyzeSlideImage(${idx})" style="font-size:12px;background:var(--green-light);color:var(--green-dark);border:1px solid #b7d9c2;border-radius:6px;padding:4px 12px;cursor:pointer;margin-bottom:6px;display:block;">✨ Analyser avec l'IA</button>` : '';
+    const netlinkSummary = editable
+      ? `${netlinkAiBtn}<div class="chart-summary-edit" contenteditable="true" data-placeholder="Commentaire sur le profil de liens…" oninput="onSummaryEdit(${idx}, this.textContent)">${s.summary || ''}</div>`
+      : s.summary ? `<div class="algo-seo-summary">${s.summary}</div>` : '';
+
     return `<div class="slide slide-content">
       ${editToolbar}
       <div class="slide-accent-bar"></div>
@@ -3322,6 +3372,77 @@ function renderSlide(s, idx, clientName, consultant) {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;flex:1;min-height:0;">
           <div id="chart-area-${idx}" style="display:flex;flex-direction:column;">${imageHtml}</div>
           <div>${methodeHtml}</div>
+        </div>
+        ${netlinkSummary}
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // SEO VISIBILITY CHART — Potentiel SEO · Visibilité actuelle vs potentielle
+  if (s.type === 'seo-visibility-chart') {
+    const b = s.bars || {};
+    const vals = {
+      top3: parseInt(b.top3) || 0,
+      basPage1: parseInt(b.basPage1) || 0,
+      page2: parseInt(b.page2) || 0,
+      page34: parseInt(b.page34) || 0,
+      page59: parseInt(b.page59) || 0,
+    };
+    const totalActuel = vals.top3 + vals.basPage1;
+    const totalPotentiel = vals.page2 + vals.page34 + vals.page59;
+    const allVals = Object.values(vals);
+    const maxVal = Math.max(...allVals, 1);
+
+    const barH = 160; // px, fixed bar container height
+
+    const mkInput = (field, val, color) => editable
+      ? `<input type="number" min="0" value="${b[field] || ''}" placeholder="0"
+           oninput="updateVisibilityBar(${idx},'${field}',this.value)"
+           style="width:70px;text-align:center;font-size:20px;font-weight:800;color:${color};border:none;background:transparent;outline:none;-moz-appearance:textfield">`
+      : `<div style="font-size:20px;font-weight:800;color:${color}">${val || '—'}</div>`;
+
+    const mkBar = (field, val, bgFull, bgFill, label) => {
+      const fillH = val ? Math.round((val / maxVal) * barH) : 0;
+      return `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1">
+        ${mkInput(field, val, bgFill)}
+        <div style="font-size:11px;color:#888;font-weight:500">Mots Clés</div>
+        <div style="width:100%;height:${barH}px;background:${bgFull};border-radius:6px 6px 0 0;display:flex;align-items:flex-end;position:relative;overflow:hidden">
+          <div style="width:100%;height:${fillH}px;background:${bgFill};border-radius:6px 6px 0 0;transition:height .3s"></div>
+        </div>
+        <div style="font-size:10px;font-weight:700;text-align:center;line-height:1.3;color:#fff;background:${bgFill};border-radius:0 0 4px 4px;width:100%;padding:4px 2px">${label}</div>
+      </div>`;
+    };
+
+    const greenLight = '#e8f5e9'; const greenDark = '#2d6a4f';
+    const orangeLight = '#fff3e0'; const orangeDark = '#e65100';
+
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        ${ef('title', s.title, 'div', 'slide-title')}
+        ${ef('subtitle', s.subtitle, 'div', 'slide-subtitle')}
+        <div style="display:flex;gap:20px;align-items:flex-end;margin-top:1.2rem">
+          <div style="flex:2;border:2px solid ${greenDark};border-radius:8px;padding:12px 10px 0;display:flex;gap:10px;align-items:flex-end">
+            ${mkBar('top3', vals.top3, greenLight, greenDark, 'TOP 3<br>1ère PAGE')}
+            ${mkBar('basPage1', vals.basPage1, greenLight, '#52b788', 'BAS DE<br>1ère PAGE')}
+          </div>
+          <div style="flex:3;border:2px solid ${orangeDark};border-radius:8px;padding:12px 10px 0;display:flex;gap:10px;align-items:flex-end">
+            ${mkBar('page2', vals.page2, orangeLight, '#ffb347', '2ème<br>PAGE')}
+            ${mkBar('page34', vals.page34, orangeLight, '#ff8c00', '3 et 4ème<br>PAGE')}
+            ${mkBar('page59', vals.page59, orangeLight, orangeDark, '5 à 9ème<br>PAGE')}
+          </div>
+        </div>
+        <div style="display:flex;gap:24px;margin-top:1rem;align-items:center">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:18px;height:18px;background:${greenLight};border:2px solid ${greenDark};border-radius:3px"></div>
+            <span style="font-size:13px;font-weight:600">visibilité actuelle${totalActuel ? ` > <strong>${totalActuel.toLocaleString('fr-FR')}</strong> Mots Clés` : ''}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:18px;height:18px;background:${orangeLight};border:2px solid ${orangeDark};border-radius:3px"></div>
+            <span style="font-size:13px;font-weight:600">visibilité potentielle${totalPotentiel ? ` > <strong>${totalPotentiel.toLocaleString('fr-FR')}</strong> Mots Clés` : ''}</span>
+          </div>
         </div>
       </div>
       ${footer(false)}
@@ -3353,7 +3474,8 @@ function renderSlide(s, idx, clientName, consultant) {
 
     let summaryHtml;
     if (editable) {
-      summaryHtml = `<div class="chart-summary-edit"
+      const aiBtn = s.image ? `<button id="ai-analyze-btn-${idx}" onclick="analyzeSlideImage(${idx})" style="font-size:12px;background:var(--green-light);color:var(--green-dark);border:1px solid #b7d9c2;border-radius:6px;padding:4px 12px;cursor:pointer;margin-bottom:6px;display:block;">✨ Analyser avec l'IA</button>` : '';
+      summaryHtml = `${aiBtn}<div class="chart-summary-edit"
         contenteditable="true"
         data-placeholder="Saisir le commentaire analytique..."
         oninput="onSummaryEdit(${idx}, this.textContent)">${s.summary || ''}</div>`;
@@ -3363,6 +3485,14 @@ function renderSlide(s, idx, clientName, consultant) {
       summaryHtml = '';
     }
 
+    const competitorsHtml = (s.competitors && s.competitors.length) ? `
+      <div style="margin-top:0.75rem;padding:0.6rem 0.85rem;background:var(--green-light);border-radius:8px;border:1px solid var(--green-mid,#c3e6cb)">
+        <div style="font-size:11px;font-weight:600;color:var(--green-dark);letter-spacing:0.04em;margin-bottom:0.35rem">DOMAINES CONCURRENTS</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${s.competitors.map(c => `<span style="font-size:12px;font-family:monospace;background:#fff;border:1px solid var(--green-mid,#c3e6cb);border-radius:5px;padding:2px 8px;color:var(--green-dark)">${c}</span>`).join('')}
+        </div>
+      </div>` : '';
+
     return `<div class="slide slide-content">
       ${editToolbar}
       <div class="slide-accent-bar"></div>
@@ -3371,6 +3501,7 @@ function renderSlide(s, idx, clientName, consultant) {
         ${s.subtitle || editable ? ef('subtitle', s.subtitle, 'div', 'slide-subtitle') : ''}
         <div class="chart-area" id="chart-area-${idx}">${imageHtml}</div>
         ${summaryHtml}
+        ${competitorsHtml}
       </div>
       ${footer(false)}
     </div>`;

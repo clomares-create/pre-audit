@@ -2029,6 +2029,22 @@ async function confirmAndGenerate() {
           { type: 'netlinking-concurrence', title: 'Netlinking · Popularité de la concurrence', subtitle: 'Stratégie de netlinking pour renforcer la puissance et la popularité du site avec différents types de backlinks selon votre profil actuel et celui de vos concurrents.', image: null, summary: '' }
         );
       }
+
+      // Inject GEO slides after section "07" (Analyse GEO)
+      const sec07Idx = slides.findIndex(s => s.type === 'section' && s.label === '07');
+      if (sec07Idx !== -1) {
+        // Remove any AI-generated geo slide right after section 07
+        if (slides[sec07Idx + 1] && slides[sec07Idx + 1].type === 'geo') {
+          slides.splice(sec07Idx + 1, 1);
+        }
+        slides.splice(sec07Idx + 1, 0,
+          { type: 'geo-overview' },
+          { type: 'geo-contexte', geoTopics: '', geoMetrics: { trafficPct: '', ecommerce: '', mentions: '', citations: '', pages: '', score: '' }, summary: '' },
+          { type: 'geo-presence', metrics: { topicsCoverts: '', topicsSans: '', urlsCitees: '', scoreMax: '' }, summary: '' },
+          { type: 'geo-plateforme', metrics: { mentionsChatgpt: '', mentionsGemini: '' }, image: null, summary: '' },
+          { type: 'geo-synthese', topic: { score: '', name: '', country: '', mentions: '', volume: '', note: '' }, source: { domain: '', url: '', type: '', prompts: '' }, summary: '' }
+        );
+      }
     }
 
     // Inject PSI technical slide after section "03"
@@ -2289,9 +2305,8 @@ function buildPrompt({ clientName, clientUrl, sector, geo, services, meetingCont
 9. type "section" — label = "06", title = "Votre netlinking VS la concurrence", subtitle = "Analyse du profil de liens entrants", body = null, summary = null
     NE PAS générer de slide de contenu pour cette section — le contenu sera injecté séparément.
 
-12. type "section" — label = "07", title = "Analyse GEO", subtitle = "Visibilité sur les IA génératives (ChatGPT, Perplexity, Gemini...)", body = null, summary = null
-
-13. type "geo" — présence IA actuelle, score de visibilité, topics couverts vs manqués, concurrents présents dans les réponses IA. metrics obligatoires (score visibilité /100, topics couverts, topics manqués, mentions IA). summary obligatoire.
+12. type "section" — label = "07", title = "Analyse GEO", subtitle = "Visibilité sur les IA génératives : ChatGPT, Perplexity, Gemini, Claude…", body = null, summary = null
+    NE PAS générer de slide de contenu pour cette section — le contenu sera injecté séparément.
 ` : `
 3. type "section" — label = "01", title = "Contexte & Objectifs", subtitle = "Analyse du positionnement et des enjeux", body = null, summary = null
 
@@ -2662,6 +2677,214 @@ function renderSlide(s, idx, clientName, consultant) {
         </div>
       </div>
       ${footer(true)}
+    </div>`;
+  }
+
+  // GEO OVERVIEW — slide statique "Analyse GEO · Vue d'ensemble" (6 cards)
+  if (s.type === 'geo-overview') {
+    const geoCards = [
+      { num: '01', title: 'Contexte & GEO', sub: 'Enjeux 2025-2026', dark: true },
+      { num: '02', title: 'Présence IA actuelle', sub: 'Topics couverts', dark: false },
+      { num: '03', title: 'Sources citées', sub: 'Top URLs & insights', dark: false },
+      { num: '04', title: 'Opportunités', sub: 'Topics manqués', dark: false },
+      { num: '05', title: 'Concurrence IA', sub: 'Mentions et leaders', dark: true },
+      { num: '06', title: 'Recommandations', sub: 'Plan d\'action prioritaire', dark: false },
+    ];
+    const cardsHtml = geoCards.map(c => `
+      <div style="background:${c.dark ? 'var(--green-dark)' : '#fff'};border:1.5px solid ${c.dark ? 'transparent' : 'var(--border)'};border-radius:14px;padding:1.4rem 1.6rem;display:flex;flex-direction:column;gap:0.5rem;">
+        <div style="font-size:22px;font-weight:700;color:var(--orange);">${c.num}</div>
+        <div style="font-size:16px;font-weight:700;color:${c.dark ? '#fff' : 'var(--green-dark)'};">${c.title}</div>
+        <div style="font-size:12px;color:${c.dark ? 'rgba(255,255,255,0.65)' : 'var(--text-light)'};">${c.sub}</div>
+      </div>`).join('');
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">Analyse GEO · Vue d'ensemble</div>
+        <div class="slide-subtitle" style="font-style:italic;">Visibilité sur les IA génératives : ChatGPT, Perplexity, Gemini, Claude…</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1rem;">${cardsHtml}</div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // GEO CONTEXTE — "01 · Contexte & GEO · Enjeux 2025-2026"
+  if (s.type === 'geo-contexte') {
+    const m = s.metrics || {};
+    const mkField = (val, placeholder, field, style='') =>
+      editable
+        ? `<span contenteditable="true" data-placeholder="${placeholder}" style="display:inline-block;min-width:40px;border-bottom:1px dashed #bbb;outline:none;${style}" oninput="(function(el){if(window.__currentSlides?.[${idx}]){if(!window.__currentSlides[${idx}].metrics)window.__currentSlides[${idx}].metrics={};window.__currentSlides[${idx}].metrics['${field}']=el.textContent;}})(this)">${val||''}</span>`
+        : `<span>${val||'—'}</span>`;
+    const mkText = (val, placeholder, field, cls='') =>
+      editable
+        ? `<div contenteditable="true" class="${cls}" data-placeholder="${placeholder}" style="outline:none;min-height:1.2em;" oninput="(function(el){if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}]['${field}']=el.innerHTML;})(this)">${val||''}</div>`
+        : `<div class="${cls}">${val||''}</div>`;
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">01 · Contexte & GEO · Enjeux 2025-2026</div>
+        <div class="slide-subtitle" style="font-style:italic;">Pourquoi la visibilité dans les IA génératives devient incontournable.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-top:1rem;flex:1;min-height:0;">
+          <div style="display:flex;flex-direction:column;gap:0.8rem;">
+            <div style="background:#fff;border:1.5px solid var(--border);border-left:4px solid var(--orange);border-radius:8px;padding:1.2rem;flex:1;">
+              <div style="font-size:15px;font-weight:700;color:var(--green-dark);margin-bottom:0.7rem;">Generative Engine Optimization</div>
+              ${mkText(s.geoTopics, 'Description du GEO…', 'geoTopics', '')}
+            </div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" style="height:22px;object-fit:contain;" onerror="this.style.display='none'">
+              <span style="font-size:18px;">🅷</span>
+              <span style="font-size:18px;background:#6e5cf6;color:#fff;border-radius:6px;padding:1px 6px;font-weight:700;font-size:13px;">✳</span>
+              <span style="font-size:18px;background:#10a37f;color:#fff;border-radius:50%;padding:2px 7px;font-weight:700;font-size:13px;">G</span>
+              <span style="font-size:18px;background:#d97706;color:#fff;border-radius:8px;padding:2px 7px;font-size:13px;">✳</span>
+              <span style="font-size:18px;">✦</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.7rem;">
+            <div style="background:#fff;border:1.5px solid var(--border);border-left:3px solid var(--orange);border-radius:8px;padding:0.9rem 1rem;">
+              <div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:0.3rem;">🔍 Part de trafic IA en hausse</div>
+              ${mkText(s.metrics?.trafficPct, 'Texte explicatif…', 'trafficPct', '')}
+            </div>
+            <div style="background:#fff;border:1.5px solid var(--border);border-left:3px solid var(--orange);border-radius:8px;padding:0.9rem 1rem;">
+              <div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:0.3rem;">🛒 Enjeu e-commerce fort</div>
+              ${mkText(s.metrics?.ecommerce, 'Texte explicatif…', 'ecommerce', '')}
+            </div>
+            <div style="background:#fff;border:1.5px solid var(--border);border-left:3px solid var(--orange);border-radius:8px;padding:0.9rem 1rem;">
+              <div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:0.3rem;">📊 Métriques de mesure (source : Semrush)</div>
+              ${mkText(s.metrics?.score, 'Mentions IA, Citations, Pages citées, Score…', 'score', '')}
+            </div>
+          </div>
+        </div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // GEO PRESENCE — "02 · Présence IA actuelle · Topics couverts"
+  if (s.type === 'geo-presence') {
+    const m = s.metrics || {};
+    const mkNum = (val, field) => editable
+      ? `<div contenteditable="true" style="font-size:42px;font-weight:800;color:var(--orange);outline:none;min-width:40px;text-align:center;" oninput="(function(el){if(!window.__currentSlides?.[${idx}].metrics)window.__currentSlides[${idx}].metrics={};window.__currentSlides[${idx}].metrics['${field}']=el.textContent;})(this)">${val||''}</div>`
+      : `<div style="font-size:42px;font-weight:800;color:var(--orange);text-align:center;">${val||'—'}</div>`;
+    const kpiCards = [
+      { field: 'topicsCoverts', label: 'Topics avec<br>présence IA', dark: false },
+      { field: 'topicsSans',    label: 'Topics sans<br>présence', dark: true },
+      { field: 'urlsCitees',    label: 'URLs sources<br>citées', dark: false },
+      { field: 'scoreMax',      label: 'Score visibilité<br>max', dark: true },
+    ];
+    const cardsHtml = kpiCards.map(c => `
+      <div style="background:${c.dark?'var(--green-dark)':'#fff'};border:1.5px solid ${c.dark?'transparent':'var(--border)'};border-radius:12px;padding:1.2rem 0.8rem;display:flex;flex-direction:column;align-items:center;gap:0.5rem;">
+        ${mkNum(m[c.field], c.field)}
+        <div style="font-size:13px;font-weight:600;color:${c.dark?'#fff':'var(--green-dark)'};text-align:center;line-height:1.3;">${c.label}</div>
+      </div>`).join('');
+    const summaryHtml = editable
+      ? `<div class="summary-block"><div contenteditable="true" class="summary-text" data-placeholder="Saisir le commentaire analytique…" style="outline:none;" oninput="(function(el){if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].summary=el.innerHTML;})(this)">${s.summary||''}</div></div>`
+      : s.summary ? `<div class="summary-block"><div class="summary-text">${s.summary}</div></div>` : '';
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">02 · Présence IA actuelle · Topics couverts</div>
+        ${editable || s.subtitle ? `<div class="slide-subtitle" style="font-style:italic;">${s.subtitle||'État des lieux des thématiques sur lesquelles votre site apparaît dans les réponses IA.'}</div>` : ''}
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:1rem;">${cardsHtml}</div>
+        ${summaryHtml}
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // GEO PLATEFORME — "02 · Analyse par plateforme IA"
+  if (s.type === 'geo-plateforme') {
+    const m = s.metrics || {};
+    const mkNum = (val, field) => editable
+      ? `<div contenteditable="true" style="font-size:42px;font-weight:800;color:var(--orange);outline:none;min-width:40px;" oninput="(function(el){if(!window.__currentSlides?.[${idx}].metrics)window.__currentSlides[${idx}].metrics={};window.__currentSlides[${idx}].metrics['${field}']=el.textContent;})(this)">${val||''}</div>`
+      : `<div style="font-size:42px;font-weight:800;color:var(--orange);">${val||'—'}</div>`;
+    const imageHtml = s.image
+      ? `<div class="chart-img-wrap"${editable?` onclick="uploadChartImage(${idx})"`:''}>
+          <img src="${s.image}" alt="Analyse plateforme IA">
+          ${editable?`<div class="chart-img-overlay">🔄 Remplacer l'image</div>`:''}
+        </div>`
+      : editable
+        ? `<div class="chart-placeholder" onclick="uploadChartImage(${idx})">
+            <div style="text-align:center">
+              <div style="font-size:28px;margin-bottom:8px">📊</div>
+              <div style="font-weight:600;margin-bottom:4px">Uploader le graphique</div>
+              <div style="font-size:12px;opacity:0.65">Courbes Mentions / Citations / Pages (Semrush)</div>
+            </div>
+          </div>`
+        : `<div class="chart-placeholder chart-placeholder-static" style="cursor:default;pointer-events:none"><span style="color:#ccc;font-size:13px">Aucune image</span></div>`;
+    const summaryHtml = editable
+      ? `<div class="summary-block"><div contenteditable="true" class="summary-text" data-placeholder="Répartition par LLM…" style="outline:none;" oninput="(function(el){if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].summary=el.innerHTML;})(this)">${s.summary||''}</div></div>`
+      : s.summary ? `<div class="summary-block"><div class="summary-text">${s.summary}</div></div>` : '';
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">02 · Analyse par plateforme IA</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:1rem;margin-top:1.2rem;align-items:start;">
+          <div style="background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:1.2rem;display:flex;flex-direction:column;align-items:center;gap:0.5rem;">
+            <div style="font-size:32px;">💬</div>
+            ${mkNum(m.mentionsChatgpt, 'mentionsChatgpt')}
+            <div style="font-size:13px;font-weight:600;color:var(--green-dark);text-align:center;">Mentions<br>ChatGPT</div>
+          </div>
+          <div style="background:var(--green-dark);border-radius:12px;padding:1.2rem;display:flex;flex-direction:column;align-items:center;gap:0.5rem;">
+            <div style="font-size:32px;">✦</div>
+            ${mkNum(m.mentionsGemini, 'mentionsGemini')}
+            <div style="font-size:13px;font-weight:600;color:#fff;text-align:center;">Mentions<br>Gemini</div>
+          </div>
+          <div id="chart-area-${idx}" style="height:220px;">${imageHtml}</div>
+        </div>
+        ${summaryHtml}
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // GEO SYNTHESE — "03 · Synthèse présence IA"
+  if (s.type === 'geo-synthese') {
+    const t = s.topic || {};
+    const src = s.source || {};
+    const mkF = (val, placeholder, obj, field) => editable
+      ? `<span contenteditable="true" data-placeholder="${placeholder}" style="outline:none;border-bottom:1px dashed #bbb;min-width:30px;display:inline-block;" oninput="(function(el){if(window.__currentSlides?.[${idx}]){if(!window.__currentSlides[${idx}]['${obj}'])window.__currentSlides[${idx}]['${obj}']={};window.__currentSlides[${idx}]['${obj}']['${field}']=el.textContent;}})(this)">${val||''}</span>`
+      : `<span>${val||'—'}</span>`;
+    const summaryHtml = editable
+      ? `<div class="summary-block"><div contenteditable="true" class="summary-text" data-placeholder="Commentaire analytique…" style="outline:none;" oninput="(function(el){if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].summary=el.innerHTML;})(this)">${s.summary||''}</div></div>`
+      : s.summary ? `<div class="summary-block"><div class="summary-text">${s.summary}</div></div>` : '';
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">03 · Synthèse présence IA</div>
+        <div style="font-size:12px;color:var(--text-light);font-style:italic;margin-bottom:0.8rem;">Topic avec présence IA détectée</div>
+        <div style="background:#fff;border:1.5px solid var(--border);border-left:4px solid var(--orange);border-radius:8px;padding:1rem 1.2rem;display:flex;align-items:center;gap:1.2rem;margin-bottom:1rem;">
+          <div style="background:var(--orange);color:#fff;border-radius:50%;width:52px;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;">
+            <div style="font-size:16px;font-weight:800;line-height:1;">${mkF(t.score,'Score','topic','score')}</div>
+            <div style="font-size:10px;line-height:1;">/100</div>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:15px;font-weight:700;color:var(--green-dark);margin-bottom:0.4rem;">${mkF(t.name,'Nom du topic','topic','name')}</div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+              <span style="background:var(--green-dark);color:#fff;border-radius:20px;padding:3px 10px;font-size:11px;">🇫🇷 ${mkF(t.country,'France','topic','country')}</span>
+              <span style="background:var(--green-dark);color:#fff;border-radius:20px;padding:3px 10px;font-size:11px;">${mkF(t.mentions,'1','topic','mentions')} mention IA</span>
+              <span style="background:var(--green-dark);color:#fff;border-radius:20px;padding:3px 10px;font-size:11px;">${mkF(t.volume,'974','topic','volume')} rech./mois</span>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--text-light);font-style:italic;max-width:180px;text-align:right;">${mkF(t.note,'Note contextuelle…','topic','note')}</div>
+        </div>
+        <div style="font-size:12px;color:var(--text-light);font-style:italic;margin-bottom:0.6rem;">Sources et pages citées par les IA</div>
+        <div style="background:#fff;border:1.5px solid var(--border);border-left:4px solid var(--orange);border-radius:8px;padding:1rem 1.2rem;display:flex;align-items:center;gap:1.2rem;margin-bottom:1rem;">
+          <div style="flex:1;">
+            <div style="font-size:15px;font-weight:700;color:var(--green-dark);">${mkF(src.domain,'domaine.fr','source','domain')}</div>
+            <div style="font-size:11px;color:var(--text-light);">${mkF(src.url,'https://…','source','url')} · ${mkF(src.type,'Fiche produit','source','type')}</div>
+          </div>
+          <div style="background:var(--orange);color:#fff;border-radius:50%;width:48px;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;text-align:center;">
+            <div style="font-size:16px;font-weight:800;">${mkF(src.prompts,'1','source','prompts')}</div>
+            <div style="font-size:10px;">prompt</div>
+          </div>
+        </div>
+        ${summaryHtml}
+      </div>
+      ${footer(false)}
     </div>`;
   }
 

@@ -2456,22 +2456,21 @@ async function aiDetectCompetitors() {
   }
 
   try {
-    const detectPrompt = `Tu es un expert en stratégie digitale. Identifie les principaux concurrents en ligne de cette entreprise.
+    const detectPrompt = `Recherche sur internet les principaux concurrents de cette entreprise.
 
-Informations :
-- Nom : ${clientName}
-- URL : ${clientUrl}
-- Secteur : ${sector || 'Non précisé'}
-- Zone géographique : ${geo || 'France'}
-${currentCompetitors.length ? `- Concurrents déjà identifiés : ${currentCompetitors.join(', ')}` : ''}
-${meetingContent ? `\nExtrait du rapport de réunion :\n${meetingContent.slice(0, 3000)}` : ''}
+Entreprise : ${clientName}${clientUrl ? ` (${clientUrl})` : ''}
+Secteur : ${sector || 'non précisé'}
+Zone géographique : ${geo || 'France'}
+${currentCompetitors.length ? `Concurrents déjà connus : ${currentCompetitors.join(', ')}` : ''}
+${meetingContent ? `\nContexte (extrait réunion) :\n${meetingContent.slice(0, 1500)}` : ''}
 
-Propose une liste de concurrents digitaux. Réponds UNIQUEMENT avec un tableau JSON de noms de domaine (ex: "site.fr", "site.com"). JAMAIS de noms d'entreprises, JAMAIS de texte, JAMAIS d'URL complètes avec https://. Uniquement des domaines bruts. 5 concurrents maximum. Exemple exact : ["concurrent1.fr","concurrent2.com","concurrent3.fr"]`;
+Effectue une recherche web pour identifier 5 concurrents directs réels. Réponds UNIQUEMENT avec un tableau JSON de noms de domaine bruts. Pas de https://, pas de slash, pas de noms d'entreprises, pas d'explication. Format exact : ["domaine1.fr","domaine2.com","domaine3.fr","domaine4.fr","domaine5.com"]`;
 
+    // Use Perplexity Sonar for web-search-powered competitor detection
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://sonate.group', 'X-Title': 'Sonate Pre-audit Generator' },
-      body: JSON.stringify({ model, max_tokens: 150, messages: [{ role: 'user', content: detectPrompt }] })
+      body: JSON.stringify({ model: 'perplexity/sonar', max_tokens: 300, messages: [{ role: 'user', content: detectPrompt }] })
     });
     const data = await res.json();
     const raw = data.choices?.[0]?.message?.content || '';

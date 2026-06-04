@@ -1233,12 +1233,14 @@
           </div>
         </div>
         <div id="confirmCompetitors" style="display:none;margin-top:1.5rem">
-          <div style="font-size:14px;color:var(--text);margin-bottom:1rem">Concurrents identifiés pour l'analyse. Ajoutez ou supprimez avant de générer.</div>
+          <div style="font-size:14px;color:var(--text);margin-bottom:0.75rem">Concurrents pour l'analyse. Ajoutez ou supprimez avant de générer.</div>
           <div class="competitor-chips" id="competitorChips"></div>
           <div class="comp-add-row">
             <input type="text" id="competitorInput" placeholder="Ajouter un concurrent (ex: site.fr)" onkeydown="if(event.key==='Enter')addCompetitorChip()">
             <button class="btn btn-outline" onclick="addCompetitorChip()">+ Ajouter</button>
           </div>
+          <button id="aiDetectBtn" class="btn btn-outline" style="width:100%;margin-top:0.6rem;font-size:13px" onclick="aiDetectCompetitors()">🔍 Identifier les concurrents avec l'IA</button>
+          <div id="aiDetectStatus" style="display:none;font-size:12px;color:var(--text-muted);margin-top:0.4rem;text-align:center">Recherche en cours…</div>
           <div style="display:flex;gap:10px;margin-top:1rem">
             <button class="btn btn-outline" style="flex:1" onclick="resetApp()">← Annuler</button>
             <button class="btn btn-primary" style="flex:2" onclick="confirmAndGenerate()">Générer le pré-audit →</button>
@@ -1873,18 +1875,25 @@ function addCompetitorChip() {
 }
 
 async function detectCompetitors() {
-  const { clientName, clientUrl, sector, geo, competitorsRaw, meetingContent, briefContent, model, apiKey } = _pendingContext;
+  const { competitorsRaw } = _pendingContext;
 
   document.getElementById('confirmServices').style.display = 'none';
-  document.getElementById('progressTitle').textContent = 'Détection des concurrents...';
-  document.getElementById('progressSteps').innerHTML = STEPS.filter(s => s.id !== 'detect').map(s =>
-    `<div class="progress-step pending"><div class="step-icon pending">○</div><div><div class="step-label">${s.label}</div><div class="step-sub">${s.sub}</div></div></div>`
-  ).join('');
 
-  // Parse manually entered competitors
   const manualCompetitors = competitorsRaw ? competitorsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+  renderCompetitorChips(manualCompetitors);
+  document.getElementById('progressTitle').textContent = 'Concurrents — ajoutez ou laissez l\'IA les identifier';
+  document.getElementById('confirmCompetitors').style.display = '';
+}
 
-  let detectedCompetitors = [...manualCompetitors];
+async function aiDetectCompetitors() {
+  const { clientName, clientUrl, sector, geo, meetingContent, model, apiKey } = _pendingContext;
+  const currentCompetitors = getCompetitorChips();
+
+  const btn = document.getElementById('aiDetectBtn');
+  const status = document.getElementById('aiDetectStatus');
+  btn.disabled = true;
+  btn.textContent = '⏳ Recherche…';
+  status.style.display = '';
 
   try {
     const detectPrompt = `Tu es un expert en stratégie digitale. Identifie les principaux concurrents en ligne de cette entreprise.
@@ -1894,11 +1903,10 @@ Informations :
 - URL : ${clientUrl}
 - Secteur : ${sector || 'Non précisé'}
 - Zone géographique : ${geo || 'France'}
-${manualCompetitors.length ? `- Concurrents déjà identifiés : ${manualCompetitors.join(', ')}` : ''}
+${currentCompetitors.length ? `- Concurrents déjà identifiés : ${currentCompetitors.join(', ')}` : ''}
 ${meetingContent ? `\nExtrait du rapport de réunion :\n${meetingContent.slice(0, 3000)}` : ''}
 
-Propose une liste de concurrents digitaux (sites web). Inclus les concurrents déjà identifiés et complète avec d'autres pertinents.
-Réponds UNIQUEMENT avec un tableau JSON de domaines. Exemple : ["concurrent1.fr","concurrent2.com","concurrent3.fr"]. 5 concurrents maximum. Aucun texte avant ou après.`;
+Propose une liste de concurrents digitaux. Réponds UNIQUEMENT avec un tableau JSON de noms de domaine (ex: "site.fr", "site.com"). JAMAIS de noms d'entreprises, JAMAIS de texte, JAMAIS d'URL complètes avec https://. Uniquement des domaines bruts. 5 concurrents maximum. Exemple exact : ["concurrent1.fr","concurrent2.com","concurrent3.fr"]`;
 
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -1910,15 +1918,15 @@ Réponds UNIQUEMENT avec un tableau JSON de domaines. Exemple : ["concurrent1.fr
     const match = raw.match(/\[[\s\S]*?\]/);
     if (match) {
       const parsed = JSON.parse(match[0]);
-      if (Array.isArray(parsed) && parsed.length) detectedCompetitors = parsed;
+      if (Array.isArray(parsed) && parsed.length) renderCompetitorChips(parsed);
     }
+    status.textContent = 'Concurrents identifiés par l\'IA — modifiez si besoin.';
   } catch (e) {
-    // use manual ones or empty
+    status.textContent = 'Erreur lors de la détection. Vérifiez votre clé API.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔍 Identifier les concurrents avec l\'IA';
   }
-
-  renderCompetitorChips(detectedCompetitors);
-  document.getElementById('progressTitle').textContent = 'Concurrents identifiés — confirmez avant de générer';
-  document.getElementById('confirmCompetitors').style.display = '';
 }
 
 async function confirmAndGenerate() {

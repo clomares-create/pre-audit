@@ -318,9 +318,9 @@
   }
 
   /* SECTION SEPARATOR */
-  .slide-section { background: #111; border-color: #111; }
+  .slide-section { background: #123C34; border-color: #123C34; }
   .slide-section .slide-inner {
-    background: #111;
+    background: #123C34;
     min-height: 220px; padding: 2.5rem 3rem;
     display: flex; flex-direction: column; justify-content: flex-end;
     position: relative; overflow: hidden;
@@ -728,6 +728,80 @@
   }
   #regenPanel .btn-regen-go:hover { background: #d04e20; }
   #regenPanel .btn-regen-go:disabled { opacity: 0.5; cursor: default; }
+
+  /* SONATE GROUP SLIDES */
+  .sonate-group-intro { font-style: italic; color: #888; font-size: 14px; margin: 6px 0 22px; line-height: 1.6; }
+  .sonate-logo-block { text-align: center; margin: 0 0 24px; }
+  .sonate-logo-text {
+    font-size: 52px; font-weight: 900; color: #123C34; letter-spacing: -0.04em; line-height: 1;
+    font-family: Georgia, serif;
+  }
+  .sonate-logo-sub { font-size: 13px; color: #888; margin-top: 4px; letter-spacing: 0.05em; }
+  .sonate-agencies-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .sonate-agency-card {
+    border: 2px solid #123C34; border-radius: 14px;
+    padding: 22px 16px; text-align: center; background: transparent;
+  }
+  .sonate-agency-name { font-size: 20px; font-weight: 800; color: #123C34; margin-bottom: 8px; }
+  .sonate-agency-desc { font-size: 13px; color: #666; line-height: 1.4; }
+
+  .sonate-kpi-subtitle { font-size: 18px; font-weight: 700; color: #1a1a18; margin: 4px 0 20px; }
+  .sonate-kpi-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .sonate-kpi-card {
+    border: 2px solid #123C34; border-radius: 14px;
+    padding: 24px 12px; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .sonate-kpi-card.dark { background: #123C34; }
+  .sonate-kpi-num { font-size: 52px; font-weight: 900; color: #e85d2a; line-height: 1; }
+  .sonate-kpi-label { font-size: 13px; color: #555; line-height: 1.3; }
+  .sonate-kpi-card.dark .sonate-kpi-label { color: rgba(255,255,255,0.75); }
+  .sonate-refs-label { font-size: 14px; font-weight: 700; color: #1a1a18; margin-bottom: 8px; }
+  .sonate-refs-row { font-size: 16px; font-weight: 700; color: #1a1a18; letter-spacing: 0.01em; line-height: 1.8; }
+
+  .sonate-team-layout { display: flex; gap: 24px; align-items: center; margin-top: 16px; flex: 1; }
+  .sonate-team-photo {
+    flex: 1; min-height: 220px; border-radius: 12px; overflow: hidden;
+    background: #e8e4db; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; position: relative;
+  }
+  .sonate-team-photo img { width: 100%; height: 100%; object-fit: cover; }
+  .sonate-team-photo-placeholder {
+    text-align: center; color: #aaa; padding: 20px;
+  }
+  .sonate-team-photo-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.35);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 13px; font-weight: 600; opacity: 0; transition: opacity 0.2s;
+  }
+  .sonate-team-photo:hover .sonate-team-photo-overlay { opacity: 1; }
+  .sonate-locations { display: flex; flex-direction: column; gap: 12px; min-width: 160px; }
+  .sonate-location-pin {
+    display: flex; align-items: center; gap: 10px;
+    border: 2px solid #123C34; border-radius: 40px;
+    padding: 10px 18px; font-size: 15px; font-weight: 700; color: #123C34;
+  }
+  .sonate-location-pin-dot {
+    width: 30px; height: 30px; border-radius: 50%; background: #e85d2a;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    font-size: 14px; color: white;
+  }
+
+  .sonate-tagline-slide { background: #123C34 !important; border-color: #123C34 !important; }
+  .sonate-tagline-inner {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 380px; text-align: center; position: relative;
+  }
+  .sonate-tagline-bg-circle {
+    position: absolute; border-radius: 50%; border: 60px solid rgba(255,255,255,0.07);
+    pointer-events: none;
+  }
+  .sonate-tagline-title {
+    font-size: 48px; font-weight: 800; color: #fff;
+    letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 20px; position: relative;
+  }
+  .sonate-tagline-bar { width: 60px; height: 4px; background: #e85d2a; border-radius: 2px; margin-bottom: 18px; }
+  .sonate-tagline-sub { font-size: 16px; font-style: italic; color: rgba(255,255,255,0.7); position: relative; }
 
   /* ALGO SEO SLIDE */
   .algo-seo-intro { font-style: italic; color: #666; font-size: 14px; margin: 8px 0 24px; line-height: 1.6; }
@@ -1746,51 +1820,34 @@ async function confirmAndGenerate() {
     // Compute service flags for static injections
     const hasSeo = services.some(s => s.toLowerCase().includes('seo'));
 
-    // For SEO reports, inject "Votre trafic VS la concurrence" section before "Notre Proposition"
+    // STATIC INJECTIONS (SEO reports only)
     if (hasSeo) {
-      const proposalIdx = slides.findIndex(s => s.type === 'section' && (s.title || '').includes('Proposition'));
-      const insertAt = proposalIdx !== -1 ? proposalIdx : Math.max(slides.length - 3, 0);
-      slides.splice(insertAt, 0,
-        { type: 'section', label: '', title: 'Votre trafic VS la concurrence', subtitle: 'Données issues de vos outils SEO' },
-        { type: 'editable-chart', title: 'Trafic concurrence · Marché', subtitle: 'Estimation du trafic SEO généré par les concurrents', image: null, summary: '' },
-        { type: 'editable-chart', title: 'Performance de votre trafic seo', subtitle: 'Estimation de votre trafic SEO', image: null, summary: '' },
-        { type: 'editable-chart', title: 'Potentiel SEO · Visibilité actuelle vs potentielle', subtitle: 'Évolution attendue du portefeuille de mots-clés positionnés sur Google.', image: null, summary: '' },
-        { type: 'editable-chart', title: 'Potentiel SEO · Vue d\'ensemble des positions', subtitle: 'Améliorer les positions existantes – répartition actuelle des mots-clés positionnés.', image: null, summary: '' }
-      );
-    }
+      // Inject algo-seo slide after section "02"
+      const sec02Idx = slides.findIndex(s => s.type === 'section' && s.label === '02');
+      if (sec02Idx !== -1) slides.splice(sec02Idx + 1, 0, { type: 'algo-seo' });
 
-    // For SEO reports, inject the fixed "Fonctionnement de l'algorithme" slide after section "01"
-    if (hasSeo) {
-      const section01Idx = slides.findIndex(s => s.type === 'section' && s.label === '01');
-      if (section01Idx !== -1) {
-        slides.splice(section01Idx + 1, 0, { type: 'algo-seo' });
+      // Inject editable-chart slides after section "04" (trafic VS concurrence)
+      const sec04Idx = slides.findIndex(s => s.type === 'section' && s.label === '04');
+      if (sec04Idx !== -1) {
+        slides.splice(sec04Idx + 1, 0,
+          { type: 'editable-chart', title: 'Trafic concurrence · Marché', subtitle: 'Estimation du trafic SEO généré par les concurrents', image: null, summary: '' },
+          { type: 'editable-chart', title: 'Performance de votre trafic SEO', subtitle: 'Estimation de votre trafic SEO actuel', image: null, summary: '' },
+          { type: 'editable-chart', title: 'Potentiel SEO · Visibilité actuelle vs potentielle', subtitle: 'Évolution attendue du portefeuille de mots-clés positionnés sur Google', image: null, summary: '' },
+          { type: 'editable-chart', title: 'Potentiel SEO · Vue d\'ensemble des positions', subtitle: 'Répartition actuelle des mots-clés positionnés', image: null, summary: '' }
+        );
+      }
+
+      // Inject editable-chart slides after section "06" (netlinking VS concurrence)
+      const sec06Idx = slides.findIndex(s => s.type === 'section' && s.label === '06');
+      if (sec06Idx !== -1) {
+        slides.splice(sec06Idx + 1, 0,
+          { type: 'editable-chart', title: 'Profil de liens entrants · Votre site', subtitle: 'Volume et qualité des backlinks pointant vers votre domaine', image: null, summary: '' },
+          { type: 'editable-chart', title: 'Profil de liens entrants · Concurrents', subtitle: 'Comparaison du netlinking avec vos principaux concurrents', image: null, summary: '' }
+        );
       }
     }
 
-    // If sitemap failed, inject a static error slide where "indexation" would be
-    if (!sitemapData) {
-      const sitemapErrorSlide = {
-        type: 'indexation',
-        label: 'Indexation',
-        title: 'Structure & Indexation',
-        subtitle: `Analyse du sitemap — ${clientUrl}`,
-        scores: null,
-        metrics: null,
-        badges: null,
-        body: `<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;font-size:13px">
-          <span style="font-size:20px">⚠️</span>
-          <div><strong>Sitemap introuvable ou inaccessible</strong><br>Aucun fichier sitemap.xml n'a pu être récupéré sur ce site. Le site utilise peut-être un sitemap non standard, ou le fichier est protégé.</div>
-        </div>`,
-        summary: 'Le sitemap du site n\'a pas pu être analysé — données d\'indexation indisponibles.',
-        accentColor: 'red',
-      };
-      const section03Idx = slides.findIndex(s => s.type === 'section' && s.label === '03');
-      if (section03Idx !== -1) {
-        slides.splice(section03Idx + 1, 0, sitemapErrorSlide);
-      }
-    }
-
-    // Always inject the static technical slide after section "02"
+    // Inject PSI technical slide after section "03"
     const mkPsiSide = (d) => d ? {
       score: d.performance,
       fcp: d.fcp, fcpScore: d.fcpScore,
@@ -1806,13 +1863,43 @@ async function confirmAndGenerate() {
       subtitle: `Page d'accueil · ${clientUrl}`,
       psi: pagespeedData ? { mobile: mkPsiSide(pagespeedData.mobile), desktop: mkPsiSide(pagespeedData.desktop) } : null,
     };
-    const section02Idx = slides.findIndex(s => s.type === 'section' && s.label === '02');
-    if (section02Idx !== -1) {
-      slides.splice(section02Idx + 1, 0, techSlide);
-    } else {
-      const introIdx = slides.findIndex(s => s.type === 'intro');
-      slides.splice(introIdx !== -1 ? introIdx + 1 : 2, 0, techSlide);
+    // Inject PSI + indexation after section "03" (Technique SEO)
+    const toInjectAfterSec03 = [techSlide];
+    if (sitemapData) {
+      toInjectAfterSec03.push({
+        type: 'indexation',
+        label: 'Indexation',
+        title: 'Structure & Indexation',
+        subtitle: `Analyse du sitemap — ${clientUrl}`,
+        body: null,
+        metrics: [
+          { value: String(sitemapData.totalUrls), label: 'Pages déclarées au sitemap' },
+          { value: sitemapData.topPatterns.length > 0 ? sitemapData.topPatterns[0][0] : '—', label: 'Section principale' },
+        ],
+        badges: null,
+        scores: null,
+        summary: `${sitemapData.totalUrls} URLs déclarées — dernière mise à jour : ${sitemapData.mostRecent || 'inconnue'}`,
+        accentColor: 'green',
+      });
     }
+    const sec03PsiIdx = slides.findIndex(s => s.type === 'section' && s.label === '03');
+    if (sec03PsiIdx !== -1) {
+      slides.splice(sec03PsiIdx + 1, 0, ...toInjectAfterSec03);
+    }
+
+    // Always inject "Un groupe 100% digital" section just after "Notre Proposition"
+    const proposalIdx = slides.findIndex(s => s.type === 'section' && (s.title || '').includes('Proposition'));
+    const groupInsertAt = proposalIdx !== -1
+      ? slides.findIndex((s, i) => i > proposalIdx && s.type === 'closing') + 1 || slides.length
+      : slides.length;
+    const groupLabel = String(slides.filter(s => s.type === 'section').length + 1).padStart(2, '0');
+    slides.splice(groupInsertAt, 0,
+      { type: 'section', label: groupLabel, title: 'Un groupe 100% digital', subtitle: 'Votre croissance est clé' },
+      { type: 'sonate-group' },
+      { type: 'sonate-kpi' },
+      { type: 'sonate-team', image: null },
+      { type: 'sonate-tagline' }
+    );
 
     // Render
     window.currentReportId = null;
@@ -1944,24 +2031,46 @@ async function fetchSitemapData(siteUrl) {
 function buildPrompt({ clientName, clientUrl, sector, geo, services, meetingContent, briefContent, consultant, pagespeedData, sitemapData, competitors }) {
   const hasSeo = services.some(s => s.toLowerCase().includes('seo'));
   const hasSea = services.some(s => s.toLowerCase().includes('sea'));
-  const hasGeo = services.some(s => s.toLowerCase().includes('geo'));
 
-  let sectionCounter = 3;
-  const geoSection = hasGeo ? `
-- type "section" — label = "0${sectionCounter}", title = "Analyse GEO", subtitle = "Visibilité sur les IA génératives (ChatGPT, Perplexity, Gemini...)", summary = null
-- type "geo" — présence IA actuelle, score, topics couverts vs manqués, concurrents IA. metrics obligatoires (score visibilité /100, topics couverts, topics manqués, mentions IA). summary obligatoire
-${(++sectionCounter, '')}` : '';
-  const seaSection = hasGeo
-    ? `- type "section" — label = "0${++sectionCounter}", title = "Référencement Payant", subtitle = "Comprendre les leviers Google Ads", summary = null
-- type "sea" — analyse concurrents sur Google Ads, stratégie recommandée. summary obligatoire
-- type "competition" — analyse des concurrents digitaux${competitors?.length ? ` suivants (utilise EXACTEMENT ces concurrents, dans cet ordre) : ${competitors.join(', ')}` : ' (les 3 principaux)'}. Forces/faiblesses pour chacun. summary obligatoire`
-    : hasSea
-    ? `- type "section" — label = "0${sectionCounter}", title = "Référencement Payant", subtitle = "Comprendre les leviers Google Ads", summary = null
-- type "sea" — analyse concurrents sur Google Ads, stratégie recommandée. summary obligatoire
-- type "competition" — analyse des concurrents digitaux${competitors?.length ? ` suivants (utilise EXACTEMENT ces concurrents, dans cet ordre) : ${competitors.join(', ')}` : ' (les 3 principaux)'}. Forces/faiblesses pour chacun. summary obligatoire`
-    : `- type "competition" — analyse des concurrents digitaux${competitors?.length ? ` suivants (utilise EXACTEMENT ces concurrents, dans cet ordre) : ${competitors.join(', ')}` : ' (les 3 principaux)'}. Forces/faiblesses pour chacun. summary obligatoire`;
+  const proposalLabel = hasSeo ? '08' : (hasSea ? '03' : '02');
 
-  const proposalSectionLabel = String(sectionCounter + 1).padStart(2, '0');
+  const seoStructure = hasSeo ? `
+3. type "section" — label = "01", title = "Contexte & Objectifs", subtitle = "Analyse du positionnement et des enjeux", body = null, summary = null
+
+4. type "intro" — contexte de l'entreprise, ce que Sonate a observé, besoins identifiés, enjeux clés. summary obligatoire.
+
+5. type "section" — label = "02", title = "Algorithme", subtitle = "Comprendre les leviers du référencement naturel", body = null, summary = null
+   NE PAS générer de slide de contenu pour cette section — le contenu sera injecté séparément.
+
+6. type "section" — label = "03", title = "Technique SEO", subtitle = "Audit technique du site ${clientUrl}", body = null, summary = null
+   NE PAS générer de slide de contenu pour cette section — le contenu sera injecté séparément.
+
+7. type "section" — label = "04", title = "Votre trafic VS la concurrence", subtitle = "Positionnement SEO actuel et potentiel", body = null, summary = null
+   NE PAS générer de slide de contenu pour cette section — le contenu sera injecté séparément.
+
+8. type "section" — label = "05", title = "Stratégie de contenu", subtitle = "Méthodologie pour gagner des positions", body = null, summary = null
+
+9. type "seo" — analyse SEO détaillée, opportunités mots-clés, potentiel de trafic, état du contenu actuel. summary obligatoire.
+
+10. type "content" — stratégie de contenu recommandée, méthode Sonate, types de contenus, fréquence. summary obligatoire.
+
+11. type "section" — label = "06", title = "Votre netlinking VS la concurrence", subtitle = "Analyse du profil de liens entrants", body = null, summary = null
+    NE PAS générer de slide de contenu pour cette section — le contenu sera injecté séparément.
+
+12. type "section" — label = "07", title = "Analyse GEO", subtitle = "Visibilité sur les IA génératives (ChatGPT, Perplexity, Gemini...)", body = null, summary = null
+
+13. type "geo" — présence IA actuelle, score de visibilité, topics couverts vs manqués, concurrents présents dans les réponses IA. metrics obligatoires (score visibilité /100, topics couverts, topics manqués, mentions IA). summary obligatoire.
+` : `
+3. type "section" — label = "01", title = "Contexte & Objectifs", subtitle = "Analyse du positionnement et des enjeux", body = null, summary = null
+
+4. type "intro" — contexte de l'entreprise, ce que Sonate a observé. summary obligatoire.
+${hasSea ? `
+5. type "section" — label = "02", title = "Référencement Payant", subtitle = "Comprendre les leviers Google Ads", body = null, summary = null
+
+6. type "sea" — analyse concurrents sur Google Ads, stratégie recommandée. summary obligatoire.
+
+7. type "competition" — analyse des concurrents digitaux${competitors?.length ? ` suivants : ${competitors.join(', ')}` : ' (les 3 principaux)'}. Forces/faiblesses pour chacun. summary obligatoire.
+` : ''}`;
 
   return `Tu es un expert en stratégie digitale de l'agence Sonate. Tu dois générer un pré-audit commercial complet pour un prospect.
 
@@ -1970,7 +2079,7 @@ INFORMATIONS CLIENT :
 - URL : ${clientUrl}
 - Secteur : ${sector || 'Non précisé'}
 - Zone géographique : ${geo || 'France'}
-- Services proposés : ${services.join(', ') || 'SEO, SEA'}
+- Services proposés : ${services.join(', ') || 'SEO'}
 - Commercial : ${consultant}
 
 ${meetingContent ? `RAPPORT DE RÉUNION :\n${meetingContent.slice(0, 6000)}\n` : ''}${briefContent ? `BRIEF COMPLÉMENTAIRE :\n${briefContent.slice(0, 3000)}\n` : ''}
@@ -1978,7 +2087,7 @@ INSTRUCTIONS STRICTES :
 Retourne UNIQUEMENT un tableau JSON valide. Aucun texte avant ou après. Aucune balise markdown.
 IMPORTANT JSON : Dans les champs "body", utilise UNIQUEMENT des guillemets simples pour les attributs HTML (ex: href='url'). Ne mets jamais de guillemets doubles à l'intérieur des valeurs JSON. Pas de retours à la ligne littéraux dans les valeurs.
 
-Le tableau contient entre 18 et 25 objets. Chaque objet a ce format :
+Chaque objet slide a ce format :
 {
   "type": string,
   "label": string,
@@ -1992,46 +2101,22 @@ Le tableau contient entre 18 et 25 objets. Chaque objet a ce format :
   "accentColor": "green|amber|red|blue"
 }
 
-Le champ "summary" est une phrase courte (1-2 lignes max) résumant le point clé. Il est OBLIGATOIRE sur les types : intro, technical, indexation, seo, content, sea, geo, competition, roadmap. Il est null sur : cover, sommaire, section, pricing, closing.
+Le champ "summary" (1-2 lignes max) est OBLIGATOIRE sur : intro, seo, content, sea, geo, competition, roadmap. Il est null sur : cover, sommaire, section, pricing, closing.
 
-IMPORTANT : Ne génère JAMAIS de slide de type "metrics". Ce type est supprimé du rapport.
+IMPORTANT : Ne génère JAMAIS de slide de type "metrics" ni "technical" ni "indexation" — ces types sont injectés séparément.
 
 STRUCTURE OBLIGATOIRE DANS CET ORDRE :
 
 1. type "cover" — title = "${clientName}", subtitle = "Pré-audit digital · ${new Date().toLocaleDateString('fr-FR', {month:'long', year:'numeric'})}", label = "PRÉ-AUDIT", body = null, summary = null
 
-2. type "sommaire" — title = "Sommaire", body = liste HTML <ol><li> des chapitres du document (utiliser les titres des parties de type "section" qui suivent), summary = null
-
-3. type "section" — label = "01", title = "Algorithme & Méthodologie", subtitle = "Comprendre les leviers du référencement naturel", body = null, summary = null
-
-4. type "intro" — contexte de l'entreprise, ce que Sonate a observé. summary obligatoire.
-
-5. type "section" — label = "02", title = "Technique SEO", subtitle = "Audit technique du site ${clientUrl}", body = null, summary = null
-
-6. NE PAS générer de slide de type "technical". Cette slide sera injectée séparément avec les données réelles PageSpeed Insights. Passe directement au point 7.
-
-7. type "section" — label = "03", title = "Indexation & Structure", subtitle = "Analyse de la couverture d'indexation", body = null, summary = null
-
-${sitemapData ? `8. type "indexation" — analyse de l'indexation et de la structure du site. NE PAS inventer de données. Utilise UNIQUEMENT les données réelles ci-dessous pour le body et les metrics.
-DONNÉES RÉELLES SITEMAP :
-- URL du sitemap : ${sitemapData.sitemapUrl}
-- Nombre de pages déclarées : ${sitemapData.totalUrls}
-- Dernière mise à jour déclarée : ${sitemapData.mostRecent || 'inconnue'}
-- Principales sections (préfixes d'URL) : ${sitemapData.topPatterns.map(([k, v]) => `/${k} (${v} pages)`).join(' · ')}
-- Exemples d'URLs : ${sitemapData.sampleUrls.slice(0, 5).join(' · ')}
-summary obligatoire.` : `8. NE PAS générer de slide de type "indexation". Cette slide sera injectée séparément. Passe directement au point 9.`}
-
-${hasSeo ? `9. type "section" — label = "04", title = "Stratégie de Contenu", subtitle = "Méthodologie pour gagner des positions", body = null, summary = null
-10. type "seo" — analyse SEO détaillée, opportunités mots-clés, potentiel. summary obligatoire.
-11. type "content" — stratégie de contenu recommandée, méthode Sonate. summary obligatoire.
-` : ''}${geoSection}${seaSection}
-
-- type "section" — label = "${proposalSectionLabel}", title = "Notre Proposition", subtitle = "Équipe, budget, prochaines étapes", body = null, summary = null
+2. type "sommaire" — title = "Sommaire", body = liste HTML <ol><li> avec les titres des parties "section" qui suivent, summary = null
+${seoStructure}
+- type "section" — label = "${proposalLabel}", title = "Notre Proposition", subtitle = "Équipe, budget, prochaines étapes", body = null, summary = null
 - type "roadmap" — plan d'action à 3 mois, 3 phases distinctes. summary obligatoire.
-- type "pricing" — proposition tarifaire détaillée. Le body doit contenir deux blocs HTML distincts : PHASE 1 SETUP (frais uniques) et PHASE 2 RUN (mensuel récurrent), avec les montants pour chaque service inclus. Tarifs Sonate : SEO setup 1 400 € HT + 700 € HT/mois · SEA setup 1 400 € HT + 400 € HT/mois · GEO setup 800 € HT + 300 € HT/mois · Contenu setup 600 € HT + 400 € HT/mois. summary = total setup et total mensuel en une phrase.
+- type "pricing" — proposition tarifaire. Le body contient deux blocs HTML : PHASE 1 SETUP (frais uniques) et PHASE 2 RUN (mensuel récurrent). Tarifs Sonate : SEO setup 1 400 € HT + 700 € HT/mois · SEA setup 1 400 € HT + 400 € HT/mois · GEO setup 800 € HT + 300 € HT/mois. summary = total setup et total mensuel.
 - type "closing" — prochaines étapes (3 étapes numérotées), contact du commercial ${consultant}. summary = null.
 
-Rédige en français. Ton professionnel et expert. Données chiffrées réalistes et cohérentes avec le secteur "${sector || 'digital'}".`;
+Rédige en français. Ton professionnel et expert. Données chiffrées réalistes pour le secteur "${sector || 'digital'}".`;
 }
 
 let __saveTimeout = null;
@@ -2058,6 +2143,26 @@ function uploadChartImage(idx) {
         <img src="${base64}" alt="Graphique">
         <div class="chart-img-overlay">🔄 Remplacer l'image</div>
       </div>`;
+      debounceSave();
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function uploadTeamPhoto(idx) {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = ev.target.result;
+      if (window.__currentSlides?.[idx]) window.__currentSlides[idx].image = base64;
+      const clientName = document.getElementById('clientName')?.value || '';
+      const clientUrl = document.getElementById('clientUrl')?.value || '';
+      document.getElementById('slidesContainer').innerHTML = renderSlides(window.__currentSlides, { clientName, clientUrl, consultant: '' });
       debounceSave();
     };
     reader.readAsDataURL(file);
@@ -2212,7 +2317,7 @@ function renderSlide(s, idx, clientName, consultant) {
 
   // SECTION SEPARATOR
   if (s.type === 'section') {
-    const num = String(s.num || pageNum).padStart(2, '0');
+    const num = s.label ? String(s.label).padStart(2, '0') : String(s.num || pageNum).padStart(2, '0');
     return `<div class="slide slide-section">
       ${editToolbar}
       <div class="slide-inner">
@@ -2433,6 +2538,132 @@ function renderSlide(s, idx, clientName, consultant) {
         <div class="algo-seo-summary">SEO : ensemble des techniques pour positionner un site dans les premiers résultats de Google.</div>
       </div>
       ${footer(false)}
+    </div>`;
+  }
+
+  // SONATE GROUP — slide 1 : présentation des agences
+  if (s.type === 'sonate-group') {
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-label">À propos</div>
+        <div class="slide-title">Groupe 100% digital</div>
+        <div class="sonate-group-intro">Sonate Group rassemble 3 agences spécialisées au service de la performance digitale.</div>
+        <div class="sonate-logo-block">
+          <div class="sonate-logo-text">Sonate</div>
+          <div class="sonate-logo-sub">Votre croissance est clé</div>
+        </div>
+        <div class="sonate-agencies-grid">
+          <div class="sonate-agency-card">
+            <div class="sonate-agency-name">Wedig</div>
+            <div class="sonate-agency-desc">Prospection & marketing digital</div>
+          </div>
+          <div class="sonate-agency-card">
+            <div class="sonate-agency-name">Let's Clic</div>
+            <div class="sonate-agency-desc">Agence de marketing digital</div>
+          </div>
+          <div class="sonate-agency-card">
+            <div class="sonate-agency-name">deux.io</div>
+            <div class="sonate-agency-desc">Growth & sales automation</div>
+          </div>
+        </div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // SONATE KPI — slide 2 : chiffres clés
+  if (s.type === 'sonate-kpi') {
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">Groupe 100% digital · Chiffres clés</div>
+        <div class="sonate-kpi-subtitle">3 sociétés dédiées à la performance digitale</div>
+        <div class="sonate-kpi-grid">
+          <div class="sonate-kpi-card">
+            <div class="sonate-kpi-num">3</div>
+            <div class="sonate-kpi-label">sociétés</div>
+          </div>
+          <div class="sonate-kpi-card dark">
+            <div class="sonate-kpi-num">2</div>
+            <div class="sonate-kpi-label">agences à Rennes & Paris</div>
+          </div>
+          <div class="sonate-kpi-card">
+            <div class="sonate-kpi-num">27</div>
+            <div class="sonate-kpi-label">salariés</div>
+          </div>
+          <div class="sonate-kpi-card dark">
+            <div class="sonate-kpi-num">8</div>
+            <div class="sonate-kpi-label">domaines d'expertise</div>
+          </div>
+        </div>
+        <div class="sonate-refs-label">Des références fortes :</div>
+        <div class="sonate-refs-row">Blast · Altaroc · Silvera · LP Promotion · Pente douce · Cimaise · YesYes Padel ·</div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // SONATE TEAM — slide 3 : équipe + localisations
+  if (s.type === 'sonate-team') {
+    const teamEditable = !!window.__editableSlides;
+    const teamPhotoHtml = s.image
+      ? `<div class="sonate-team-photo"${teamEditable ? ` onclick="uploadTeamPhoto(${idx})"` : ''}>
+          <img src="${s.image}" alt="Notre équipe">
+          ${teamEditable ? `<div class="sonate-team-photo-overlay">🔄 Remplacer la photo</div>` : ''}
+        </div>`
+      : teamEditable
+        ? `<div class="sonate-team-photo" onclick="uploadTeamPhoto(${idx})">
+            <div class="sonate-team-photo-placeholder">
+              <div style="font-size:28px;margin-bottom:8px">📸</div>
+              <div style="font-weight:600;margin-bottom:4px;color:#666">Cliquer pour ajouter la photo</div>
+              <div style="font-size:12px;color:#aaa">Photo de l'équipe Sonate</div>
+            </div>
+            <div class="sonate-team-photo-overlay">📸 Ajouter la photo</div>
+          </div>`
+        : `<div class="sonate-team-photo" style="cursor:default">
+            <div class="sonate-team-photo-placeholder"><span style="color:#ccc">Aucune photo</span></div>
+          </div>`;
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-inner" style="display:flex;flex-direction:column">
+        <div class="slide-title">Notre équipe</div>
+        <div class="sonate-team-layout">
+          ${teamPhotoHtml}
+          <div class="sonate-locations">
+            <div class="sonate-location-pin">
+              <div class="sonate-location-pin-dot">📍</div>
+              RENNES
+            </div>
+            <div class="sonate-location-pin">
+              <div class="sonate-location-pin-dot">📍</div>
+              LAVAL
+            </div>
+            <div class="sonate-location-pin">
+              <div class="sonate-location-pin-dot">📍</div>
+              PARIS
+            </div>
+          </div>
+        </div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // SONATE TAGLINE — slide 4 : "Votre croissance est clé"
+  if (s.type === 'sonate-tagline') {
+    return `<div class="slide sonate-tagline-slide">
+      ${editToolbar}
+      <div class="sonate-tagline-inner">
+        <div class="sonate-tagline-bg-circle" style="width:300px;height:300px;top:-80px;right:-60px"></div>
+        <div class="sonate-tagline-bg-circle" style="width:200px;height:200px;bottom:-50px;left:-40px"></div>
+        <div class="sonate-tagline-title">Votre croissance est clé.</div>
+        <div class="sonate-tagline-bar"></div>
+        <div class="sonate-tagline-sub">Une expertise globale, des résultats mesurables, une équipe engagée.</div>
+      </div>
+      ${footer(true)}
     </div>`;
   }
 

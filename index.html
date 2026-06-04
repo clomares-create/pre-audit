@@ -2514,8 +2514,11 @@ function uploadStratPhoto(idx, memberIdx) {
   input.onchange = (e) => {
     const reader = new FileReader();
     reader.onload = (ev) => {
+      const base64 = ev.target.result;
+      const memberName = window.__currentSlides?.[idx]?.members?.[memberIdx]?.name;
+      if (memberName) localStorage.setItem('sonate_strat_photo_' + memberName.toLowerCase().replace(/[^a-z0-9]/g, '_'), base64);
       if (window.__currentSlides?.[idx]?.members?.[memberIdx])
-        window.__currentSlides[idx].members[memberIdx].photo = ev.target.result;
+        window.__currentSlides[idx].members[memberIdx].photo = base64;
       const cn = document.getElementById('clientName')?.value || '';
       const cu = document.getElementById('clientUrl')?.value || '';
       document.getElementById('slidesContainer').innerHTML = renderSlides(window.__currentSlides, { clientName: cn, clientUrl: cu, consultant: '' });
@@ -3652,9 +3655,10 @@ function renderSlide(s, idx, clientName, consultant) {
     const monthYear = new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
     const monthYearCap = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
     const memberHtml = (s.members || []).map((m, mi) => {
-      const photoHtml = m.photo
+      const memberPhoto = m.photo || localStorage.getItem('sonate_strat_photo_' + (m.name || '').toLowerCase().replace(/[^a-z0-9]/g, '_'));
+      const photoHtml = memberPhoto
         ? `<div class="strat-member-photo"${stratEditable ? ` onclick="uploadStratPhoto(${idx},${mi})"` : ''}>
-            <img src="${m.photo}" alt="${m.name}">
+            <img src="${memberPhoto}" alt="${m.name}">
             ${stratEditable ? `<div class="strat-member-photo-overlay">🔄 Remplacer</div>` : ''}
           </div>`
         : stratEditable

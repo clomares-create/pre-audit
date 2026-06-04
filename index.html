@@ -2152,7 +2152,8 @@ async function confirmAndGenerate() {
             { name: 'Benjamin MOUSTIC', photo: null },
             { name: 'Fabien GUILLEUX', photo: null },
           ],
-        }
+        },
+        { type: 'seo-equipe-experte', photos: [null, null, null, null, null, null] }
       );
     }
 
@@ -2474,6 +2475,29 @@ function uploadTeamPhoto(idx) {
     reader.onload = (ev) => {
       const base64 = ev.target.result;
       if (window.__currentSlides?.[idx]) window.__currentSlides[idx].image = base64;
+      const clientName = document.getElementById('clientName')?.value || '';
+      const clientUrl = document.getElementById('clientUrl')?.value || '';
+      document.getElementById('slidesContainer').innerHTML = renderSlides(window.__currentSlides, { clientName, clientUrl, consultant: '' });
+      debounceSave();
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function uploadEquipePhoto(idx, photoIdx) {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = ev.target.result;
+      if (window.__currentSlides?.[idx]) {
+        if (!Array.isArray(window.__currentSlides[idx].photos)) window.__currentSlides[idx].photos = [null,null,null,null,null,null];
+        window.__currentSlides[idx].photos[photoIdx] = base64;
+      }
       const clientName = document.getElementById('clientName')?.value || '';
       const clientUrl = document.getElementById('clientUrl')?.value || '';
       document.getElementById('slidesContainer').innerHTML = renderSlides(window.__currentSlides, { clientName, clientUrl, consultant: '' });
@@ -3572,6 +3596,36 @@ function renderSlide(s, idx, clientName, consultant) {
       <div class="slide-inner">
         <div class="slide-title">Stratégie proposée · ${monthYearCap}</div>
         <div class="strat-team-grid">${memberHtml}</div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // SEO ÉQUIPE EXPERTE — slide statique avec 6 photos uploadables
+  if (s.type === 'seo-equipe-experte') {
+    const photos = Array.isArray(s.photos) ? s.photos : [null,null,null,null,null,null];
+    const photosHtml = photos.map((p, pi) => {
+      if (p) {
+        return `<div style="flex:1;min-width:0;aspect-ratio:3/4;border-radius:8px;overflow:hidden;cursor:${editable?'pointer':'default'};" ${editable?`onclick="uploadEquipePhoto(${idx},${pi})"`:''}">
+          <img src="${p}" alt="Photo équipe" style="width:100%;height:100%;object-fit:cover;">
+        </div>`;
+      } else if (editable) {
+        return `<div onclick="uploadEquipePhoto(${idx},${pi})" style="flex:1;min-width:0;aspect-ratio:3/4;border-radius:8px;background:#e8e8e8;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:6px;">
+          <div style="font-size:24px;">📷</div>
+          <div style="font-size:10px;color:#999;text-align:center;">Photo</div>
+        </div>`;
+      } else {
+        return `<div style="flex:1;min-width:0;aspect-ratio:3/4;border-radius:8px;background:#e8e8e8;"></div>`;
+      }
+    }).join('');
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">SEO · Une équipe hyper experte</div>
+        <div style="font-size:17px;font-weight:700;color:var(--green-dark);margin-bottom:0.5rem;">La spécialisation comme garantie de la performance</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:1.5rem;">Les équipes SEO sont spécialisées dans la stratégie et la mise en place opérationnelle SEO-GEO. Chaque consultant présente une finesse d'analyse et d'intervention de haut niveau.</div>
+        <div style="display:flex;gap:1rem;align-items:flex-start;">${photosHtml}</div>
       </div>
       ${footer(false)}
     </div>`;

@@ -2528,6 +2528,7 @@ function uploadTeamPhoto(idx) {
     const reader = new FileReader();
     reader.onload = (ev) => {
       const base64 = ev.target.result;
+      localStorage.setItem('sonate_team_photo', base64);
       if (window.__currentSlides?.[idx]) window.__currentSlides[idx].image = base64;
       const clientName = document.getElementById('clientName')?.value || '';
       const clientUrl = document.getElementById('clientUrl')?.value || '';
@@ -3819,9 +3820,10 @@ function renderSlide(s, idx, clientName, consultant) {
   // SONATE TEAM — slide 3 : équipe + localisations
   if (s.type === 'sonate-team') {
     const teamEditable = !!window.__editableSlides;
-    const teamPhotoHtml = s.image
+    const teamImg = s.image || localStorage.getItem('sonate_team_photo');
+    const teamPhotoHtml = teamImg
       ? `<div class="sonate-team-photo"${teamEditable ? ` onclick="uploadTeamPhoto(${idx})"` : ''}>
-          <img src="${s.image}" alt="Notre équipe">
+          <img src="${teamImg}" alt="Notre équipe">
           ${teamEditable ? `<div class="sonate-team-photo-overlay">🔄 Remplacer la photo</div>` : ''}
         </div>`
       : teamEditable

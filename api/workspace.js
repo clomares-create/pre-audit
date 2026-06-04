@@ -106,8 +106,11 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true });
   }
 
-  // POST /api/workspace?action=invite
+  // POST /api/workspace?action=invite — invite by email
   if (req.method === 'POST' && action === 'invite') {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email manquant' });
+
     const wsRow = await db.execute({
       sql: 'SELECT * FROM workspaces WHERE owner_id = ?',
       args: [payload.userId]
@@ -115,66 +118,62 @@ export default async function handler(req, res) {
     const workspace = wsRow.rows[0];
     if (!workspace) return res.status(403).json({ error: 'Aucun espace de travail trouvé' });
 
-    const token = randomUUID();
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-    await db.execute({
-      sql: 'INSERT INTO workspace_invites (token, workspace_id, created_by, expires_at) VALUES (?, ?, ?, ?)',
-      args: [token, workspace.id, payload.userId, expiresAt]
+    // Check if user already exists
+    const userRow = await db.execute({
+      sql: 'SELECT id, name, email, workspace_id FROM users WHERE email = ?',
+      args: [email.toLowerCase().trim()]
     });
+    const target = userRow.rows[0];
 
-    return res.status(201).json({ token });
-  }
-
-  // POST /api/workspace?action=join
-  if (req.method === 'POST' && action === 'join') {
-    const { token } = req.body;
-    if (!token) return res.status(400).json({ error: 'Token manquant' });
-
-    const inviteRow = await db.execute({
-      sql: 'SELECT * FROM workspace_invites WHERE token = ?',
-      args: [token]
-    });
-    const invite = inviteRow.rows[0];
-    if (!invite) return res.status(404).json({ error: 'Invitation introuvable' });
-    if (invite.used) return res.status(410).json({ error: 'Invitation déjà utilisée' });
-    if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
-      return res.status(410).json({ error: 'Invitation expirée' });
+    if (target) {
+      if (target.workspace_id === workspace.id) {
+        return res.status(409).json({ error: 'Cet utilisateur est déjà membre de votre espace' });
+      }
+      // Add them directly
+      await db.execute({
+        sql: 'UPDATE users SET workspace_id = ? WHERE id = ?',
+        args: [workspace.id, target.id]
+      });
+      return res.status(200).json({ status: 'added', name: target.name || target.email });
     }
 
-    const wsRow = await db.execute({
-      sql: 'SELECT * FROM workspaces WHERE id = ?',
-      args: [invite.workspace_id]
+    // User doesn't exist yet — store a pending invite by email
+    try { await db.execute(`ALTER TABLE workspace_invites ADD COLUMN invited_email TEXT`); } catch {}
+    // Remove any existing pending invite for this email in this workspace
+    await db.execute({
+      sql: 'DELETE FROM workspace_invites WHERE workspace_id = ? AND invited_email = ? AND used = 0',
+      args: [workspace.id, email.toLowerCase().trim()]
     });
+    const token = randomUUID();
+    await db.execute({
+      sql: 'INSERT INTO workspace_invites (token, workspace_id, created_by, invited_email, used) VALUES (?, ?, ?, ?, 0)',
+      args: [token, workspace.id, payload.userId, email.toLowerCase().trim()]
+    });
+    return res.status(201).json({ status: 'pending', email });
+  }
+
+  // GET /api/workspace?action=pending-invites
+  if (req.method === 'GET' && action === 'pending-invites') {
+    const wsRow = await db.execute({ sql: 'SELECT id FROM workspaces WHERE owner_id = ?', args: [payload.userId] });
     const workspace = wsRow.rows[0];
-    if (!workspace) return res.status(404).json({ error: 'Espace de travail introuvable' });
-
-    await db.execute({
-      sql: 'UPDATE users SET workspace_id = ? WHERE id = ?',
-      args: [workspace.id, payload.userId]
-    });
-
-    await db.execute({
-      sql: 'UPDATE workspace_invites SET used = 1 WHERE token = ?',
-      args: [token]
-    });
-
-    const memberCountRow = await db.execute({
-      sql: 'SELECT COUNT(*) as count FROM users WHERE workspace_id = ?',
+    if (!workspace) return res.status(403).json({ error: 'Non autorisé' });
+    try { await db.execute(`ALTER TABLE workspace_invites ADD COLUMN invited_email TEXT`); } catch {}
+    const rows = await db.execute({
+      sql: 'SELECT invited_email FROM workspace_invites WHERE workspace_id = ? AND used = 0 AND invited_email IS NOT NULL',
       args: [workspace.id]
     });
-    const memberCount = memberCountRow.rows[0]?.count ?? 0;
+    return res.status(200).json({ invites: rows.rows });
+  }
 
-    return res.status(200).json({
-      workspace: {
-        id: workspace.id,
-        name: workspace.name,
-        api_key: workspace.api_key,
-        pagespeed_key: workspace.pagespeed_key,
-        isOwner: workspace.owner_id === payload.userId,
-        memberCount
-      }
-    });
+  // POST /api/workspace?action=remove-member
+  if (req.method === 'POST' && action === 'remove-member') {
+    const { userId: targetId } = req.body;
+    if (!targetId) return res.status(400).json({ error: 'Utilisateur manquant' });
+    const wsRow = await db.execute({ sql: 'SELECT * FROM workspaces WHERE owner_id = ?', args: [payload.userId] });
+    const workspace = wsRow.rows[0];
+    if (!workspace) return res.status(403).json({ error: 'Non autorisé' });
+    await db.execute({ sql: 'UPDATE users SET workspace_id = NULL WHERE id = ? AND workspace_id = ?', args: [targetId, workspace.id] });
+    return res.status(200).json({ ok: true });
   }
 
   return res.status(404).json({ error: 'Action inconnue' });

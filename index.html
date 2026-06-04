@@ -2409,7 +2409,7 @@ Chaque objet slide a ce format :
   "accentColor": "green|amber|red|blue"
 }
 
-Le champ "summary" (1-2 lignes max) est OBLIGATOIRE sur : intro, seo, content, sea, geo, competition, roadmap. Il est null sur : cover, sommaire, section, pricing, closing.
+Le champ "summary" (1-2 lignes max) est OBLIGATOIRE sur : intro, seo, content, sea, geo, competition. Il est null sur : cover, sommaire, section, pricing.
 
 IMPORTANT : Ne génère JAMAIS de slide de type "metrics" ni "technical" ni "indexation" — ces types sont injectés séparément.
 
@@ -2419,10 +2419,8 @@ STRUCTURE OBLIGATOIRE DANS CET ORDRE :
 
 2. type "sommaire" — title = "Sommaire", body = liste HTML <ol><li> avec les titres des parties "section" qui suivent, summary = null
 ${seoStructure}
-- type "section" — label = "${proposalLabel}", title = "Notre Proposition", subtitle = "Équipe, budget, prochaines étapes", body = null, summary = null
-- type "roadmap" — plan d'action à 3 mois, 3 phases distinctes. summary obligatoire.
+- type "section" — label = "${proposalLabel}", title = "Budget & Tarifs", subtitle = "Investissement et accompagnement", body = null, summary = null
 - type "pricing" — proposition tarifaire. Le body contient deux blocs HTML : PHASE 1 SETUP (frais uniques) et PHASE 2 RUN (mensuel récurrent). Tarifs Sonate : SEO setup 1 400 € HT + 700 € HT/mois · SEA setup 1 400 € HT + 400 € HT/mois · GEO setup 800 € HT + 300 € HT/mois. summary = total setup et total mensuel.
-- type "closing" — prochaines étapes (3 étapes numérotées), contact du commercial ${consultant}. summary = null.
 
 Rédige en français. Ton professionnel et expert. Données chiffrées réalistes pour le secteur "${sector || 'digital'}".`;
 }
@@ -2486,13 +2484,20 @@ function uploadSeoImage(idx, field) {
   input.click();
 }
 
+function refLogoKey(idx) {
+  const title = window.__currentSlides?.[idx]?.title || String(idx);
+  return 'sonate_ref_logo_' + title.toLowerCase().replace(/[^a-z0-9]/g, '_');
+}
+
 function uploadRefLogo(idx) {
   const input = document.createElement('input');
   input.type = 'file'; input.accept = 'image/*';
   input.onchange = (e) => {
     const reader = new FileReader();
     reader.onload = (ev) => {
-      if (window.__currentSlides?.[idx]) window.__currentSlides[idx].logo = ev.target.result;
+      const base64 = ev.target.result;
+      localStorage.setItem(refLogoKey(idx), base64);
+      if (window.__currentSlides?.[idx]) window.__currentSlides[idx].logo = base64;
       const cn = document.getElementById('clientName')?.value || '';
       const cu = document.getElementById('clientUrl')?.value || '';
       document.getElementById('slidesContainer').innerHTML = renderSlides(window.__currentSlides, { clientName: cn, clientUrl: cu, consultant: '' });
@@ -2530,6 +2535,7 @@ function uploadTeamPhoto(idx) {
     const reader = new FileReader();
     reader.onload = (ev) => {
       const base64 = ev.target.result;
+      localStorage.setItem('sonate_team_photo', base64);
       if (window.__currentSlides?.[idx]) window.__currentSlides[idx].image = base64;
       const clientName = document.getElementById('clientName')?.value || '';
       const clientUrl = document.getElementById('clientUrl')?.value || '';
@@ -3573,9 +3579,11 @@ function renderSlide(s, idx, clientName, consultant) {
   // RÉFÉRENCE CLIENT — étude de cas (Santarome, GCE…)
   if (s.type === 'sonate-ref') {
     const refEditable = !!window.__editableSlides;
-    const logoHtml = s.logo
+    const refKey = 'sonate_ref_logo_' + (s.title || '').toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const refLogo = s.logo || localStorage.getItem(refKey);
+    const logoHtml = refLogo
       ? `<div class="ref-logo-area"${refEditable ? ` onclick="uploadRefLogo(${idx})"` : ''}>
-          <img src="${s.logo}" alt="Logo">
+          <img src="${refLogo}" alt="Logo">
           ${refEditable ? `<div class="ref-logo-overlay">🔄 Remplacer</div>` : ''}
         </div>`
       : refEditable
@@ -3821,9 +3829,10 @@ function renderSlide(s, idx, clientName, consultant) {
   // SONATE TEAM — slide 3 : équipe + localisations
   if (s.type === 'sonate-team') {
     const teamEditable = !!window.__editableSlides;
-    const teamPhotoHtml = s.image
+    const teamImg = s.image || localStorage.getItem('sonate_team_photo');
+    const teamPhotoHtml = teamImg
       ? `<div class="sonate-team-photo"${teamEditable ? ` onclick="uploadTeamPhoto(${idx})"` : ''}>
-          <img src="${s.image}" alt="Notre équipe">
+          <img src="${teamImg}" alt="Notre équipe">
           ${teamEditable ? `<div class="sonate-team-photo-overlay">🔄 Remplacer la photo</div>` : ''}
         </div>`
       : teamEditable

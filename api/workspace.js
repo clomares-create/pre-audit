@@ -66,6 +66,28 @@ export default async function handler(req, res) {
     });
   }
 
+  // GET /api/workspace?action=members
+  if (req.method === 'GET' && action === 'members') {
+    const userRow = await db.execute({ sql: 'SELECT workspace_id FROM users WHERE id = ?', args: [payload.userId] });
+    const user = userRow.rows[0];
+    let workspaceId = user?.workspace_id;
+    if (!workspaceId) {
+      const ownedRow = await db.execute({ sql: 'SELECT id FROM workspaces WHERE owner_id = ?', args: [payload.userId] });
+      workspaceId = ownedRow.rows[0]?.id;
+    }
+    if (!workspaceId) return res.status(404).json({ error: 'Espace introuvable' });
+
+    const wsRow = await db.execute({ sql: 'SELECT owner_id FROM workspaces WHERE id = ?', args: [workspaceId] });
+    const ownerId = wsRow.rows[0]?.owner_id;
+
+    const membersRow = await db.execute({
+      sql: 'SELECT id, name, email FROM users WHERE workspace_id = ?',
+      args: [workspaceId]
+    });
+    const members = membersRow.rows.map(m => ({ ...m, is_owner: m.id === ownerId }));
+    return res.status(200).json({ members });
+  }
+
   // PATCH /api/workspace?action=settings
   if (req.method === 'PATCH' && action === 'settings') {
     const wsRow = await db.execute({

@@ -623,6 +623,56 @@
   .header-user { display: flex; align-items: center; gap: 10px; }
   .header-username { font-size: 13px; color: rgba(255,255,255,0.7); }
 
+  /* ESPACE PAGE */
+  .espace-overlay {
+    position: fixed; inset: 0; background: var(--bg);
+    z-index: 600; display: none; flex-direction: column; overflow: hidden;
+  }
+  .espace-overlay.open { display: flex; }
+  .espace-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem; height: 56px; background: var(--green-dark);
+    border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;
+  }
+  .espace-header-title { font-size: 16px; font-weight: 600; color: #fff; }
+  .espace-close {
+    background: none; border: none; color: rgba(255,255,255,0.6);
+    font-size: 20px; cursor: pointer; line-height: 1; padding: 4px 8px;
+  }
+  .espace-close:hover { color: #fff; }
+  .espace-tabs {
+    display: flex; gap: 0; background: var(--white);
+    border-bottom: 1px solid var(--border); flex-shrink: 0; padding: 0 2rem;
+  }
+  .espace-tab {
+    padding: 14px 20px; font-size: 14px; font-weight: 500; color: var(--text-muted);
+    cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s;
+    background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .espace-tab:hover { color: var(--text); }
+  .espace-tab.active { color: var(--green-dark); border-bottom-color: var(--green-dark); font-weight: 600; }
+  .espace-body { flex: 1; overflow-y: auto; padding: 2rem; max-width: 860px; width: 100%; margin: 0 auto; }
+  .espace-section { display: none; }
+  .espace-section.active { display: block; }
+  .espace-card {
+    background: var(--white); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1.5rem; margin-bottom: 1.25rem;
+  }
+  .espace-card-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 1rem; }
+  .espace-member-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .espace-member-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .espace-member-avatar {
+    width: 34px; height: 34px; border-radius: 50%; background: var(--green-dark);
+    color: #fff; font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .espace-member-info { flex: 1; }
+  .espace-member-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .espace-member-role { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
   /* REPORTS PANEL */
   .reports-overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.4);
@@ -1081,6 +1131,67 @@
   </div>
 </div>
 
+<!-- ESPACE PAGE -->
+<div class="espace-overlay" id="espaceOverlay">
+  <div class="espace-header">
+    <span class="espace-header-title">Mon Espace</span>
+    <button class="espace-close" onclick="closeEspace()">✕</button>
+  </div>
+  <div class="espace-tabs">
+    <button class="espace-tab active" onclick="switchEspaceTab('membres')">Membres</button>
+    <button class="espace-tab" onclick="switchEspaceTab('rapports')">Rapports</button>
+    <button class="espace-tab" onclick="switchEspaceTab('parametres')">Paramètres</button>
+  </div>
+  <div class="espace-body">
+
+    <!-- MEMBRES -->
+    <div class="espace-section active" id="espace-membres">
+      <div class="espace-card">
+        <div class="espace-card-title">Membres de l'espace</div>
+        <div id="espaceMembersList"><div style="font-size:13px;color:var(--text-muted)">Chargement…</div></div>
+      </div>
+      <div class="espace-card" id="espaceInviteCard" style="display:none">
+        <div class="espace-card-title">Inviter un collaborateur</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:1rem">Générez un lien d'invitation valable 7 jours. La personne invitée aura accès aux clés API de votre espace.</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div id="espaceInviteLinkBox" style="flex:1;font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Cliquez sur "Générer" pour créer un lien</div>
+          <button class="btn btn-primary" style="font-size:13px;white-space:nowrap" onclick="generateInviteLinkEspace()">Générer un lien</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RAPPORTS -->
+    <div class="espace-section" id="espace-rapports">
+      <div class="espace-card" style="padding:0;overflow:hidden">
+        <div style="padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);font-size:14px;font-weight:600;color:var(--text)">Rapports générés</div>
+        <div id="espaceReportsList" style="padding:0.5rem 0"><div style="padding:1rem 1.5rem;font-size:13px;color:var(--text-muted)">Chargement…</div></div>
+      </div>
+    </div>
+
+    <!-- PARAMÈTRES -->
+    <div class="espace-section" id="espace-parametres">
+      <div class="espace-card">
+        <div class="espace-card-title">Clés API de l'espace</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:1.2rem">Ces clés sont partagées avec tous les membres. Seul le propriétaire peut les modifier.</div>
+        <div class="form-group">
+          <label class="form-label">Clé API OpenRouter</label>
+          <input type="password" id="espaceApiKey" placeholder="sk-or-…">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Clé API PageSpeed Insights <span style="font-weight:400;color:var(--text-light)">(optionnelle)</span></label>
+          <input type="password" id="espacePagespeedKey" placeholder="Clé Google Cloud API">
+        </div>
+        <button class="btn btn-primary" id="espaceSettingsBtn" onclick="saveEspaceSettings()">Enregistrer les clés</button>
+      </div>
+      <div class="espace-card" id="espaceDangerCard" style="display:none">
+        <div class="espace-card-title" style="color:#e53e3e">Zone propriétaire</div>
+        <div style="font-size:13px;color:var(--text-muted)">Vous êtes propriétaire de cet espace. Les membres rejoignent via un lien d'invitation (onglet Membres).</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <header>
   <div class="logo">S<span>onate</span> <span style="font-weight:300;opacity:.5;margin-left:4px">/ Pré-audit</span></div>
   <div class="header-actions">
@@ -1091,6 +1202,7 @@
     <div class="header-user" id="headerUser" style="display:none">
       <span class="header-username" id="headerUsername"></span>
       <button class="btn btn-ghost" style="font-size:13px;padding:6px 12px" onclick="openReportsPanel()">Mes rapports</button>
+      <button class="btn btn-ghost" style="font-size:13px;padding:6px 12px" onclick="openEspace()">Espace</button>
       <button class="btn btn-ghost" style="font-size:13px;padding:6px 12px" onclick="logout()">Déconnexion</button>
     </div>
   </div>
@@ -1194,12 +1306,6 @@
       </div>
       <button class="btn btn-outline" style="width:100%;margin-top:4px" onclick="saveSettings()">Enregistrer</button>
 
-      <div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--border)">
-        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:0.6rem;letter-spacing:0.04em">MON ESPACE</div>
-        <div id="workspacePanel">
-          <div style="font-size:12px;color:var(--text-muted)">Chargement…</div>
-        </div>
-      </div>
     </div>
   </aside>
 
@@ -1648,18 +1754,6 @@ async function saveSettings() {
   localStorage.setItem('sonate_settings', JSON.stringify(settings));
   updateApiStatus();
 
-  // If workspace owner, sync API keys to the server
-  if (_workspace?.isOwner) {
-    const jwt = getJwt();
-    if (jwt) {
-      await fetch('/api/workspace?action=settings', {
-        method: 'PATCH',
-        headers: { 'Authorization': 'Bearer ' + jwt.token, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ api_key: settings.apiKey, pagespeed_key: settings.pagespeedKey })
-      }).catch(() => {});
-    }
-  }
-
   showToast('Paramètres enregistrés ✓');
   toggleSettings(false);
 }
@@ -1675,7 +1769,6 @@ async function loadWorkspace() {
     const res = await fetch('/api/workspace?action=me', { headers: { 'Authorization': 'Bearer ' + jwt.token } });
     const data = await res.json();
     _workspace = data.workspace;
-    renderWorkspacePanel();
     if (_workspace?.api_key && !document.getElementById('apiKey').value) {
       document.getElementById('apiKey').value = _workspace.api_key;
       updateApiStatus();
@@ -1686,43 +1779,6 @@ async function loadWorkspace() {
   } catch(e) { /* offline */ }
 }
 
-function renderWorkspacePanel() {
-  const el = document.getElementById('workspacePanel');
-  if (!el) return;
-  if (!_workspace) {
-    el.innerHTML = `<div style="font-size:12px;color:var(--text-muted)">Aucun espace configuré.</div>`;
-    return;
-  }
-  const memberLabel = _workspace.memberCount > 1 ? `${_workspace.memberCount} membres` : '1 membre';
-  el.innerHTML = `
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:0.5rem">${_workspace.isOwner ? '👑 Vous êtes propriétaire' : '👤 Membre'} · ${memberLabel}</div>
-    ${_workspace.isOwner ? `
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:0.4rem">Partagez ce lien pour inviter des collaborateurs :</div>
-      <div style="display:flex;gap:6px;align-items:center">
-        <div id="inviteLinkBox" style="font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:4px 8px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted)">Générer un lien…</div>
-        <button class="btn btn-outline" style="font-size:11px;padding:4px 8px" onclick="generateInviteLink()">Inviter</button>
-      </div>
-      <div style="font-size:11px;color:var(--text-muted);margin-top:0.5rem">Les clés API enregistrées ici sont partagées avec tous les membres.</div>
-    ` : `
-      <div style="font-size:11px;color:var(--green-dark)">✓ Clés API chargées depuis l'espace de votre propriétaire.</div>
-    `}
-  `;
-}
-
-async function generateInviteLink() {
-  const jwt = getJwt();
-  if (!jwt) return;
-  try {
-    const res = await fetch('/api/workspace?action=invite', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + jwt.token, 'Content-Type': 'application/json' }
-    });
-    const { token } = await res.json();
-    const link = `${window.location.origin}/?invite=${token}`;
-    document.getElementById('inviteLinkBox').textContent = link;
-    navigator.clipboard.writeText(link).then(() => showToast('Lien d\'invitation copié ✓'));
-  } catch(e) { showToast('Erreur lors de la génération'); }
-}
 
 async function joinWorkspace(token) {
   const jwt = getJwt();
@@ -1755,6 +1811,173 @@ function toggleSettings(forceOpen) {
     panel.classList.remove('open');
     arrow.textContent = '▾';
   }
+}
+
+// ─── ESPACE PAGE ──────────────────────────────────────────────────────────────
+
+let _espaceCurrentTab = 'membres';
+
+async function openEspace() {
+  document.getElementById('espaceOverlay').classList.add('open');
+  switchEspaceTab(_espaceCurrentTab);
+  await loadEspaceData();
+}
+
+function closeEspace() {
+  document.getElementById('espaceOverlay').classList.remove('open');
+}
+
+function switchEspaceTab(tab) {
+  _espaceCurrentTab = tab;
+  document.querySelectorAll('.espace-tab').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'') === tab));
+  document.querySelectorAll('.espace-section').forEach(s => s.classList.toggle('active', s.id === 'espace-' + tab));
+}
+
+async function loadEspaceData() {
+  const jwt = getJwt();
+  if (!jwt) return;
+  if (!_workspace) await loadWorkspace();
+  const ws = _workspace;
+  if (!ws) return;
+
+  const isOwner = ws.isOwner;
+
+  // MEMBRES
+  const membersEl = document.getElementById('espaceMembersList');
+  const jwt2 = getJwt();
+  try {
+    const res = await fetch('/api/workspace?action=members', { headers: { 'Authorization': 'Bearer ' + jwt2.token } });
+    if (res.ok) {
+      const { members } = await res.json();
+      membersEl.innerHTML = members.map(m => `
+        <div class="espace-member-row">
+          <div class="espace-member-avatar">${(m.name || m.email || '?')[0].toUpperCase()}</div>
+          <div class="espace-member-info">
+            <div class="espace-member-name">${m.name || m.email}</div>
+            <div class="espace-member-role">${m.email}${m.is_owner ? ' · Propriétaire' : ''}</div>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      membersEl.innerHTML = `<div style="font-size:13px;color:var(--text-muted)">${ws.memberCount} membre(s)</div>`;
+    }
+  } catch(e) {
+    membersEl.innerHTML = `<div style="font-size:13px;color:var(--text-muted)">${ws.memberCount} membre(s)</div>`;
+  }
+
+  document.getElementById('espaceInviteCard').style.display = isOwner ? '' : 'none';
+
+  // RAPPORTS
+  await loadEspaceReports();
+
+  // PARAMÈTRES
+  document.getElementById('espaceApiKey').value = ws.api_key || '';
+  document.getElementById('espacePagespeedKey').value = ws.pagespeed_key || '';
+  document.getElementById('espaceSettingsBtn').style.display = isOwner ? '' : 'none';
+  document.getElementById('espaceDangerCard').style.display = isOwner ? '' : 'none';
+  const settingsNote = document.querySelector('#espace-parametres .espace-card > div:first-of-type + div');
+  if (!isOwner && document.getElementById('espaceApiKey')) {
+    document.getElementById('espaceApiKey').disabled = true;
+    document.getElementById('espacePagespeedKey').disabled = true;
+  }
+}
+
+async function loadEspaceReports() {
+  const jwt = getJwt();
+  if (!jwt) return;
+  const listEl = document.getElementById('espaceReportsList');
+  try {
+    const res = await fetch('/api/reports/list', { headers: { 'Authorization': 'Bearer ' + jwt.token } });
+    const data = await res.json();
+    if (!data.reports?.length) {
+      listEl.innerHTML = '<div style="padding:1rem 1.5rem;font-size:13px;color:var(--text-muted)">Aucun rapport sauvegardé.</div>';
+      return;
+    }
+    const statusColors = { draft: '#888', sent: '#3b82f6', signed: '#16a34a' };
+    const statusLabels = { draft: 'Brouillon', sent: 'Envoyé', signed: 'Signé' };
+    listEl.innerHTML = data.reports.map(r => {
+      const raw = r.updated_at || r.updatedAt || r.created_at || r.createdAt;
+      const date = raw ? new Date(raw.includes('T') ? raw : raw + 'Z').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+      const name = r.client_name || r.clientName || '(sans nom)';
+      const url = r.client_url || r.clientUrl || '';
+      const slug = r.slug;
+      const origin = window.location.origin;
+      return `<div style="display:flex;align-items:center;gap:12px;padding:12px 1.5rem;border-bottom:1px solid var(--border)">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${date}${url ? ' · ' + url : ''}</div>
+        </div>
+        <span style="font-size:11px;color:${statusColors[r.status]||'#888'};background:${statusColors[r.status]||'#888'}18;padding:2px 8px;border-radius:10px;white-space:nowrap">${statusLabels[r.status]||r.status}</span>
+        <button class="btn btn-outline" style="font-size:11px;padding:4px 10px;white-space:nowrap" onclick="loadReportFromEspace('${r.id}','${slug}')">Ouvrir</button>
+        <button class="btn btn-outline" style="font-size:11px;padding:4px 10px;white-space:nowrap" onclick="renameReport('${r.id}','${name.replace(/'/g,"\\'")}');loadEspaceReports()">Renommer</button>
+        <button class="btn-copy" title="Copier le lien" onclick="copyText('${origin}/r/${slug}')">📋</button>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    listEl.innerHTML = '<div style="padding:1rem 1.5rem;font-size:13px;color:var(--text-muted)">Erreur de chargement.</div>';
+  }
+}
+
+async function loadReportFromEspace(reportId, slug) {
+  closeEspace();
+  const res = await fetch('/api/reports/by-slug?slug=' + slug);
+  if (!res.ok) return;
+  const { report } = await res.json();
+  document.getElementById('clientName').value = report.clientName;
+  document.getElementById('clientUrl').value = report.clientUrl || '';
+  window.currentReportId = reportId;
+  document.getElementById('welcomeState').style.display = 'none';
+  document.getElementById('progressState').style.display = 'none';
+  document.getElementById('resultState').style.display = '';
+  document.getElementById('resultTitle').textContent = 'Pré-audit — ' + report.clientName;
+  document.getElementById('resultDate').textContent = `Chargé le ${new Date().toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})}`;
+  window.__editableSlides = true;
+  window.__currentSlides = report.content;
+  document.getElementById('slidesContainer').innerHTML = renderSlides(report.content, {
+    clientName: report.clientName, clientUrl: report.clientUrl || '', consultant: '',
+  });
+  const origin = window.location.origin;
+  document.getElementById('reportLink').textContent = origin + '/r/' + slug;
+  document.getElementById('reportLinkContainer').style.display = 'flex';
+}
+
+async function generateInviteLinkEspace() {
+  const jwt = getJwt();
+  if (!jwt) return;
+  try {
+    const res = await fetch('/api/workspace?action=invite', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + jwt.token, 'Content-Type': 'application/json' }
+    });
+    const { token } = await res.json();
+    const link = `${window.location.origin}/?invite=${token}`;
+    document.getElementById('espaceInviteLinkBox').textContent = link;
+    navigator.clipboard.writeText(link).then(() => showToast("Lien d'invitation copié ✓"));
+  } catch(e) { showToast('Erreur lors de la génération'); }
+}
+
+async function saveEspaceSettings() {
+  const jwt = getJwt();
+  if (!jwt) return;
+  const api_key = document.getElementById('espaceApiKey').value.trim();
+  const pagespeed_key = document.getElementById('espacePagespeedKey').value.trim();
+  try {
+    await fetch('/api/workspace?action=settings', {
+      method: 'PATCH',
+      headers: { 'Authorization': 'Bearer ' + jwt.token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ api_key, pagespeed_key })
+    });
+    // Also sync to local settings
+    const s = loadSettings();
+    s.apiKey = api_key;
+    s.pagespeedKey = pagespeed_key;
+    localStorage.setItem('sonate_settings', JSON.stringify(s));
+    document.getElementById('apiKey').value = api_key;
+    document.getElementById('pagespeedKey').value = pagespeed_key;
+    updateApiStatus();
+    if (_workspace) { _workspace.api_key = api_key; _workspace.pagespeed_key = pagespeed_key; }
+    showToast('Clés enregistrées ✓');
+  } catch(e) { showToast('Erreur lors de la sauvegarde'); }
 }
 
 function switchTab(section, mode) {

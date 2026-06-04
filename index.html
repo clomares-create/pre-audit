@@ -892,6 +892,44 @@
   .strat-member-photo:hover .strat-member-photo-overlay { opacity: 1; }
   .strat-member-name { font-size: 18px; font-weight: 700; color: #fff; text-align: center; }
 
+  /* SEO KEYWORD SLIDES */
+  .seo-kw-layout { display: flex; gap: 16px; align-items: stretch; margin-top: 8px; flex: 1; }
+  .seo-kw-image-area {
+    flex: 1.4; min-height: 200px; border-radius: 10px; overflow: hidden;
+    background: #f0ece4; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; position: relative;
+  }
+  .seo-kw-image-area img { width: 100%; height: 100%; object-fit: contain; }
+  .seo-kw-placeholder {
+    text-align: center; color: #aaa; padding: 20px; font-size: 12px;
+  }
+  .seo-kw-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.32); opacity: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 12px; font-weight: 600; transition: opacity 0.2s;
+  }
+  .seo-kw-image-area:hover .seo-kw-overlay { opacity: 1; }
+  .seo-kw-comment {
+    width: 220px; flex-shrink: 0; background: #123C34; border-left: 5px solid #e85d2a;
+    border-radius: 10px; padding: 18px 16px; color: #fff; font-size: 13px; line-height: 1.65;
+  }
+  .seo-kw-comment[contenteditable="true"] { outline: none; cursor: text; }
+  .seo-kw-comment[contenteditable="true"]:focus { box-shadow: 0 0 0 2px #e85d2a; }
+  .seo-kw-comment:empty::before { content: attr(data-placeholder); color: rgba(255,255,255,0.35); pointer-events: none; }
+
+  .seo-pot-image-area {
+    flex: 1; min-height: 200px; border-radius: 12px; overflow: hidden;
+    background: #f0ece4; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; position: relative; margin-top: 8px;
+  }
+  .seo-pot-image-area img { width: 100%; height: 100%; object-fit: contain; }
+  .seo-pot-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.32); opacity: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 12px; font-weight: 600; transition: opacity 0.2s; border-radius: 12px;
+  }
+  .seo-pot-image-area:hover .seo-pot-overlay { opacity: 1; }
+
   /* ALGO SEO SLIDE */
   .algo-seo-intro { font-style: italic; color: #666; font-size: 14px; margin: 8px 0 24px; line-height: 1.6; }
   .algo-seo-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-bottom: 24px; }
@@ -1922,7 +1960,9 @@ async function confirmAndGenerate() {
           { type: 'editable-chart', title: 'Trafic concurrence · Marché', subtitle: 'Estimation du trafic SEO généré par les concurrents', image: null, summary: '' },
           { type: 'editable-chart', title: 'Performance de votre trafic SEO', subtitle: 'Estimation de votre trafic SEO actuel', image: null, summary: '' },
           { type: 'editable-chart', title: 'Potentiel SEO · Visibilité actuelle vs potentielle', subtitle: 'Évolution attendue du portefeuille de mots-clés positionnés sur Google', image: null, summary: '' },
-          { type: 'editable-chart', title: 'Potentiel SEO · Vue d\'ensemble des positions', subtitle: 'Répartition actuelle des mots-clés positionnés', image: null, summary: '' }
+          { type: 'editable-chart', title: 'Potentiel SEO · Vue d\'ensemble des positions', subtitle: 'Répartition actuelle des mots-clés positionnés', image: null, summary: '' },
+          { type: 'seo-top-keywords', title: 'Performances SEO · Vos principaux mots-clés', subtitle: 'Les principaux mots-clés générateurs de trafic naturel sur votre site.', image: null, comment: '' },
+          { type: 'seo-keyword-potential', title: 'Potentiel mots-clés · [THÈME]', subtitle: 'Volume = recherches mensuelles · KD% = niveau de concurrence SEO', image: null }
         );
       }
 
@@ -2290,6 +2330,34 @@ function uploadChartImage(idx) {
   input.click();
 }
 
+function duplicateSlide(idx) {
+  if (!window.__currentSlides) return;
+  const copy = JSON.parse(JSON.stringify(window.__currentSlides[idx]));
+  window.__currentSlides.splice(idx + 1, 0, copy);
+  const cn = document.getElementById('clientName')?.value || '';
+  const cu = document.getElementById('clientUrl')?.value || '';
+  document.getElementById('slidesContainer').innerHTML = renderSlides(window.__currentSlides, { clientName: cn, clientUrl: cu, consultant: '' });
+  debounceSave();
+  showToast('✅ Slide dupliquée');
+}
+
+function uploadSeoImage(idx, field) {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = (e) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (window.__currentSlides?.[idx]) window.__currentSlides[idx][field] = ev.target.result;
+      const cn = document.getElementById('clientName')?.value || '';
+      const cu = document.getElementById('clientUrl')?.value || '';
+      document.getElementById('slidesContainer').innerHTML = renderSlides(window.__currentSlides, { clientName: cn, clientUrl: cu, consultant: '' });
+      debounceSave();
+    };
+    reader.readAsDataURL(e.target.files[0]);
+  };
+  input.click();
+}
+
 function uploadRefLogo(idx) {
   const input = document.createElement('input');
   input.type = 'file'; input.accept = 'image/*';
@@ -2461,6 +2529,7 @@ function renderSlide(s, idx, clientName, consultant) {
   const editable = !!window.__editableSlides;
   const editToolbar = editable
     ? `<div class="slide-edit-toolbar">
+        <button class="slide-edit-btn" onclick="duplicateSlide(${idx})" title="Dupliquer cette slide">⧉</button>
         <button class="slide-edit-btn" onclick="openRegenPanel(${idx})" title="Régénérer avec l'IA">✨ IA</button>
       </div>`
     : '';
@@ -2711,6 +2780,66 @@ function renderSlide(s, idx, clientName, consultant) {
           </div>
         </div>
         <div class="algo-seo-summary">SEO : ensemble des techniques pour positionner un site dans les premiers résultats de Google.</div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // SEO TOP KEYWORDS — tableau performances + commentaire
+  if (s.type === 'seo-top-keywords') {
+    const imgHtml = s.image
+      ? `<div class="seo-kw-image-area"${editable ? ` onclick="uploadSeoImage(${idx},'image')"` : ''}>
+          <img src="${s.image}" alt="Performances mots-clés">
+          ${editable ? `<div class="seo-kw-overlay">🔄 Remplacer l'image</div>` : ''}
+        </div>`
+      : editable
+        ? `<div class="seo-kw-image-area" onclick="uploadSeoImage(${idx},'image')">
+            <div class="seo-kw-placeholder"><div style="font-size:26px;margin-bottom:6px">📊</div><div>Screenshot Semrush / Ahrefs</div><div style="margin-top:4px;font-size:11px;opacity:.7">Cliquer pour uploader</div></div>
+            <div class="seo-kw-overlay">📊 Uploader le tableau</div>
+          </div>`
+        : `<div class="seo-kw-image-area" style="cursor:default"><div class="seo-kw-placeholder">Aucune image</div></div>`;
+    const commentHtml = editable
+      ? `<div class="seo-kw-comment slide-edit-field" contenteditable="true"
+            data-placeholder="Saisir l'analyse des mots-clés..."
+            oninput="onFieldEdit(${idx},'comment',this.innerHTML)">${s.comment || ''}</div>`
+      : s.comment
+        ? `<div class="seo-kw-comment">${s.comment}</div>`
+        : '';
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner" style="display:flex;flex-direction:column">
+        ${ef('title', s.title, 'div', 'slide-title')}
+        ${ef('subtitle', s.subtitle || 'Les principaux mots-clés générateurs de trafic naturel sur votre site.', 'div', 'algo-seo-intro')}
+        <div class="seo-kw-layout">
+          ${imgHtml}
+          ${commentHtml}
+        </div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // SEO KEYWORD POTENTIAL — screenshot potentiel mots-clés
+  if (s.type === 'seo-keyword-potential') {
+    const imgHtml = s.image
+      ? `<div class="seo-pot-image-area"${editable ? ` onclick="uploadSeoImage(${idx},'image')"` : ''}>
+          <img src="${s.image}" alt="Potentiel mots-clés">
+          ${editable ? `<div class="seo-pot-overlay">🔄 Remplacer l'image</div>` : ''}
+        </div>`
+      : editable
+        ? `<div class="seo-pot-image-area" onclick="uploadSeoImage(${idx},'image')">
+            <div class="seo-kw-placeholder"><div style="font-size:26px;margin-bottom:6px">📊</div><div>Screenshot Semrush / Ahrefs</div><div style="margin-top:4px;font-size:11px;opacity:.7">Cliquer pour uploader</div></div>
+            <div class="seo-pot-overlay">📊 Uploader le tableau</div>
+          </div>`
+        : `<div class="seo-pot-image-area" style="cursor:default"><div class="seo-kw-placeholder">Aucune image</div></div>`;
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner" style="display:flex;flex-direction:column">
+        ${ef('title', s.title, 'div', 'slide-title')}
+        ${ef('subtitle', s.subtitle || 'Volume = recherches mensuelles · KD% = niveau de concurrence SEO', 'div', 'algo-seo-intro')}
+        ${imgHtml}
       </div>
       ${footer(false)}
     </div>`;

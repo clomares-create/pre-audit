@@ -286,22 +286,47 @@
   }
 
   /* COVER */
-  .slide-cover { background: #111; border-color: #111; }
+  .slide-cover { background: #123C34; border-color: #123C34; }
   .slide-cover .slide-inner {
-    background: #111;
+    background: #123C34;
     min-height: 420px; padding: 3rem;
     display: flex; flex-direction: column; justify-content: space-between;
-    position: relative;
+    position: relative; overflow: hidden;
+  }
+  .slide-cover-deco {
+    position: absolute; border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    pointer-events: none;
+  }
+  .slide-cover-deco-1 {
+    width: 340px; height: 340px;
+    top: -80px; right: -60px;
+  }
+  .slide-cover-deco-2 {
+    width: 220px; height: 220px;
+    bottom: -60px; left: -50px;
+  }
+  .slide-cover-logo {
+    font-size: 22px; font-weight: 800; color: #fff;
+    letter-spacing: -0.02em; line-height: 1;
+    position: relative; z-index: 1;
+  }
+  .slide-cover-logo span {
+    display: block; font-size: 9px; font-weight: 400;
+    letter-spacing: 0.05em; color: rgba(255,255,255,0.55);
+    margin-top: 2px; text-transform: none;
   }
   .slide-badge-orange {
     display: inline-block;
     background: var(--orange); color: #fff;
     font-size: 10px; font-weight: 800; letter-spacing: 0.15em;
-    padding: 5px 14px; border-radius: 3px;
+    padding: 7px 18px; border-radius: 50px;
     align-self: flex-start; text-transform: uppercase;
+    position: relative; z-index: 1;
   }
   .slide-cover-body {
-    flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 2.5rem 0 1.5rem;
+    flex: 1; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 0 2rem;
+    position: relative; z-index: 1; gap: 1.2rem;
   }
   .slide-cover-title {
     font-size: 52px; font-weight: 800; color: #fff;
@@ -312,9 +337,9 @@
     color: rgba(255,255,255,0.45);
   }
   .slide-cover-bottom {
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 13px; color: rgba(255,255,255,0.35);
-    padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex; justify-content: space-between; align-items: flex-end;
+    font-size: 13px; color: rgba(255,255,255,0.45);
+    position: relative; z-index: 1;
   }
 
   /* SECTION SEPARATOR */
@@ -2646,17 +2671,18 @@ function renderSlide(s, idx, clientName, consultant) {
     return `<div class="slide slide-cover">
       ${editToolbar}
       <div class="slide-inner">
-        <div class="slide-badge-orange">PRÉ-AUDIT</div>
+        <div class="slide-cover-deco slide-cover-deco-1"></div>
+        <div class="slide-cover-deco slide-cover-deco-2"></div>
+        <div class="slide-cover-logo">Sonate<span>Votre croissance est clé</span></div>
         <div class="slide-cover-body">
+          <div class="slide-badge-orange">PRÉ-AUDIT</div>
           ${ef('title', s.title || clientName, 'div', 'slide-cover-title')}
           ${s.subtitle || editable ? ef('subtitle', s.subtitle, 'div', 'slide-cover-subtitle') : ''}
         </div>
         <div class="slide-cover-bottom">
-          <span>${new Date().toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'})}</span>
-          <span>${consultant} · Sonate</span>
+          <span>${new Date().toLocaleDateString('fr-FR', {month:'long', year:'numeric'})}</span>
         </div>
       </div>
-      ${footer(true)}
     </div>`;
   }
 

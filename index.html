@@ -2550,7 +2550,7 @@ async function confirmAndGenerate() {
       },
       body: JSON.stringify({
         model,
-        max_tokens: 32000,
+        ...(model.includes('gemini') ? {} : { max_tokens: 32000 }),
         messages: [{ role: 'user', content: prompt }],
       })
     });
@@ -2567,7 +2567,12 @@ async function confirmAndGenerate() {
 
     if (!raw) {
       const apiErr = data.error?.message;
-      throw new Error(apiErr ? `Erreur API : ${apiErr}` : `Réponse vide du modèle (finish_reason: ${finishReason || 'inconnu'}). Vérifiez votre clé API et le modèle sélectionné.`);
+      const detail = apiErr
+        ? `Erreur API : ${apiErr}`
+        : `Réponse vide (finish_reason: ${finishReason ?? 'inconnu'}). `
+          + (model.includes('gemini') ? `Gemini via OpenRouter peut nécessiter un compte avec crédits suffisants. ` : '')
+          + `Essayez le modèle google/gemini-2.5-flash-preview.`;
+      throw new Error(detail);
     }
     if (finishReason === 'length') {
       throw new Error(`Réponse tronquée : le modèle a atteint la limite de tokens avant de finir le JSON. Essayez un modèle avec une plus grande fenêtre de sortie (ex: google/gemini-2.5-pro).`);

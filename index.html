@@ -370,14 +370,16 @@
   /* SOMMAIRE */
   .sommaire-grid {
     display: grid; grid-template-columns: 1fr 1fr;
-    gap: 0 3rem; margin-top: 2rem;
+    gap: 0 4rem; margin-top: 2.5rem;
   }
   .sommaire-item {
-    display: flex; align-items: baseline; gap: 14px;
-    padding: 11px 0; border-bottom: 1px solid #f0ede8;
+    display: flex; align-items: flex-start; gap: 1.2rem;
+    padding: 1rem 0; border-bottom: 1px solid #e8e4de;
   }
-  .sommaire-num { font-size: 11px; font-weight: 800; color: var(--orange); flex-shrink: 0; letter-spacing: 0.04em; }
-  .sommaire-label { font-size: 14px; font-weight: 500; color: #222; }
+  .sommaire-num { font-size: 28px; font-weight: 800; color: var(--orange); flex-shrink: 0; line-height: 1; min-width: 2.5rem; }
+  .sommaire-text { display: flex; flex-direction: column; gap: 2px; }
+  .sommaire-label { font-size: 16px; font-weight: 700; color: var(--green-dark); line-height: 1.2; }
+  .sommaire-sub { font-size: 12px; color: #888; font-weight: 400; }
 
   /* CONTENT SLIDES */
   .slide-content { background: #fff; }
@@ -2313,6 +2315,13 @@ Rédige une analyse concise en 3 à 5 phrases (texte brut, pas de HTML, pas de l
     document.getElementById('resultState').style.display = '';
     document.getElementById('resultTitle').textContent = `Pré-audit — ${clientName}`;
     document.getElementById('resultDate').textContent = `Généré le ${new Date().toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})} · ${model}`;
+    // Rebuild sommaire from actual section slides (after all injections)
+    const sommaireIdx = slides.findIndex(s => s.type === 'sommaire');
+    if (sommaireIdx !== -1) {
+      const sectionSlides = slides.filter(s => s.type === 'section' && s.label && s.title);
+      slides[sommaireIdx].items = sectionSlides.map(s => ({ label: s.label, title: s.title, subtitle: s.subtitle || '' }));
+    }
+
     window.__editableSlides = true;
     window.__currentSlides = slides;
     document.getElementById('slidesContainer').innerHTML = renderSlides(slides, { clientName, clientUrl, consultant });
@@ -2828,18 +2837,24 @@ function renderSlide(s, idx, clientName, consultant) {
   if (s.type === 'sommaire') {
     const items = Array.isArray(s.items) ? s.items : [];
     const itemsHtml = items.length
-      ? items.map((item, i) => `
-          <div class="sommaire-item">
-            <span class="sommaire-num">${String(i + 1).padStart(2, '0')}</span>
-            <span class="sommaire-label">${item}</span>
-          </div>`).join('')
+      ? items.map((item, i) => {
+          const label = typeof item === 'object' ? item.label : String(i + 1).padStart(2, '0');
+          const title = typeof item === 'object' ? item.title : item;
+          const subtitle = typeof item === 'object' ? item.subtitle : '';
+          return `<div class="sommaire-item">
+            <span class="sommaire-num">${label}</span>
+            <div class="sommaire-text">
+              <span class="sommaire-label">${title}</span>
+              ${subtitle ? `<span class="sommaire-sub">${subtitle}</span>` : ''}
+            </div>
+          </div>`;
+        }).join('')
       : (s.body ? `<div class="slide-body">${s.body}</div>` : '');
     return `<div class="slide slide-content">
       ${editToolbar}
       <div class="slide-accent-bar"></div>
       <div class="slide-inner">
-        <div class="slide-label">Document</div>
-        ${ef('title', s.title || 'Sommaire', 'div', 'slide-title')}
+        <div style="font-size:36px;font-weight:800;color:var(--green-dark);margin-bottom:0;">Sommaire</div>
         <div class="sommaire-grid">${itemsHtml}</div>
       </div>
       ${footer(false)}
@@ -3414,21 +3429,23 @@ function renderSlide(s, idx, clientName, consultant) {
     const columnHtml = (d, label, icon) => `
       <div class="psi-column">
         <div class="psi-column-label"><span>${icon}</span> ${label}</div>
-        <div class="psi-left">
-          <div class="psi-gauge-row">
-            ${gaugeHtml(d.score)}
-            <div>
-              <div class="psi-gauge-label">Performances</div>
-              <div class="psi-legend">
-                <span class="psi-leg-red">▲ 0–49</span>
-                <span class="psi-leg-orange">■ 50–89</span>
-                <span class="psi-leg-green">● 90–100</span>
+        <div style="display:grid;grid-template-columns:1fr${d.screenshot ? ' 1fr' : ''};gap:14px;align-items:start;">
+          <div class="psi-left">
+            <div class="psi-gauge-row">
+              ${gaugeHtml(d.score)}
+              <div>
+                <div class="psi-gauge-label">Performances</div>
+                <div class="psi-legend">
+                  <span class="psi-leg-red">▲ 0–49</span>
+                  <span class="psi-leg-orange">■ 50–89</span>
+                  <span class="psi-leg-green">● 90–100</span>
+                </div>
               </div>
             </div>
+            ${statsHtml(d)}
           </div>
-          ${statsHtml(d)}
+          ${d.screenshot ? `<div style="border-radius:8px;overflow:hidden;border:1px solid #e8e8e8;"><img src="${d.screenshot}" alt="Aperçu ${label}" style="width:100%;display:block;object-fit:contain;"></div>` : ''}
         </div>
-        ${d.screenshot ? `<div style="margin-top:12px"><img src="${d.screenshot}" alt="Aperçu ${label}" style="width:100%;border-radius:6px;border:1px solid #e8e8e8;display:block;max-height:140px;object-fit:cover;object-position:top"></div>` : ''}
       </div>`;
 
     let widgetInner;

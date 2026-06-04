@@ -1233,7 +1233,7 @@
           </div>
         </div>
         <div id="confirmCompetitors" style="display:none;margin-top:1.5rem">
-          <div style="font-size:14px;color:var(--text);margin-bottom:0.75rem">Concurrents pour l'analyse. Ajoutez ou supprimez avant de générer.</div>
+          <div style="font-size:14px;color:var(--text);margin-bottom:0.75rem">Domaines concurrents — ils apparaîtront sur la slide <strong>Trafic concurrence · Marché</strong>.</div>
           <div class="competitor-chips" id="competitorChips"></div>
           <div class="comp-add-row">
             <input type="text" id="competitorInput" placeholder="Ajouter un concurrent (ex: site.fr)" onkeydown="if(event.key==='Enter')addCompetitorChip()">
@@ -1932,6 +1932,7 @@ Propose une liste de concurrents digitaux. Réponds UNIQUEMENT avec un tableau J
 async function confirmAndGenerate() {
   const { clientName, clientUrl, sector, geo, meetingContent, briefContent, consultant, model, apiKey, settings } = _pendingContext;
   const confirmedCompetitors = getCompetitorChips();
+  window._confirmedCompetitors = confirmedCompetitors;
 
   const selectedIds = ALL_SERVICES.filter(s => document.getElementById('svc-card-' + s.id)?.classList.contains('active')).map(s => s.id);
   const services = ALL_SERVICES.filter(s => selectedIds.includes(s.id)).map(s => s.label);
@@ -2042,7 +2043,7 @@ async function confirmAndGenerate() {
       const sec04Idx = slides.findIndex(s => s.type === 'section' && s.label === '04');
       if (sec04Idx !== -1) {
         slides.splice(sec04Idx + 1, 0,
-          { type: 'editable-chart', title: 'Trafic concurrence · Marché', subtitle: 'Estimation du trafic SEO généré par les concurrents', image: null, summary: '' },
+          { type: 'editable-chart', title: 'Trafic concurrence · Marché', subtitle: 'Estimation du trafic SEO généré par les concurrents', image: null, summary: '', competitors: confirmedCompetitors },
           { type: 'editable-chart', title: 'Performance de votre trafic SEO', subtitle: 'Estimation de votre trafic SEO actuel', image: null, summary: '' },
           { type: 'editable-chart', title: 'Potentiel SEO · Visibilité actuelle vs potentielle', subtitle: 'Évolution attendue du portefeuille de mots-clés positionnés sur Google', image: null, summary: '' },
           { type: 'editable-chart', title: 'Potentiel SEO · Vue d\'ensemble des positions', subtitle: 'Répartition actuelle des mots-clés positionnés', image: null, summary: '' },
@@ -3363,6 +3364,14 @@ function renderSlide(s, idx, clientName, consultant) {
       summaryHtml = '';
     }
 
+    const competitorsHtml = (s.competitors && s.competitors.length) ? `
+      <div style="margin-top:0.75rem;padding:0.6rem 0.85rem;background:var(--green-light);border-radius:8px;border:1px solid var(--green-mid,#c3e6cb)">
+        <div style="font-size:11px;font-weight:600;color:var(--green-dark);letter-spacing:0.04em;margin-bottom:0.35rem">DOMAINES CONCURRENTS</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${s.competitors.map(c => `<span style="font-size:12px;font-family:monospace;background:#fff;border:1px solid var(--green-mid,#c3e6cb);border-radius:5px;padding:2px 8px;color:var(--green-dark)">${c}</span>`).join('')}
+        </div>
+      </div>` : '';
+
     return `<div class="slide slide-content">
       ${editToolbar}
       <div class="slide-accent-bar"></div>
@@ -3371,6 +3380,7 @@ function renderSlide(s, idx, clientName, consultant) {
         ${s.subtitle || editable ? ef('subtitle', s.subtitle, 'div', 'slide-subtitle') : ''}
         <div class="chart-area" id="chart-area-${idx}">${imageHtml}</div>
         ${summaryHtml}
+        ${competitorsHtml}
       </div>
       ${footer(false)}
     </div>`;

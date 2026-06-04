@@ -541,10 +541,14 @@
   }
   .psi-tab-btn.active { color: #1a73e8; border-bottom-color: #1a73e8; }
   .psi-tab-icon { font-size: 16px; }
+  .psi-columns { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #e8e8e8; }
+  .psi-column { padding: 16px 20px 18px; }
+  .psi-column + .psi-column { border-left: 1px solid #e8e8e8; }
+  .psi-column-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
   .psi-panel { display: none; padding: 18px 22px 20px; }
   .psi-panel.active { display: flex; gap: 22px; align-items: flex-start; }
   .psi-left { flex: 1; min-width: 0; }
-  .psi-right { flex-shrink: 0; width: 200px; }
+  .psi-right { flex-shrink: 0; width: 120px; }
   .psi-right img { width: 100%; border-radius: 6px; border: 1px solid #e8e8e8; display: block; }
   .psi-gauge-row { display: flex; align-items: center; gap: 16px; margin-bottom: 6px; }
   .psi-gauge-svg { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
@@ -3287,19 +3291,32 @@ function renderSlide(s, idx, clientName, consultant) {
         ${d.screenshot ? `<div class="psi-right"><img src="${d.screenshot}" alt="Aperçu ${tabId}"></div>` : ''}
       </div>`;
 
+    const columnHtml = (d, label, icon) => `
+      <div class="psi-column">
+        <div class="psi-column-label"><span>${icon}</span> ${label}</div>
+        <div class="psi-left">
+          <div class="psi-gauge-row">
+            ${gaugeHtml(d.score)}
+            <div>
+              <div class="psi-gauge-label">Performances</div>
+              <div class="psi-legend">
+                <span class="psi-leg-red">▲ 0–49</span>
+                <span class="psi-leg-orange">■ 50–89</span>
+                <span class="psi-leg-green">● 90–100</span>
+              </div>
+            </div>
+          </div>
+          ${statsHtml(d)}
+        </div>
+        ${d.screenshot ? `<div style="margin-top:12px"><img src="${d.screenshot}" alt="Aperçu ${label}" style="width:100%;border-radius:6px;border:1px solid #e8e8e8;display:block;max-height:140px;object-fit:cover;object-position:top"></div>` : ''}
+      </div>`;
+
     let widgetInner;
     if (s.psi) {
-      widgetInner = `
-        <div class="psi-tabs">
-          <button class="psi-tab-btn active" onclick="psiTab(this,'${uid}','mobile')">
-            <span class="psi-tab-icon">📱</span> Mobile
-          </button>
-          <button class="psi-tab-btn" onclick="psiTab(this,'${uid}','desktop')">
-            <span class="psi-tab-icon">🖥</span> Bureau
-          </button>
-        </div>
-        ${panelHtml(s.psi.mobile, 'mobile')}
-        ${panelHtml(s.psi.desktop, 'desktop')}`;
+      widgetInner = `<div class="psi-columns">
+        ${columnHtml(s.psi.mobile, 'Mobile', '📱')}
+        ${columnHtml(s.psi.desktop, 'Bureau', '🖥')}
+      </div>`;
     } else {
       widgetInner = `<div class="psi-error"><span style="font-size:20px">⚠️</span>
         <div><strong>Données indisponibles</strong><br>L'API PageSpeed Insights n'a pas pu être contactée. Configurez une clé API Google dans les paramètres.</div>

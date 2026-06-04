@@ -1676,6 +1676,9 @@ async function confirmAndGenerate() {
       }
     }
 
+    // Compute service flags for static injections
+    const hasSeo = services.some(s => s.toLowerCase().includes('seo'));
+
     // For SEO reports, inject "Votre trafic VS la concurrence" section before "Notre Proposition"
     if (hasSeo) {
       const proposalIdx = slides.findIndex(s => s.type === 'section' && (s.title || '').includes('Proposition'));
@@ -1690,7 +1693,6 @@ async function confirmAndGenerate() {
     }
 
     // For SEO reports, inject the fixed "Fonctionnement de l'algorithme" slide after section "01"
-    const hasSeo = services.some(s => s.toLowerCase().includes('seo'));
     if (hasSeo) {
       const section01Idx = slides.findIndex(s => s.type === 'section' && s.label === '01');
       if (section01Idx !== -1) {

@@ -2022,12 +2022,11 @@ async function confirmAndGenerate() {
         );
       }
 
-      // Inject editable-chart slides after section "06" (netlinking VS concurrence)
+      // Inject netlinking-concurrence slide after section "06"
       const sec06Idx = slides.findIndex(s => s.type === 'section' && s.label === '06');
       if (sec06Idx !== -1) {
         slides.splice(sec06Idx + 1, 0,
-          { type: 'editable-chart', title: 'Profil de liens entrants · Votre site', subtitle: 'Volume et qualité des backlinks pointant vers votre domaine', image: null, summary: '' },
-          { type: 'editable-chart', title: 'Profil de liens entrants · Concurrents', subtitle: 'Comparaison du netlinking avec vos principaux concurrents', image: null, summary: '' }
+          { type: 'netlinking-concurrence', title: 'Netlinking · Popularité de la concurrence', subtitle: 'Stratégie de netlinking pour renforcer la puissance et la popularité du site avec différents types de backlinks selon votre profil actuel et celui de vos concurrents.', image: null, summary: '' }
         );
       }
     }
@@ -2663,6 +2662,66 @@ function renderSlide(s, idx, clientName, consultant) {
         </div>
       </div>
       ${footer(true)}
+    </div>`;
+  }
+
+  // NETLINKING CONCURRENCE — image upload à gauche, panel méthode statique à droite
+  if (s.type === 'netlinking-concurrence') {
+
+    let imageHtml;
+    if (s.image) {
+      imageHtml = `<div class="chart-img-wrap"${editable ? ` onclick="uploadChartImage(${idx})"` : ''}>
+        <img src="${s.image}" alt="Netlinking concurrence">
+        ${editable ? `<div class="chart-img-overlay">🔄 Remplacer l'image</div>` : ''}
+      </div>`;
+    } else if (editable) {
+      imageHtml = `<div class="chart-placeholder" onclick="uploadChartImage(${idx})">
+        <div style="text-align:center">
+          <div style="font-size:30px;margin-bottom:8px">📎</div>
+          <div style="font-weight:600;margin-bottom:4px">Cliquer pour uploader l'image</div>
+          <div style="font-size:12px;opacity:0.65">Tableau de popularité des concurrents (Semrush, Ahrefs…)</div>
+        </div>
+      </div>`;
+    } else {
+      imageHtml = `<div class="chart-placeholder chart-placeholder-static" style="cursor:default;pointer-events:none">
+        <span style="color:#ccc;font-size:13px">Aucune image</span>
+      </div>`;
+    }
+
+    const methodeHtml = `<div style="background:var(--green-dark);border-radius:12px;padding:2rem;color:#fff;display:flex;flex-direction:column;gap:1.2rem;height:100%;box-sizing:border-box;">
+      <div style="font-size:11px;font-weight:700;color:var(--orange);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem;">Notre méthode</div>
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        <div style="display:flex;gap:0.8rem;align-items:flex-start;">
+          <span style="font-size:15px;font-weight:700;color:var(--orange);min-width:24px;">01</span>
+          <span style="font-size:13px;line-height:1.4;">Audit du profil de backlinks existant</span>
+        </div>
+        <div style="display:flex;gap:0.8rem;align-items:flex-start;">
+          <span style="font-size:15px;font-weight:700;color:var(--orange);min-width:24px;">02</span>
+          <span style="font-size:13px;line-height:1.4;">Analyse des backlinks des concurrents</span>
+        </div>
+        <div style="display:flex;gap:0.8rem;align-items:flex-start;">
+          <span style="font-size:15px;font-weight:700;color:var(--orange);min-width:24px;">03</span>
+          <span style="font-size:13px;line-height:1.4;">Mix d'ancres et de typologies variées</span>
+        </div>
+        <div style="display:flex;gap:0.8rem;align-items:flex-start;">
+          <span style="font-size:15px;font-weight:700;color:var(--orange);min-width:24px;">04</span>
+          <span style="font-size:13px;line-height:1.4;">Pilotage mensuel de la popularité</span>
+        </div>
+      </div>
+    </div>`;
+
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        ${ef('title', s.title, 'div', 'slide-title')}
+        ${s.subtitle || editable ? ef('subtitle', s.subtitle, 'div', 'slide-subtitle') : ''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;flex:1;min-height:0;">
+          <div id="chart-area-${idx}" style="display:flex;flex-direction:column;">${imageHtml}</div>
+          <div>${methodeHtml}</div>
+        </div>
+      </div>
+      ${footer(false)}
     </div>`;
   }
 

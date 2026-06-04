@@ -618,6 +618,29 @@
     border-radius: var(--radius); padding: 10px 14px; font-size: 13px;
     margin-bottom: 1rem; display: none;
   }
+  .auth-field {
+    position: relative; margin-bottom: 10px;
+  }
+  .auth-field input {
+    width: 100%; padding: 22px 14px 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px; background: var(--sand);
+    font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text);
+    outline: none; transition: border-color 0.15s, background 0.15s;
+    box-sizing: border-box;
+  }
+  .auth-field input:focus {
+    border-color: var(--green-accent); background: var(--white);
+  }
+  .auth-field label {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    font-size: 14px; color: var(--text-muted); pointer-events: none;
+    transition: all 0.15s ease; transform-origin: left top;
+  }
+  .auth-field input:focus + label,
+  .auth-field input:not(:placeholder-shown) + label {
+    top: 10px; transform: none; font-size: 11px; color: var(--text-light); font-weight: 500;
+  }
 
   /* HEADER USER */
   .header-user { display: flex; align-items: center; gap: 10px; }
@@ -1104,17 +1127,17 @@
       <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Créer un compte</button>
     </div>
     <div class="auth-error" id="authError"></div>
-    <div id="authFormRegisterName" class="form-group" style="display:none">
-      <label class="form-label">Nom</label>
-      <input type="text" id="authName" placeholder="Prénom Nom">
+    <div id="authFormRegisterName" class="auth-field" style="display:none">
+      <input type="text" id="authName" placeholder=" ">
+      <label for="authName">Nom</label>
     </div>
-    <div class="form-group">
-      <label class="form-label">Email</label>
-      <input type="email" id="authEmail" placeholder="votre@email.com">
+    <div class="auth-field">
+      <input type="email" id="authEmail" placeholder=" ">
+      <label for="authEmail">Email</label>
     </div>
-    <div class="form-group">
-      <label class="form-label">Mot de passe</label>
-      <input type="password" id="authPassword" placeholder="••••••••">
+    <div class="auth-field">
+      <input type="password" id="authPassword" placeholder=" ">
+      <label for="authPassword">Mot de passe</label>
     </div>
     <button class="btn btn-primary btn-lg" style="width:100%;margin-top:4px" id="authSubmit" onclick="submitAuth()">Se connecter</button>
   </div>

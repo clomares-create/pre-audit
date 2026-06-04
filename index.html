@@ -1906,8 +1906,7 @@ Informations :
 ${currentCompetitors.length ? `- Concurrents déjà identifiés : ${currentCompetitors.join(', ')}` : ''}
 ${meetingContent ? `\nExtrait du rapport de réunion :\n${meetingContent.slice(0, 3000)}` : ''}
 
-Propose une liste de concurrents digitaux (sites web). Inclus les concurrents déjà identifiés et complète avec d'autres pertinents.
-Réponds UNIQUEMENT avec un tableau JSON de domaines. Exemple : ["concurrent1.fr","concurrent2.com","concurrent3.fr"]. 5 concurrents maximum. Aucun texte avant ou après.`;
+Propose une liste de concurrents digitaux. Réponds UNIQUEMENT avec un tableau JSON de noms de domaine (ex: "site.fr", "site.com"). JAMAIS de noms d'entreprises, JAMAIS de texte, JAMAIS d'URL complètes avec https://. Uniquement des domaines bruts. 5 concurrents maximum. Exemple exact : ["concurrent1.fr","concurrent2.com","concurrent3.fr"]`;
 
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',

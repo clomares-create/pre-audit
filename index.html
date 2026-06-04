@@ -505,13 +505,42 @@
   .comp-add-row input { flex: 1; }
   .comp-add-row button { flex-shrink: 0; }
 
-  /* PAGESPEED SCREENSHOTS */
-  .psi-screenshots { display: flex; gap: 16px; margin-top: 1.25rem; }
-  .psi-shot { flex: 1; min-width: 0; }
-  .psi-shot-label { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-light); margin-bottom: 6px; }
-  .psi-shot img { width: 100%; border-radius: 6px; border: 1px solid var(--border); display: block; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-  .psi-shot-mobile img { max-width: 160px; }
-  .psi-shot-desktop img { width: 100%; }
+  /* PSI WIDGET */
+  .psi-widget { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.10); margin-top: 6px; }
+  .psi-tabs { display: flex; border-bottom: 1px solid #e8e8e8; padding: 0 20px; gap: 4px; }
+  .psi-tab-btn {
+    padding: 10px 16px; border: none; background: none; cursor: pointer;
+    font-size: 14px; font-weight: 500; color: #666;
+    border-bottom: 3px solid transparent; margin-bottom: -1px;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .psi-tab-btn.active { color: #1a73e8; border-bottom-color: #1a73e8; }
+  .psi-tab-icon { font-size: 16px; }
+  .psi-panel { display: none; padding: 18px 22px 20px; }
+  .psi-panel.active { display: flex; gap: 22px; align-items: flex-start; }
+  .psi-left { flex: 1; min-width: 0; }
+  .psi-right { flex-shrink: 0; width: 200px; }
+  .psi-right img { width: 100%; border-radius: 6px; border: 1px solid #e8e8e8; display: block; }
+  .psi-gauge-row { display: flex; align-items: center; gap: 16px; margin-bottom: 6px; }
+  .psi-gauge-svg { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+  .psi-score-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; }
+  .psi-gauge-label { font-size: 15px; font-weight: 600; color: #333; }
+  .psi-note { font-size: 11px; color: #666; line-height: 1.5; margin: 6px 0 8px; max-width: 340px; }
+  .psi-note a { color: #1a73e8; }
+  .psi-legend { display: flex; gap: 14px; font-size: 11px; color: #444; margin-bottom: 10px; }
+  .psi-legend-item { display: flex; align-items: center; gap: 4px; }
+  .psi-leg-red { color: #ea4335; }
+  .psi-leg-orange { color: #f4a225; }
+  .psi-leg-green { color: #0cce6b; }
+  .psi-stats-title { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #555; margin-bottom: 8px; }
+  .psi-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .psi-stat { padding: 8px 0; border-top: 1px solid #f0f0f0; }
+  .psi-stat-name { font-size: 12px; color: #333; display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
+  .psi-stat-val { font-size: 15px; font-weight: 600; }
+  .psi-ind-red { color: #ea4335; }
+  .psi-ind-orange { color: #f4a225; }
+  .psi-ind-green { color: #0cce6b; }
+  .psi-error { display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; color: #991b1b; font-size: 13px; margin-top: 10px; }
 
   /* MODEL SELECT */
   .model-input-row { display: flex; gap: 8px; }
@@ -623,6 +652,35 @@
   }
   .report-link-label { font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
   .report-link-url { font-size: 12px; color: var(--green-dark); font-family: 'DM Mono', monospace; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* EDITABLE CHART SLIDE */
+  .chart-area { margin: 10px 0 12px; flex: 1; }
+  .chart-placeholder {
+    width: 100%; min-height: 210px;
+    border: 2px dashed #c8c4bb; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; background: #faf8f5; color: #999;
+    font-size: 14px; transition: border-color 0.15s, background 0.15s;
+  }
+  .chart-placeholder:hover { border-color: #1a3a2e; background: #f0ede8; color: #1a3a2e; }
+  .chart-placeholder-static { min-height: 120px; cursor: default; }
+  .chart-img-wrap { position: relative; cursor: pointer; display: inline-block; width: 100%; }
+  .chart-img-wrap img { width: 100%; border-radius: 8px; border: 1px solid #e8e8e8; display: block; max-height: 290px; object-fit: contain; object-position: top; }
+  .chart-img-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: white; font-weight: 600; opacity: 0; transition: all 0.2s;
+  }
+  .chart-img-wrap:hover .chart-img-overlay { background: rgba(0,0,0,0.38); opacity: 1; }
+  .chart-summary-edit {
+    margin-top: 12px; background: #1a3a2e; color: white;
+    border-left: 4px solid #e85d2a; border-radius: 4px;
+    padding: 13px 16px; font-size: 13px; line-height: 1.65; min-height: 46px;
+    transition: box-shadow 0.15s;
+  }
+  .chart-summary-edit[contenteditable="true"] { outline: none; cursor: text; }
+  .chart-summary-edit[contenteditable="true"]:empty::before { content: attr(data-placeholder); color: rgba(255,255,255,0.35); pointer-events: none; }
+  .chart-summary-edit[contenteditable="true"]:focus { box-shadow: 0 0 0 2px #e85d2a; }
 
   /* ALGO SEO SLIDE */
   .algo-seo-intro { font-style: italic; color: #666; font-size: 14px; margin: 8px 0 24px; line-height: 1.6; }
@@ -1080,7 +1138,8 @@ async function loadReportIntoApp(reportId) {
   document.getElementById('resultState').style.display = '';
   document.getElementById('resultTitle').textContent = 'Pré-audit — ' + report.clientName;
   document.getElementById('resultDate').textContent = `Chargé le ${new Date().toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})}`;
-  window.__pagespeedScreenshots = null;
+  window.__editableSlides = true;
+  window.__currentSlides = report.content;
   document.getElementById('slidesContainer').innerHTML = renderSlides(report.content, {
     clientName: report.clientName, clientUrl: report.clientUrl || '', consultant: '',
   });
@@ -1162,6 +1221,8 @@ async function loadPublicReport(slug) {
   document.getElementById('resultState').style.display = '';
   document.getElementById('resultTitle').textContent = 'Pré-audit — ' + report.clientName;
   document.getElementById('resultDate').textContent = `Généré le ${new Date(report.createdAt).toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})}`;
+  window.__editableSlides = false;
+  window.__currentSlides = null;
   document.getElementById('slidesContainer').innerHTML = renderSlides(report.content, {
     clientName: report.clientName, clientUrl: report.clientUrl || '', consultant: '',
   });
@@ -1615,6 +1676,19 @@ async function confirmAndGenerate() {
       }
     }
 
+    // For SEO reports, inject "Votre trafic VS la concurrence" section before "Notre Proposition"
+    if (hasSeo) {
+      const proposalIdx = slides.findIndex(s => s.type === 'section' && (s.title || '').includes('Proposition'));
+      const insertAt = proposalIdx !== -1 ? proposalIdx : Math.max(slides.length - 3, 0);
+      slides.splice(insertAt, 0,
+        { type: 'section', label: '', title: 'Votre trafic VS la concurrence', subtitle: 'Données issues de vos outils SEO' },
+        { type: 'editable-chart', title: 'Trafic concurrence · Marché', subtitle: 'Estimation du trafic SEO généré par les concurrents', image: null, summary: '' },
+        { type: 'editable-chart', title: 'Performance de votre trafic seo', subtitle: 'Estimation de votre trafic SEO', image: null, summary: '' },
+        { type: 'editable-chart', title: 'Potentiel SEO · Visibilité actuelle vs potentielle', subtitle: 'Évolution attendue du portefeuille de mots-clés positionnés sur Google.', image: null, summary: '' },
+        { type: 'editable-chart', title: 'Potentiel SEO · Vue d\'ensemble des positions', subtitle: 'Améliorer les positions existantes – répartition actuelle des mots-clés positionnés.', image: null, summary: '' }
+      );
+    }
+
     // For SEO reports, inject the fixed "Fonctionnement de l'algorithme" slide after section "01"
     const hasSeo = services.some(s => s.toLowerCase().includes('seo'));
     if (hasSeo) {
@@ -1647,32 +1721,28 @@ async function confirmAndGenerate() {
       }
     }
 
-    // If PageSpeed failed, inject a static error slide where "technical" would be
-    if (!pagespeedData) {
-      const techErrorSlide = {
-        type: 'technical',
-        label: 'Technique SEO',
-        title: 'Performance & Vitesse',
-        subtitle: `Audit technique du site ${clientUrl}`,
-        scores: null,
-        metrics: null,
-        badges: null,
-        body: `<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;font-size:13px">
-          <span style="font-size:20px">⚠️</span>
-          <div><strong>Données indisponibles</strong><br>L'API PageSpeed Insights n'a pas pu être contactée pour ce site. Configurez une clé API Google dans les paramètres pour obtenir les scores réels de performance.</div>
-        </div>`,
-        summary: 'Les données de performance n\'ont pas pu être récupérées via PageSpeed Insights.',
-        accentColor: 'red',
-      };
-      // Insert after the "02 Technique SEO" section slide
-      const sectionIdx = slides.findIndex(s => s.type === 'section' && s.label === '02');
-      if (sectionIdx !== -1) {
-        slides.splice(sectionIdx + 1, 0, techErrorSlide);
-      } else {
-        // fallback: insert after intro
-        const introIdx = slides.findIndex(s => s.type === 'intro');
-        slides.splice(introIdx !== -1 ? introIdx + 1 : 2, 0, techErrorSlide);
-      }
+    // Always inject the static technical slide after section "02"
+    const mkPsiSide = (d) => d ? {
+      score: d.performance,
+      fcp: d.fcp, fcpScore: d.fcpScore,
+      lcp: d.lcp, lcpScore: d.lcpScore,
+      tbt: d.tbt, tbtScore: d.tbtScore,
+      cls: d.cls, clsScore: d.clsScore,
+      si: d.si, siScore: d.siScore,
+      screenshot: d.screenshot,
+    } : null;
+    const techSlide = {
+      type: 'technical',
+      title: 'Technique · Vitesse de chargement',
+      subtitle: `Page d'accueil · ${clientUrl}`,
+      psi: pagespeedData ? { mobile: mkPsiSide(pagespeedData.mobile), desktop: mkPsiSide(pagespeedData.desktop) } : null,
+    };
+    const section02Idx = slides.findIndex(s => s.type === 'section' && s.label === '02');
+    if (section02Idx !== -1) {
+      slides.splice(section02Idx + 1, 0, techSlide);
+    } else {
+      const introIdx = slides.findIndex(s => s.type === 'intro');
+      slides.splice(introIdx !== -1 ? introIdx + 1 : 2, 0, techSlide);
     }
 
     // Render
@@ -1682,7 +1752,8 @@ async function confirmAndGenerate() {
     document.getElementById('resultState').style.display = '';
     document.getElementById('resultTitle').textContent = `Pré-audit — ${clientName}`;
     document.getElementById('resultDate').textContent = `Généré le ${new Date().toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})} · ${model}`;
-    window.__pagespeedScreenshots = pagespeedData ? { mobile: pagespeedData.mobile.screenshot, desktop: pagespeedData.desktop.screenshot } : null;
+    window.__editableSlides = true;
+    window.__currentSlides = slides;
     document.getElementById('slidesContainer').innerHTML = renderSlides(slides, { clientName, clientUrl, consultant });
     saveReport(slides);
 
@@ -1711,9 +1782,15 @@ async function fetchPageSpeed(url, apiKey) {
     accessibility: Math.round((data.lighthouseResult?.categories?.accessibility?.score ?? 0) * 100),
     seo: Math.round((data.lighthouseResult?.categories?.seo?.score ?? 0) * 100),
     fcp: data.lighthouseResult?.audits?.['first-contentful-paint']?.displayValue || null,
+    fcpScore: data.lighthouseResult?.audits?.['first-contentful-paint']?.score ?? null,
     lcp: data.lighthouseResult?.audits?.['largest-contentful-paint']?.displayValue || null,
+    lcpScore: data.lighthouseResult?.audits?.['largest-contentful-paint']?.score ?? null,
     cls: data.lighthouseResult?.audits?.['cumulative-layout-shift']?.displayValue || null,
+    clsScore: data.lighthouseResult?.audits?.['cumulative-layout-shift']?.score ?? null,
     tbt: data.lighthouseResult?.audits?.['total-blocking-time']?.displayValue || null,
+    tbtScore: data.lighthouseResult?.audits?.['total-blocking-time']?.score ?? null,
+    si: data.lighthouseResult?.audits?.['speed-index']?.displayValue || null,
+    siScore: data.lighthouseResult?.audits?.['speed-index']?.score ?? null,
     screenshot: data.lighthouseResult?.audits?.['final-screenshot']?.details?.data || null,
   });
 
@@ -1862,15 +1939,7 @@ STRUCTURE OBLIGATOIRE DANS CET ORDRE :
 
 5. type "section" — label = "02", title = "Technique SEO", subtitle = "Audit technique du site ${clientUrl}", body = null, summary = null
 
-${pagespeedData ? `6. type "technical" — performance technique, vitesse, mobile. scores obligatoires basés sur les données réelles ci-dessous. summary obligatoire.
-DONNÉES RÉELLES PAGESPEED INSIGHTS (utilise EXACTEMENT ces valeurs dans les scores) :
-- Performance mobile : ${pagespeedData.mobile.performance}/100
-- Performance desktop : ${pagespeedData.desktop.performance}/100
-- Accessibilité : ${pagespeedData.mobile.accessibility}/100 (mobile) · ${pagespeedData.desktop.accessibility}/100 (desktop) — utilise la moyenne arrondie
-- SEO technique Lighthouse : ${pagespeedData.mobile.seo}/100 (mobile) · ${pagespeedData.desktop.seo}/100 (desktop) — utilise la moyenne arrondie
-- Core Web Vitals mobile : FCP ${pagespeedData.mobile.fcp || 'N/A'} · LCP ${pagespeedData.mobile.lcp || 'N/A'} · CLS ${pagespeedData.mobile.cls || 'N/A'} · TBT ${pagespeedData.mobile.tbt || 'N/A'}
-- Core Web Vitals desktop : FCP ${pagespeedData.desktop.fcp || 'N/A'} · LCP ${pagespeedData.desktop.lcp || 'N/A'} · CLS ${pagespeedData.desktop.cls || 'N/A'} · TBT ${pagespeedData.desktop.tbt || 'N/A'}
-Mentionne les Core Web Vitals dans le body de la slide.` : `6. NE PAS générer de slide de type "technical". Cette slide sera injectée séparément avec les données réelles. Passe directement au point 7.`}
+6. NE PAS générer de slide de type "technical". Cette slide sera injectée séparément avec les données réelles PageSpeed Insights. Passe directement au point 7.
 
 7. type "section" — label = "03", title = "Indexation & Structure", subtitle = "Analyse de la couverture d'indexation", body = null, summary = null
 
@@ -1894,6 +1963,51 @@ ${hasSeo ? `9. type "section" — label = "04", title = "Stratégie de Contenu",
 - type "closing" — prochaines étapes (3 étapes numérotées), contact du commercial ${consultant}. summary = null.
 
 Rédige en français. Ton professionnel et expert. Données chiffrées réalistes et cohérentes avec le secteur "${sector || 'digital'}".`;
+}
+
+let __saveTimeout = null;
+function debounceSave() {
+  clearTimeout(__saveTimeout);
+  __saveTimeout = setTimeout(() => {
+    if (window.__currentSlides) saveReport(window.__currentSlides);
+  }, 1200);
+}
+
+function uploadChartImage(idx) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = ev.target.result;
+      if (window.__currentSlides?.[idx]) window.__currentSlides[idx].image = base64;
+      const area = document.getElementById(`chart-area-${idx}`);
+      if (area) area.innerHTML = `<div class="chart-img-wrap" onclick="uploadChartImage(${idx})">
+        <img src="${base64}" alt="Graphique">
+        <div class="chart-img-overlay">🔄 Remplacer l'image</div>
+      </div>`;
+      debounceSave();
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function onSummaryEdit(idx, value) {
+  if (window.__currentSlides?.[idx]) window.__currentSlides[idx].summary = value;
+  debounceSave();
+}
+
+function psiTab(btn, uid, tab) {
+  const widget = btn.closest('.psi-widget');
+  widget.querySelectorAll('.psi-tab-btn').forEach(b => b.classList.remove('active'));
+  widget.querySelectorAll('.psi-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  const panel = document.getElementById(`${uid}-${tab}`);
+  if (panel) panel.classList.add('active');
 }
 
 function renderSlides(slides, { clientName, clientUrl, consultant }) {
@@ -1980,6 +2094,142 @@ function renderSlide(s, idx, clientName, consultant) {
     </div>`;
   }
 
+  // EDITABLE CHART — slide à compléter manuellement (trafic, potentiel SEO…)
+  if (s.type === 'editable-chart') {
+    const editable = !!window.__editableSlides;
+
+    let imageHtml;
+    if (s.image) {
+      imageHtml = `<div class="chart-img-wrap"${editable ? ` onclick="uploadChartImage(${idx})"` : ''}>
+        <img src="${s.image}" alt="Graphique">
+        ${editable ? `<div class="chart-img-overlay">🔄 Remplacer l'image</div>` : ''}
+      </div>`;
+    } else if (editable) {
+      imageHtml = `<div class="chart-placeholder" onclick="uploadChartImage(${idx})">
+        <div style="text-align:center">
+          <div style="font-size:30px;margin-bottom:8px">📎</div>
+          <div style="font-weight:600;margin-bottom:4px">Cliquer pour uploader l'image</div>
+          <div style="font-size:12px;opacity:0.65">Screenshot depuis votre outil SEO (Semrush, Ahrefs…)</div>
+        </div>
+      </div>`;
+    } else {
+      imageHtml = `<div class="chart-placeholder chart-placeholder-static" style="cursor:default;pointer-events:none">
+        <span style="color:#ccc;font-size:13px">Aucune image</span>
+      </div>`;
+    }
+
+    let summaryHtml;
+    if (editable) {
+      summaryHtml = `<div class="chart-summary-edit"
+        contenteditable="true"
+        data-placeholder="Saisir le commentaire analytique..."
+        oninput="onSummaryEdit(${idx}, this.textContent)">${s.summary || ''}</div>`;
+    } else if (s.summary) {
+      summaryHtml = `<div class="algo-seo-summary">${s.summary}</div>`;
+    } else {
+      summaryHtml = '';
+    }
+
+    return `<div class="slide slide-content">
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">${s.title || ''}</div>
+        ${s.subtitle ? `<div class="slide-subtitle">${s.subtitle}</div>` : ''}
+        <div class="chart-area" id="chart-area-${idx}">${imageHtml}</div>
+        ${summaryHtml}
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // TECHNICAL — slide PSI (PageSpeed Insights widget)
+  if (s.type === 'technical') {
+    const uid = `psi-${idx}`;
+    const scoreColor = (n) => n >= 90 ? '#0cce6b' : n >= 50 ? '#ffa400' : '#ea4335';
+    const indClass = (sc) => sc === null ? 'psi-ind-green' : sc >= 0.9 ? 'psi-ind-green' : sc >= 0.5 ? 'psi-ind-orange' : 'psi-ind-red';
+    const indIcon = (sc) => sc === null ? '●' : sc >= 0.9 ? '●' : sc >= 0.5 ? '■' : '▲';
+    const circ = 2 * Math.PI * 40;
+
+    const gaugeHtml = (score) => {
+      const col = scoreColor(score);
+      const filled = circ * score / 100;
+      return `<div class="psi-gauge-svg">
+        <svg viewBox="0 0 100 100" width="72" height="72">
+          <circle cx="50" cy="50" r="40" fill="none" stroke="#e8e8e8" stroke-width="9"/>
+          <circle cx="50" cy="50" r="40" fill="none" stroke="${col}" stroke-width="9"
+            stroke-dasharray="${filled.toFixed(1)} ${(circ - filled).toFixed(1)}"
+            stroke-linecap="round" transform="rotate(-90 50 50)"/>
+        </svg>
+        <div class="psi-score-overlay" style="color:${col}">${score}</div>
+      </div>`;
+    };
+
+    const statsHtml = (d) => {
+      const stats = [
+        { name: 'First Contentful Paint', val: d.fcp, sc: d.fcpScore },
+        { name: 'Largest Contentful Paint', val: d.lcp, sc: d.lcpScore },
+        { name: 'Total Blocking Time', val: d.tbt, sc: d.tbtScore },
+        { name: 'Cumulative Layout Shift', val: d.cls, sc: d.clsScore },
+        { name: 'Speed Index', val: d.si, sc: d.siScore },
+      ].filter(x => x.val);
+      return `<div class="psi-stats-title">Statistiques</div>
+      <div class="psi-stats-grid">${stats.map(st => `
+        <div class="psi-stat">
+          <div class="psi-stat-name"><span class="${indClass(st.sc)}">${indIcon(st.sc)}</span> ${st.name}</div>
+          <div class="psi-stat-val ${indClass(st.sc)}">${st.val}</div>
+        </div>`).join('')}
+      </div>`;
+    };
+
+    const panelHtml = (d, tabId) => `
+      <div class="psi-panel${tabId === 'mobile' ? ' active' : ''}" id="${uid}-${tabId}">
+        <div class="psi-left">
+          <div class="psi-gauge-row">
+            ${gaugeHtml(d.score)}
+            <div>
+              <div class="psi-gauge-label">Performances</div>
+              <div class="psi-legend">
+                <span class="psi-leg-red">▲ 0–49</span>
+                <span class="psi-leg-orange">■ 50–89</span>
+                <span class="psi-leg-green">● 90–100</span>
+              </div>
+            </div>
+          </div>
+          ${statsHtml(d)}
+        </div>
+        ${d.screenshot ? `<div class="psi-right"><img src="${d.screenshot}" alt="Aperçu ${tabId}"></div>` : ''}
+      </div>`;
+
+    let widgetInner;
+    if (s.psi) {
+      widgetInner = `
+        <div class="psi-tabs">
+          <button class="psi-tab-btn active" onclick="psiTab(this,'${uid}','mobile')">
+            <span class="psi-tab-icon">📱</span> Mobile
+          </button>
+          <button class="psi-tab-btn" onclick="psiTab(this,'${uid}','desktop')">
+            <span class="psi-tab-icon">🖥</span> Bureau
+          </button>
+        </div>
+        ${panelHtml(s.psi.mobile, 'mobile')}
+        ${panelHtml(s.psi.desktop, 'desktop')}`;
+    } else {
+      widgetInner = `<div class="psi-error"><span style="font-size:20px">⚠️</span>
+        <div><strong>Données indisponibles</strong><br>L'API PageSpeed Insights n'a pas pu être contactée. Configurez une clé API Google dans les paramètres.</div>
+      </div>`;
+    }
+
+    return `<div class="slide slide-content">
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">${s.title || 'Technique · Vitesse de chargement'}</div>
+        ${s.subtitle ? `<div class="slide-subtitle">${s.subtitle}</div>` : ''}
+        <div class="psi-widget">${widgetInner}</div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
   // ALGO SEO — slide fixe "Fonctionnement de l'algorithme" (SEO uniquement)
   if (s.type === 'algo-seo') {
     return `<div class="slide slide-content">
@@ -2050,17 +2300,6 @@ function renderSlide(s, idx, clientName, consultant) {
   }
 
   if (s.body) content += `<div class="slide-body">${s.body}</div>`;
-
-  // PageSpeed screenshots — injected only on the technical slide when data is available
-  if (s.type === 'technical' && window.__pagespeedScreenshots) {
-    const { mobile, desktop } = window.__pagespeedScreenshots;
-    if (mobile || desktop) {
-      content += `<div class="psi-screenshots">`;
-      if (desktop) content += `<div class="psi-shot psi-shot-desktop"><div class="psi-shot-label">Desktop</div><img src="${desktop}" alt="Aperçu desktop"></div>`;
-      if (mobile) content += `<div class="psi-shot psi-shot-mobile"><div class="psi-shot-label">Mobile</div><img src="${mobile}" alt="Aperçu mobile"></div>`;
-      content += `</div>`;
-    }
-  }
 
   if (s.summary) {
     content += `<div class="summary-block">

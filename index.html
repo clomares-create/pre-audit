@@ -1862,6 +1862,13 @@ function removeCompetitorChip(idx) {
   renderCompetitorChips(current);
 }
 
+function updateVisibilityBar(idx, field, value) {
+  if (!window.__currentSlides?.[idx]) return;
+  if (!window.__currentSlides[idx].bars) window.__currentSlides[idx].bars = {};
+  window.__currentSlides[idx].bars[field] = value;
+  renderSlides();
+}
+
 function addCompetitorChip() {
   const input = document.getElementById('competitorInput');
   const val = input.value.trim().replace(/,/g, '');
@@ -2045,7 +2052,7 @@ async function confirmAndGenerate() {
         slides.splice(sec04Idx + 1, 0,
           { type: 'editable-chart', title: 'Trafic concurrence · Marché', subtitle: 'Estimation du trafic SEO généré par les concurrents', image: null, summary: '', competitors: confirmedCompetitors },
           { type: 'editable-chart', title: 'Performance de votre trafic SEO', subtitle: 'Estimation de votre trafic SEO actuel', image: null, summary: '' },
-          { type: 'editable-chart', title: 'Potentiel SEO · Visibilité actuelle vs potentielle', subtitle: 'Évolution attendue du portefeuille de mots-clés positionnés sur Google', image: null, summary: '' },
+          { type: 'seo-visibility-chart', title: 'Potentiel SEO · Visibilité actuelle vs potentielle', subtitle: 'Évolution attendue du portefeuille de mots-clés positionnés sur Google.', bars: { top3: '', basPage1: '', page2: '', page34: '', page59: '' } },
           { type: 'editable-chart', title: 'Potentiel SEO · Vue d\'ensemble des positions', subtitle: 'Répartition actuelle des mots-clés positionnés', image: null, summary: '' },
           { type: 'seo-top-keywords', title: 'Performances SEO · Vos principaux mots-clés', subtitle: 'Les principaux mots-clés générateurs de trafic naturel sur votre site.', image: null, comment: '' },
           { type: 'seo-keyword-potential', title: 'Potentiel mots-clés · [THÈME]', subtitle: 'Volume = recherches mensuelles · KD% = niveau de concurrence SEO', image: null }
@@ -3323,6 +3330,76 @@ function renderSlide(s, idx, clientName, consultant) {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;flex:1;min-height:0;">
           <div id="chart-area-${idx}" style="display:flex;flex-direction:column;">${imageHtml}</div>
           <div>${methodeHtml}</div>
+        </div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // SEO VISIBILITY CHART — Potentiel SEO · Visibilité actuelle vs potentielle
+  if (s.type === 'seo-visibility-chart') {
+    const b = s.bars || {};
+    const vals = {
+      top3: parseInt(b.top3) || 0,
+      basPage1: parseInt(b.basPage1) || 0,
+      page2: parseInt(b.page2) || 0,
+      page34: parseInt(b.page34) || 0,
+      page59: parseInt(b.page59) || 0,
+    };
+    const totalActuel = vals.top3 + vals.basPage1;
+    const totalPotentiel = vals.page2 + vals.page34 + vals.page59;
+    const allVals = Object.values(vals);
+    const maxVal = Math.max(...allVals, 1);
+
+    const barH = 160; // px, fixed bar container height
+
+    const mkInput = (field, val, color) => editable
+      ? `<input type="number" min="0" value="${b[field] || ''}" placeholder="0"
+           oninput="updateVisibilityBar(${idx},'${field}',this.value)"
+           style="width:70px;text-align:center;font-size:20px;font-weight:800;color:${color};border:none;background:transparent;outline:none;-moz-appearance:textfield">`
+      : `<div style="font-size:20px;font-weight:800;color:${color}">${val || '—'}</div>`;
+
+    const mkBar = (field, val, bgFull, bgFill, label) => {
+      const fillH = val ? Math.round((val / maxVal) * barH) : 0;
+      return `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1">
+        ${mkInput(field, val, bgFill)}
+        <div style="font-size:11px;color:#888;font-weight:500">Mots Clés</div>
+        <div style="width:100%;height:${barH}px;background:${bgFull};border-radius:6px 6px 0 0;display:flex;align-items:flex-end;position:relative;overflow:hidden">
+          <div style="width:100%;height:${fillH}px;background:${bgFill};border-radius:6px 6px 0 0;transition:height .3s"></div>
+        </div>
+        <div style="font-size:10px;font-weight:700;text-align:center;line-height:1.3;color:#fff;background:${bgFill};border-radius:0 0 4px 4px;width:100%;padding:4px 2px">${label}</div>
+      </div>`;
+    };
+
+    const greenLight = '#e8f5e9'; const greenDark = '#2d6a4f';
+    const orangeLight = '#fff3e0'; const orangeDark = '#e65100';
+
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        ${ef('title', s.title, 'div', 'slide-title')}
+        ${ef('subtitle', s.subtitle, 'div', 'slide-subtitle')}
+        <div style="display:flex;gap:20px;align-items:flex-end;margin-top:1.2rem">
+          <div style="flex:2;border:2px solid ${greenDark};border-radius:8px;padding:12px 10px 0;display:flex;gap:10px;align-items:flex-end">
+            ${mkBar('top3', vals.top3, greenLight, greenDark, 'TOP 3<br>1ère PAGE')}
+            ${mkBar('basPage1', vals.basPage1, greenLight, '#52b788', 'BAS DE<br>1ère PAGE')}
+          </div>
+          <div style="flex:3;border:2px solid ${orangeDark};border-radius:8px;padding:12px 10px 0;display:flex;gap:10px;align-items:flex-end">
+            ${mkBar('page2', vals.page2, orangeLight, '#ffb347', '2ème<br>PAGE')}
+            ${mkBar('page34', vals.page34, orangeLight, '#ff8c00', '3 et 4ème<br>PAGE')}
+            ${mkBar('page59', vals.page59, orangeLight, orangeDark, '5 à 9ème<br>PAGE')}
+          </div>
+        </div>
+        <div style="display:flex;gap:24px;margin-top:1rem;align-items:center">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:18px;height:18px;background:${greenLight};border:2px solid ${greenDark};border-radius:3px"></div>
+            <span style="font-size:13px;font-weight:600">visibilité actuelle${totalActuel ? ` > <strong>${totalActuel.toLocaleString('fr-FR')}</strong> Mots Clés` : ''}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:18px;height:18px;background:${orangeLight};border:2px solid ${orangeDark};border-radius:3px"></div>
+            <span style="font-size:13px;font-weight:600">visibilité potentielle${totalPotentiel ? ` > <strong>${totalPotentiel.toLocaleString('fr-FR')}</strong> Mots Clés` : ''}</span>
+          </div>
         </div>
       </div>
       ${footer(false)}

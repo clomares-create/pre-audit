@@ -2409,7 +2409,7 @@ Chaque objet slide a ce format :
   "accentColor": "green|amber|red|blue"
 }
 
-Le champ "summary" (1-2 lignes max) est OBLIGATOIRE sur : intro, seo, content, sea, geo, competition, roadmap. Il est null sur : cover, sommaire, section, pricing, closing.
+Le champ "summary" (1-2 lignes max) est OBLIGATOIRE sur : intro, seo, content, sea, geo, competition. Il est null sur : cover, sommaire, section, pricing.
 
 IMPORTANT : Ne génère JAMAIS de slide de type "metrics" ni "technical" ni "indexation" — ces types sont injectés séparément.
 
@@ -2419,10 +2419,8 @@ STRUCTURE OBLIGATOIRE DANS CET ORDRE :
 
 2. type "sommaire" — title = "Sommaire", body = liste HTML <ol><li> avec les titres des parties "section" qui suivent, summary = null
 ${seoStructure}
-- type "section" — label = "${proposalLabel}", title = "Notre Proposition", subtitle = "Équipe, budget, prochaines étapes", body = null, summary = null
-- type "roadmap" — plan d'action à 3 mois, 3 phases distinctes. summary obligatoire.
+- type "section" — label = "${proposalLabel}", title = "Budget & Tarifs", subtitle = "Investissement et accompagnement", body = null, summary = null
 - type "pricing" — proposition tarifaire. Le body contient deux blocs HTML : PHASE 1 SETUP (frais uniques) et PHASE 2 RUN (mensuel récurrent). Tarifs Sonate : SEO setup 1 400 € HT + 700 € HT/mois · SEA setup 1 400 € HT + 400 € HT/mois · GEO setup 800 € HT + 300 € HT/mois. summary = total setup et total mensuel.
-- type "closing" — prochaines étapes (3 étapes numérotées), contact du commercial ${consultant}. summary = null.
 
 Rédige en français. Ton professionnel et expert. Données chiffrées réalistes pour le secteur "${sector || 'digital'}".`;
 }

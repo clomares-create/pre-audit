@@ -2424,6 +2424,18 @@ function buildPrompt({ clientName, clientUrl, sector, geo, services, meetingCont
 4. type "intro" — contexte de l'entreprise, ce que Sonate a observé. summary obligatoire.
 ${hasSea ? `
 5. type "section" — label = "02", title = "Référencement Payant", subtitle = "Comprendre les leviers Google Ads", body = null, summary = null
+   NE PAS générer de slide de contenu pour cette section — le contenu sera injecté séparément.
+   SAUF : génère une slide de type "sea-strategie" avec les champs suivants déduits du contexte client :
+   {
+     "type": "sea-strategie",
+     "supports": "Google Ads",
+     "emplacements": "Google Shopping, Google Search, Google Display",
+     "requetes": "expression générique, expression longue traîne",
+     "objectifs": "[déduit du secteur et des besoins]",
+     "zone": "[zone géographique du client]",
+     "periode": "[période recommandée ex: toute l'année / saisonnière]",
+     "duree": "[durée recommandée ex: 6 mois, à définir]"
+   }
 
 6. type "sea" — analyse concurrents sur Google Ads, stratégie recommandée. summary obligatoire.
 
@@ -2462,6 +2474,7 @@ Chaque objet slide a ce format :
 Le champ "summary" (1-2 lignes max) est OBLIGATOIRE sur : intro, seo, content, sea, geo, competition. Il est null sur : cover, sommaire, section, pricing.
 
 IMPORTANT : Ne génère JAMAIS de slide de type "metrics" ni "technical" ni "indexation" — ces types sont injectés séparément.
+Pour le type "sea-strategie", utilise ce format spécifique (pas le format générique) : {"type":"sea-strategie","supports":"...","emplacements":"...","requetes":"...","objectifs":"...","zone":"...","periode":"...","duree":"..."}
 
 STRUCTURE OBLIGATOIRE DANS CET ORDRE :
 
@@ -3939,6 +3952,60 @@ function renderSlide(s, idx, clientName, consultant) {
         <div class="sonate-tagline-sub">Une expertise globale, des résultats mesurables, une équipe engagée.</div>
       </div>
       ${footer(true)}
+    </div>`;
+  }
+
+  // SEA STRATEGIE — "Investir pour vendre" + panneau Stratégie SEA statique
+  if (s.type === 'sea-strategie') {
+    const secLabel = s.sectionLabel || '02';
+    const mkField = (val, field, label) => {
+      const valHtml = editable
+        ? `<span contenteditable="true" style="outline:none;font-weight:400;" oninput="(function(el){if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}]['${field}']=el.textContent;})(this)">${val||''}</span>`
+        : `<span>${val||''}</span>`;
+      return `<div style="font-size:15px;line-height:1.8;color:var(--text);"><strong>${label} :</strong> ${valHtml}</div>`;
+    };
+
+    const strategyGrid = `
+      <div style="background:#f0f4fb;border-radius:16px;padding:1.8rem 1.5rem;display:flex;flex-direction:column;align-items:center;gap:1.2rem;height:100%;box-sizing:border-box;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(100,140,200,0.12);"></div>
+        <div style="position:absolute;bottom:-20px;left:-20px;width:80px;height:80px;border-radius:50%;background:rgba(100,140,200,0.10);"></div>
+        <div style="font-size:22px;font-weight:800;color:var(--green-dark);text-align:center;line-height:1.2;z-index:1;">Stratégie<br>SEA</div>
+        <div style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:0;z-index:1;">
+          ${[
+            { icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6b8fba" stroke-width="1.8"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>`, label: 'localisation' },
+            { icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6b8fba" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`, label: 'personae' },
+            { icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6b8fba" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`, label: 'durée' },
+            { icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6b8fba" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`, label: 'période' },
+            { icon: `<svg width="28" height="28" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#f4f4f4"/><path d="M12 12h5.6A5.6 5.6 0 0 0 12 6.4V12z" fill="#4285F4"/><path d="M12 12v5.6A5.6 5.6 0 0 0 17.6 12H12z" fill="#34A853"/><path d="M12 12H6.4A5.6 5.6 0 0 0 12 17.6V12z" fill="#FBBC05"/><path d="M12 12V6.4A5.6 5.6 0 0 0 6.4 12H12z" fill="#EA4335"/></svg>`, label: 'Google' },
+            { icon: `<svg width="28" height="28" viewBox="0 0 24 24"><rect x="2" y="2" width="9" height="9" rx="1" fill="#F25022"/><rect x="13" y="2" width="9" height="9" rx="1" fill="#7FBA00"/><rect x="2" y="13" width="9" height="9" rx="1" fill="#00A4EF"/><rect x="13" y="13" width="9" height="9" rx="1" fill="#FFB900"/></svg>`, label: 'Microsoft' },
+          ].map(item => `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0.8rem 0.5rem;border-bottom:1px solid rgba(0,0,0,0.07);border-right:1px solid rgba(0,0,0,0.07);gap:0.35rem;">
+              ${item.icon}
+              <span style="font-size:11px;color:#5a7a9a;font-weight:500;">${item.label}</span>
+            </div>`).join('')}
+        </div>
+      </div>`;
+
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">${secLabel} · Le référencement payant</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:1rem;align-items:start;">
+          <div style="display:flex;flex-direction:column;gap:0.2rem;">
+            <div style="font-size:18px;font-weight:700;color:var(--green-dark);margin-bottom:1rem;">Investir pour vendre</div>
+            ${mkField(s.supports,   'supports',    'Supports')}
+            ${mkField(s.emplacements,'emplacements','Emplacements')}
+            ${mkField(s.requetes,   'requetes',    'Requêtes')}
+            ${mkField(s.objectifs,  'objectifs',   'Objectifs')}
+            ${mkField(s.zone,       'zone',        'Zone')}
+            ${mkField(s.periode,    'periode',     'Période')}
+            ${mkField(s.duree,      'duree',       'Durée')}
+          </div>
+          <div>${strategyGrid}</div>
+        </div>
+      </div>
+      ${footer(false)}
     </div>`;
   }
 

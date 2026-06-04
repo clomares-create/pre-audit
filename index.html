@@ -370,14 +370,16 @@
   /* SOMMAIRE */
   .sommaire-grid {
     display: grid; grid-template-columns: 1fr 1fr;
-    gap: 0 3rem; margin-top: 2rem;
+    gap: 0 4rem; margin-top: 2.5rem;
   }
   .sommaire-item {
-    display: flex; align-items: baseline; gap: 14px;
-    padding: 11px 0; border-bottom: 1px solid #f0ede8;
+    display: flex; align-items: flex-start; gap: 1.2rem;
+    padding: 1rem 0; border-bottom: 1px solid #e8e4de;
   }
-  .sommaire-num { font-size: 11px; font-weight: 800; color: var(--orange); flex-shrink: 0; letter-spacing: 0.04em; }
-  .sommaire-label { font-size: 14px; font-weight: 500; color: #222; }
+  .sommaire-num { font-size: 28px; font-weight: 800; color: var(--orange); flex-shrink: 0; line-height: 1; min-width: 2.5rem; }
+  .sommaire-text { display: flex; flex-direction: column; gap: 2px; }
+  .sommaire-label { font-size: 16px; font-weight: 700; color: var(--green-dark); line-height: 1.2; }
+  .sommaire-sub { font-size: 12px; color: #888; font-weight: 400; }
 
   /* CONTENT SLIDES */
   .slide-content { background: #fff; }
@@ -2313,6 +2315,13 @@ Rédige une analyse concise en 3 à 5 phrases (texte brut, pas de HTML, pas de l
     document.getElementById('resultState').style.display = '';
     document.getElementById('resultTitle').textContent = `Pré-audit — ${clientName}`;
     document.getElementById('resultDate').textContent = `Généré le ${new Date().toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})} · ${model}`;
+    // Rebuild sommaire from actual section slides (after all injections)
+    const sommaireIdx = slides.findIndex(s => s.type === 'sommaire');
+    if (sommaireIdx !== -1) {
+      const sectionSlides = slides.filter(s => s.type === 'section' && s.label && s.title);
+      slides[sommaireIdx].items = sectionSlides.map(s => ({ label: s.label, title: s.title, subtitle: s.subtitle || '' }));
+    }
+
     window.__editableSlides = true;
     window.__currentSlides = slides;
     document.getElementById('slidesContainer').innerHTML = renderSlides(slides, { clientName, clientUrl, consultant });
@@ -2828,18 +2837,24 @@ function renderSlide(s, idx, clientName, consultant) {
   if (s.type === 'sommaire') {
     const items = Array.isArray(s.items) ? s.items : [];
     const itemsHtml = items.length
-      ? items.map((item, i) => `
-          <div class="sommaire-item">
-            <span class="sommaire-num">${String(i + 1).padStart(2, '0')}</span>
-            <span class="sommaire-label">${item}</span>
-          </div>`).join('')
+      ? items.map((item, i) => {
+          const label = typeof item === 'object' ? item.label : String(i + 1).padStart(2, '0');
+          const title = typeof item === 'object' ? item.title : item;
+          const subtitle = typeof item === 'object' ? item.subtitle : '';
+          return `<div class="sommaire-item">
+            <span class="sommaire-num">${label}</span>
+            <div class="sommaire-text">
+              <span class="sommaire-label">${title}</span>
+              ${subtitle ? `<span class="sommaire-sub">${subtitle}</span>` : ''}
+            </div>
+          </div>`;
+        }).join('')
       : (s.body ? `<div class="slide-body">${s.body}</div>` : '');
     return `<div class="slide slide-content">
       ${editToolbar}
       <div class="slide-accent-bar"></div>
       <div class="slide-inner">
-        <div class="slide-label">Document</div>
-        ${ef('title', s.title || 'Sommaire', 'div', 'slide-title')}
+        <div style="font-size:36px;font-weight:800;color:var(--green-dark);margin-bottom:0;">Sommaire</div>
         <div class="sommaire-grid">${itemsHtml}</div>
       </div>
       ${footer(false)}

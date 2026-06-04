@@ -892,6 +892,51 @@
   .strat-member-photo:hover .strat-member-photo-overlay { opacity: 1; }
   .strat-member-name { font-size: 18px; font-weight: 700; color: #fff; text-align: center; }
 
+  /* STRATÉGIE DE CONTENU — slides statiques */
+  .seo-intent-label { font-weight: 700; font-size: 15px; color: #1a1a18; margin-bottom: 4px; }
+  .seo-intent-italic { font-style: italic; color: #888; font-size: 13px; margin-bottom: 16px; }
+  .seo-intent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; flex: 1; }
+  .seo-intent-card {
+    border: 2px solid #e85d2a; border-radius: 16px; padding: 22px 20px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .seo-intent-card.dark { background: #123C34; border-color: #123C34; }
+  .seo-intent-num {
+    width: 42px; height: 42px; border-radius: 50%; background: #e85d2a;
+    color: #fff; font-size: 20px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .seo-intent-card-title { font-size: 22px; font-weight: 800; color: #1a1a18; }
+  .seo-intent-card.dark .seo-intent-card-title { color: #fff; }
+  .seo-intent-card-quote { font-style: italic; color: #e85d2a; font-size: 14px; }
+  .seo-intent-card-body { font-size: 13px; color: #555; line-height: 1.6; margin-top: 4px; }
+  .seo-intent-card.dark .seo-intent-card-body { color: rgba(255,255,255,0.8); }
+
+  .seo-wiki-layout { display: flex; gap: 20px; align-items: stretch; flex: 1; margin-top: 10px; }
+  .seo-wiki-hex {
+    width: 180px; flex-shrink: 0; background: #e0dbd2; border-radius: 16px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 20px 14px; text-align: center; gap: 12px;
+  }
+  .seo-wiki-hex-icon { font-size: 32px; }
+  .seo-wiki-hex-text { font-size: 16px; font-weight: 900; color: #1a1a18; line-height: 1.2; text-transform: uppercase; }
+  .seo-wiki-image-area {
+    flex: 1; border-radius: 12px; overflow: hidden; background: #f0ece4;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative;
+  }
+  .seo-wiki-image-area img { width: 100%; height: 100%; object-fit: contain; }
+  .seo-wiki-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.32); opacity: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 12px; font-weight: 600; transition: opacity 0.2s;
+  }
+  .seo-wiki-image-area:hover .seo-wiki-overlay { opacity: 1; }
+  .seo-wiki-placeholder { text-align: center; color: #aaa; font-size: 12px; padding: 20px; }
+
+  .seo-content-quality-subtitle { font-size: 16px; font-weight: 700; color: #1a1a18; margin: 2px 0 8px; }
+  .seo-content-quality-intro { font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 16px; }
+  .seo-content-quality-footer { font-style: italic; color: #888; font-size: 13px; margin-top: 14px; text-align: center; }
+
   /* SEO KEYWORD SLIDES */
   .seo-kw-layout { display: flex; gap: 16px; align-items: stretch; margin-top: 8px; flex: 1; }
   .seo-kw-image-area {
@@ -1966,6 +2011,17 @@ async function confirmAndGenerate() {
         );
       }
 
+      // Inject static content strategy slides after section "05"
+      const sec05Idx = slides.findIndex(s => s.type === 'section' && s.label === '05');
+      if (sec05Idx !== -1) {
+        slides.splice(sec05Idx + 1, 0,
+          { type: 'seo-gagner-positions' },
+          { type: 'seo-wikipedia-methode', image: null },
+          { type: 'seo-gagner-positions-upload', title: 'Comment gagner des positions ?', keyword: '[MOT-CLÉ]', image: null, pageUrl: '' },
+          { type: 'seo-qualite-contenus' }
+        );
+      }
+
       // Inject editable-chart slides after section "06" (netlinking VS concurrence)
       const sec06Idx = slides.findIndex(s => s.type === 'section' && s.label === '06');
       if (sec06Idx !== -1) {
@@ -2229,12 +2285,9 @@ function buildPrompt({ clientName, clientUrl, sector, geo, services, meetingCont
    NE PAS générer de slide de contenu pour cette section — le contenu sera injecté séparément.
 
 8. type "section" — label = "05", title = "Stratégie de contenu", subtitle = "Méthodologie pour gagner des positions", body = null, summary = null
+   NE PAS générer de slide de contenu pour cette section — le contenu sera injecté séparément.
 
-9. type "seo" — analyse SEO détaillée, opportunités mots-clés, potentiel de trafic, état du contenu actuel. summary obligatoire.
-
-10. type "content" — stratégie de contenu recommandée, méthode Sonate, types de contenus, fréquence. summary obligatoire.
-
-11. type "section" — label = "06", title = "Votre netlinking VS la concurrence", subtitle = "Analyse du profil de liens entrants", body = null, summary = null
+9. type "section" — label = "06", title = "Votre netlinking VS la concurrence", subtitle = "Analyse du profil de liens entrants", body = null, summary = null
     NE PAS générer de slide de contenu pour cette section — le contenu sera injecté séparément.
 
 12. type "section" — label = "07", title = "Analyse GEO", subtitle = "Visibilité sur les IA génératives (ChatGPT, Perplexity, Gemini...)", body = null, summary = null
@@ -2780,6 +2833,125 @@ function renderSlide(s, idx, clientName, consultant) {
           </div>
         </div>
         <div class="algo-seo-summary">SEO : ensemble des techniques pour positionner un site dans les premiers résultats de Google.</div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // COMMENT GAGNER DES POSITIONS — static (2 cards intentions)
+  if (s.type === 'seo-gagner-positions') {
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner" style="display:flex;flex-direction:column">
+        <div class="slide-title">Comment gagner des positions ?</div>
+        <div class="seo-intent-label">Analyse des intentions "Utilisateurs" · Méthode Sonate</div>
+        <div class="seo-intent-italic">Devenez le Wikipédia de votre activité</div>
+        <div class="seo-intent-grid">
+          <div class="seo-intent-card">
+            <div class="seo-intent-num">1</div>
+            <div class="seo-intent-card-title">Requête informative</div>
+            <div class="seo-intent-card-quote">« Je veux savoir »</div>
+            <div class="seo-intent-card-body">Stratégie de contenu via articles de blog : guides, FAQ, conseils experts qui répondent aux questions des internautes.</div>
+          </div>
+          <div class="seo-intent-card dark">
+            <div class="seo-intent-num">2</div>
+            <div class="seo-intent-card-title">Requête commerciale</div>
+            <div class="seo-intent-card-quote">« Je veux acheter »</div>
+            <div class="seo-intent-card-body">Stratégie de pages service : pages produits optimisées, pages locales, comparatifs pour capter l'intention d'achat.</div>
+          </div>
+        </div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // NOTRE MÉTHODE WIKIPÉDIA — static hex + image uploadable
+  if (s.type === 'seo-wikipedia-methode') {
+    const imgHtml = s.image
+      ? `<div class="seo-wiki-image-area"${editable ? ` onclick="uploadSeoImage(${idx},'image')"` : ''}>
+          <img src="${s.image}" alt="Mind map">
+          ${editable ? `<div class="seo-wiki-overlay">🔄 Remplacer l'image</div>` : ''}
+        </div>`
+      : editable
+        ? `<div class="seo-wiki-image-area" onclick="uploadSeoImage(${idx},'image')">
+            <div class="seo-wiki-placeholder"><div style="font-size:26px;margin-bottom:6px">🗺️</div><div>Mind map / arbre de contenus</div><div style="margin-top:4px;font-size:11px;opacity:.7">Cliquer pour uploader</div></div>
+            <div class="seo-wiki-overlay">📊 Uploader l'image</div>
+          </div>`
+        : `<div class="seo-wiki-image-area" style="cursor:default"><div class="seo-wiki-placeholder">Aucune image</div></div>`;
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner" style="display:flex;flex-direction:column">
+        <div class="slide-title">Notre méthode · Wikipédia de votre activité</div>
+        <div class="algo-seo-intro">Construire une architecture de contenus complète autour de votre marque et de votre expertise.</div>
+        <div class="seo-wiki-layout">
+          <div class="seo-wiki-hex">
+            <div class="seo-wiki-hex-icon">💡</div>
+            <div class="seo-wiki-hex-text">Devenez le Wikipédia de votre activité</div>
+          </div>
+          ${imgHtml}
+        </div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // COMMENT GAGNER DES POSITIONS — dynamique (upload screenshot outil SEO)
+  if (s.type === 'seo-gagner-positions-upload') {
+    const imgHtml = s.image
+      ? `<div class="seo-pot-image-area"${editable ? ` onclick="uploadSeoImage(${idx},'image')"` : ''}>
+          <img src="${s.image}" alt="Analyse SEO">
+          ${editable ? `<div class="seo-pot-overlay">🔄 Remplacer l'image</div>` : ''}
+        </div>`
+      : editable
+        ? `<div class="seo-pot-image-area" onclick="uploadSeoImage(${idx},'image')">
+            <div class="seo-kw-placeholder"><div style="font-size:26px;margin-bottom:6px">📊</div><div>Screenshot analyse de contenu (Semrush, YourTextGuru…)</div><div style="margin-top:4px;font-size:11px;opacity:.7">Cliquer pour uploader</div></div>
+            <div class="seo-pot-overlay">📊 Uploader le screenshot</div>
+          </div>`
+        : `<div class="seo-pot-image-area" style="cursor:default"><div class="seo-kw-placeholder">Aucune image</div></div>`;
+    const urlHtml = editable
+      ? `<div class="slide-edit-field" style="font-style:italic;color:#888;font-size:12px;margin-top:8px" contenteditable="true"
+            oninput="onFieldEdit(${idx},'pageUrl',this.innerText)">${s.pageUrl || 'https://votre-site.fr/page-analysée'}</div>`
+      : s.pageUrl ? `<div style="font-style:italic;color:#888;font-size:12px;margin-top:8px">${s.pageUrl}</div>` : '';
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner" style="display:flex;flex-direction:column">
+        <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap">
+          ${ef('title', s.title || 'Comment gagner des positions ?', 'div', 'slide-title')}
+          ${ef('keyword', s.keyword || '[MOT-CLÉ]', 'div', 'ref-badge')}
+        </div>
+        <div class="algo-seo-intro" style="color:#e85d2a;font-style:normal;font-weight:700">Le contenu est roi 👑</div>
+        ${imgHtml}
+        ${urlHtml}
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // LA QUALITÉ DES CONTENUS — static
+  if (s.type === 'seo-qualite-contenus') {
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner" style="display:flex;flex-direction:column">
+        <div class="slide-title">La qualité des contenus</div>
+        <div class="seo-content-quality-subtitle">Notre vision de la qualité des contenus</div>
+        <div class="seo-content-quality-intro">Les contenus représentent une part importante des informations transmises aux moteurs de recherche et aux LLMs. Il est important de pouvoir travailler sur deux plans :</div>
+        <div class="seo-intent-grid" style="flex:1">
+          <div class="seo-intent-card">
+            <div class="seo-intent-num" style="font-size:16px;width:48px;height:48px">01</div>
+            <div class="seo-intent-card-title">Pour les moteurs</div>
+            <div class="seo-intent-card-body">La qualité et l'originalité des contenus pour favoriser l'indexation et le positionnement sur Google et les LLMs.</div>
+          </div>
+          <div class="seo-intent-card dark">
+            <div class="seo-intent-num" style="font-size:16px;width:48px;height:48px">02</div>
+            <div class="seo-intent-card-title">Pour les internautes</div>
+            <div class="seo-intent-card-body">La qualité et la mise en forme des contenus pour l'expérience utilisateur — clarté, lisibilité, valeur ajoutée.</div>
+          </div>
+        </div>
+        <div class="seo-content-quality-footer">Avant d'être visibles par les internautes, les contenus doivent être jugés pertinents par les moteurs de recherche.</div>
       </div>
       ${footer(false)}
     </div>`;

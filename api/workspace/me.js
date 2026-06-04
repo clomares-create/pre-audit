@@ -34,7 +34,17 @@ export default async function handler(req, res) {
     workspace = ownedRow.rows[0] || null;
 
     if (!workspace) {
-      return res.status(200).json({ workspace: null });
+      // Auto-create workspace for this user
+      const id = randomUUID();
+      await db.execute({
+        sql: 'INSERT INTO workspaces (id, owner_id, name) VALUES (?, ?, ?)',
+        args: [id, payload.userId, '']
+      });
+      await db.execute({
+        sql: 'UPDATE users SET workspace_id = ? WHERE id = ?',
+        args: [id, payload.userId]
+      });
+      workspace = { id, owner_id: payload.userId, name: '', api_key: null, pagespeed_key: null };
     }
   }
 

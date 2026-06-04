@@ -1438,29 +1438,30 @@ async function loadReportsList() {
     listEl.innerHTML = data.reports.map(r => {
       const statusColors = { draft: 'gray', sent: 'blue', signed: 'green' };
       const statusLabels = { draft: 'Brouillon', sent: 'Envoyé', signed: 'Signé' };
-      const date = new Date(r.updatedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+      const raw = r.updated_at || r.updatedAt || r.created_at || r.createdAt;
+      const date = raw ? new Date(raw.includes('T') ? raw : raw + 'Z').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+      const name = r.client_name || r.clientName || '';
+      const url = r.client_url || r.clientUrl || '';
       const slug = r.slug;
       const origin = window.location.origin;
       return `<div class="report-item" id="ri-${r.id}">
-        <div class="report-item-top" onclick="loadReportIntoApp('${r.id}')">
-          <span class="report-item-name">${r.clientName}</span>
+        <div class="report-item-top">
+          <span class="report-item-name" onclick="loadReportIntoApp('${r.id}')" style="cursor:pointer;flex:1">${name}</span>
           <span class="badge badge-${statusColors[r.status] || 'gray'}">${statusLabels[r.status] || r.status}</span>
         </div>
-        <div class="report-item-date">${date}</div>
-        <div class="report-item-bottom">
-          <span class="report-item-url">${r.clientUrl || ''}</span>
-          <div class="report-item-actions">
-            <select class="status-select" onchange="updateReportStatus('${r.id}', this.value)">
-              <option value="draft"${r.status==='draft'?' selected':''}>Brouillon</option>
-              <option value="sent"${r.status==='sent'?' selected':''}>Envoyé</option>
-              <option value="signed"${r.status==='signed'?' selected':''}>Signé</option>
-            </select>
-          </div>
-        </div>
-        <div class="report-slug-row">
-          <span class="report-slug-text" id="slug-${r.id}">${origin}/r/${slug}</span>
+        <div style="font-size:11px;color:var(--text-muted);margin:2px 0 6px">${date}${url ? ' · ' + url : ''}</div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-outline" style="font-size:11px;padding:3px 8px" onclick="loadReportIntoApp('${r.id}')">✏️ Ouvrir</button>
+          <button class="btn btn-outline" style="font-size:11px;padding:3px 8px" onclick="renameReport('${r.id}','${name.replace(/'/g,"\\'")}')">Renommer</button>
+          <button class="btn btn-outline" style="font-size:11px;padding:3px 8px" onclick="duplicateReport('${r.id}')">Dupliquer</button>
+          <select class="status-select" style="font-size:11px" onchange="updateReportStatus('${r.id}', this.value)">
+            <option value="draft"${r.status==='draft'?' selected':''}>Brouillon</option>
+            <option value="sent"${r.status==='sent'?' selected':''}>Envoyé</option>
+            <option value="signed"${r.status==='signed'?' selected':''}>Signé</option>
+          </select>
           <button class="btn-copy" title="Copier le lien" onclick="copyText('${origin}/r/${slug}')">📋</button>
         </div>
+        <span class="report-slug-text" id="slug-${r.id}" style="display:none">${origin}/r/${slug}</span>
       </div>`;
     }).join('');
   } catch (e) {
@@ -1499,6 +1500,38 @@ async function loadReportIntoApp(reportId) {
   document.getElementById('reportLinkContainer').style.display = 'flex';
 
   closeReportsPanel();
+}
+
+async function renameReport(reportId, currentName) {
+  const newName = prompt('Nouveau nom du rapport :', currentName);
+  if (!newName || newName.trim() === currentName) return;
+  const jwt = getJwt();
+  if (!jwt) return;
+  await fetch('/api/reports/rename', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt.token },
+    body: JSON.stringify({ reportId, clientName: newName.trim() }),
+  });
+  await loadReportsList();
+}
+
+async function duplicateReport(reportId) {
+  const jwt = getJwt();
+  if (!jwt) return;
+  const slugEl = document.getElementById('slug-' + reportId);
+  if (!slugEl) return;
+  const slug = slugEl.textContent.split('/r/')[1];
+  const res = await fetch('/api/reports/by-slug?slug=' + slug);
+  if (!res.ok) return;
+  const { report } = await res.json();
+  const newName = report.clientName + ' (copie)';
+  await fetch('/api/reports/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt.token },
+    body: JSON.stringify({ clientName: newName, clientUrl: report.clientUrl, content: report.content }),
+  });
+  showToast('Rapport dupliqué ✓');
+  await loadReportsList();
 }
 
 async function updateReportStatus(reportId, status) {

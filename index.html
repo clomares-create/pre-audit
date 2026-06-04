@@ -2080,6 +2080,18 @@ async function confirmAndGenerate() {
       }
     }
 
+    // STATIC INJECTIONS (SEA reports)
+    if (hasSea) {
+      // Inject sea-ref-payant slides after section "02" (Référencement Payant)
+      const seaSec02Idx = slides.findIndex(s => s.type === 'section' && s.label === '02' && (s.title || '').toLowerCase().includes('payant'));
+      if (seaSec02Idx !== -1) {
+        slides.splice(seaSec02Idx + 1, 0,
+          { type: 'sea-ref-payant', sectionLabel: '02', commentTitle: 'Le marché', commentText: 'Google présente ses emplacements dédiés au e-commerce sur une grande majorité de requêtes du secteur', image: null },
+          { type: 'sea-ref-payant', sectionLabel: '02', commentTitle: '', commentText: '', image: null }
+        );
+      }
+    }
+
     // Inject PSI technical slide after section "03"
     const mkPsiSide = (d) => d ? {
       score: d.performance,
@@ -2154,6 +2166,44 @@ Rédige une analyse concise en 3 à 5 phrases (texte brut, pas de HTML, pas de l
       { type: 'sonate-team', image: null },
       { type: 'sonate-tagline' }
     );
+
+    // Inject "Références clients SEA" section — SEA only (sans SEO), always last
+    if (hasSea && !hasSeo) {
+      const refSeaLabel = String(slides.filter(s => s.type === 'section').length + 1).padStart(2, '0');
+      slides.push(
+        { type: 'section', label: refSeaLabel, title: 'Références clients SEA', subtitle: 'Études de cas & témoignages' },
+        {
+          type: 'sonate-ref',
+          title: 'Référence client · SANTAROME',
+          subtitle: 'Laboratoire de compléments alimentaires · SEO + SEA + Développement web',
+          badge: 'SANTÉ / E-COMMERCE',
+          logo: null,
+          positions: `<h4>Campagnes Google Ads :</h4><ul><li>Gummies : annonces Shopping & Search</li><li>Compléments alimentaires bio : campagnes Display</li><li>Sève de bouleau : remarketing produit</li></ul><h4>Résultats :</h4><ul><li>ROAS moyen : x4,2</li><li>Coût par acquisition réduit de 38%</li><li>Taux de conversion amélioré de +27%</li></ul>`,
+          kpis: [
+            { value: 'x4,2', label: 'ROAS moyen sur les campagnes Shopping', dark: false },
+            { value: '-38%', label: 'Coût par acquisition vs avant accompagnement', dark: true },
+            { value: '+27%', label: 'Taux de conversion après optimisation', dark: false },
+          ],
+          result: 'Résultat : des campagnes Google Ads rentabilisées grâce à une stratégie de ciblage affinée et un suivi mensuel rigoureux.',
+        },
+        {
+          type: 'sonate-testimonials',
+          testimonials: [
+            { name: 'Maxime Vadrot', count: 8, when: 'il y a un an', text: 'Wedig nous accompagne depuis plusieurs années sur nos campagnes SEA. Les résultats sont exceptionnels. L\'équipe est au top avec de vrais bons conseils, ils ne nous laissent pas "seuls" grâce à des rapports mensuels + des accompagnements en visio de qualité. Je recommande fortement !', visited: 'Visité en février 2025', avatar: null },
+            { name: 'Srm Tp', count: 6, when: 'il y a 6 mois', text: 'Je tiens a féliciter l\'équipe pour l\'écoute la patience et leur réactivité ++++ qu\'il on eu pour comprendre et répondre à mon besoin. Julien Aaron Margaut bravo à vous pour votre travail je ne regrette pas et je recommande.', visited: 'Visité en octobre 2025', avatar: null },
+            { name: 'Christele Le Guillouzer', count: 1, when: 'il y a 6 mois', text: '✨ Une collaboration de qualité ✨\n\nJ\'ai eu le plaisir de travailler avec Wedig plusieurs années et je ne peux que recommander leurs services. Tout au long de notre collaboration, j\'ai particulièrement apprécié leur professionnalisme, leur réactivité et leur capacité à comprendre nos besoins.\n\nUne expérience très positive que je recommande sans hésitation !', visited: 'Visité en octobre 2025', avatar: null },
+          ],
+        },
+        {
+          type: 'sonate-strategie',
+          members: [
+            { name: 'Benjamin MOUSTIC', photo: null },
+            { name: 'Fabien GUILLEUX', photo: null },
+          ],
+        },
+        { type: 'seo-equipe-experte', photos: [null, null, null, null, null, null] }
+      );
+    }
 
     // Inject "Références clients SEO" section — SEO only, always last
     if (hasSeo) {
@@ -3889,6 +3939,55 @@ function renderSlide(s, idx, clientName, consultant) {
         <div class="sonate-tagline-sub">Une expertise globale, des résultats mesurables, une équipe engagée.</div>
       </div>
       ${footer(true)}
+    </div>`;
+  }
+
+  // SEA REF PAYANT — slide image uploadable + barre de commentaire
+  if (s.type === 'sea-ref-payant') {
+    const secLabel = s.sectionLabel || '02';
+    let imageHtml;
+    if (s.image) {
+      imageHtml = `<div class="chart-img-wrap" style="flex:1;min-height:0;border-radius:10px;overflow:hidden;"${editable ? ` onclick="uploadSeoImage(${idx},'image')"` : ''}>
+        <img src="${s.image}" alt="Capture Google Ads" style="width:100%;height:100%;object-fit:contain;">
+        ${editable ? `<div class="chart-img-overlay">🔄 Remplacer l'image</div>` : ''}
+      </div>`;
+    } else if (editable) {
+      imageHtml = `<div class="chart-placeholder" style="flex:1;min-height:0;" onclick="uploadSeoImage(${idx},'image')">
+        <div style="text-align:center">
+          <div style="font-size:30px;margin-bottom:8px">📸</div>
+          <div style="font-weight:600;margin-bottom:4px">Cliquer pour uploader la capture</div>
+          <div style="font-size:12px;opacity:0.65">Screenshot Google Ads, SERP, annonces concurrentes…</div>
+        </div>
+      </div>`;
+    } else {
+      imageHtml = `<div class="chart-placeholder chart-placeholder-static" style="flex:1;min-height:0;cursor:default;pointer-events:none">
+        <span style="color:#ccc;font-size:13px">Aucune image</span>
+      </div>`;
+    }
+
+    const commentTitleHtml = editable
+      ? `<span contenteditable="true" style="outline:none;font-weight:700;font-size:14px;color:#fff;display:inline-block;min-width:60px;border-bottom:1px dashed rgba(255,255,255,0.4);" oninput="(function(el){if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].commentTitle=el.textContent;})(this)">${s.commentTitle||''}</span>`
+      : `<span style="font-weight:700;font-size:14px;color:#fff;">${s.commentTitle||''}</span>`;
+
+    const commentTextHtml = editable
+      ? `<span contenteditable="true" style="outline:none;font-size:13px;color:rgba(255,255,255,0.9);display:inline-block;min-width:100px;" oninput="(function(el){if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].commentText=el.textContent;})(this)">${s.commentText||''}</span>`
+      : `<span style="font-size:13px;color:rgba(255,255,255,0.9);">${s.commentText||''}</span>`;
+
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner" style="display:flex;flex-direction:column;gap:1rem;height:100%;box-sizing:border-box;">
+        <div class="slide-title">${secLabel} · Le référencement payant</div>
+        ${imageHtml}
+        <div style="background:var(--green-dark);border-radius:10px;padding:0.85rem 1.2rem;display:flex;flex-direction:column;gap:0.3rem;flex-shrink:0;">
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <span style="font-size:16px;">📊</span>
+            ${commentTitleHtml}
+          </div>
+          <div>${commentTextHtml}</div>
+        </div>
+      </div>
+      ${footer(false)}
     </div>`;
   }
 

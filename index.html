@@ -1254,7 +1254,9 @@
           <div class="result-title" id="resultTitle">Pré-audit —</div>
           <div style="font-size:13px;color:var(--text-muted)" id="resultDate"></div>
         </div>
-        <div class="result-actions">
+        <div class="result-actions" style="align-items:center;gap:10px">
+          <span id="saveStatus" style="font-size:12px;color:var(--text-muted)"></span>
+          <button class="btn btn-outline" onclick="openReportsPanel()" style="font-size:13px">📁 Mes rapports</button>
           <button class="btn btn-outline" onclick="resetApp()">← Nouveau</button>
           <button class="btn btn-primary" onclick="printPDF()">⬇ Exporter PDF</button>
         </div>
@@ -1503,12 +1505,17 @@ async function saveReport(slides) {
   const jwt = getJwt();
   if (!jwt) return;
 
+  setSaveStatus('saving');
   try {
+    const clientName = document.getElementById('clientName').value;
+    const services = window._confirmedServices || [];
+    const reportName = services.length ? `${clientName} · ${services.map(s => s.split(' ')[0]).join(' · ')}` : clientName;
+
     const res = await fetch('/api/reports/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt.token },
       body: JSON.stringify({
-        clientName: document.getElementById('clientName').value,
+        clientName: reportName,
         clientUrl: document.getElementById('clientUrl').value,
         content: slides,
         reportId: window.currentReportId || null,
@@ -1519,9 +1526,18 @@ async function saveReport(slides) {
     const url = window.location.origin + '/r/' + data.slug;
     document.getElementById('reportLink').textContent = url;
     document.getElementById('reportLinkContainer').style.display = 'flex';
+    setSaveStatus('saved');
   } catch (e) {
-    // silent fail — generation already succeeded
+    setSaveStatus('error');
   }
+}
+
+function setSaveStatus(state) {
+  const el = document.getElementById('saveStatus');
+  if (!el) return;
+  if (state === 'saving') { el.textContent = '⏳ Enregistrement…'; el.style.color = 'var(--text-muted)'; }
+  else if (state === 'saved') { el.textContent = '✓ Enregistré'; el.style.color = 'var(--green-dark)'; }
+  else if (state === 'error') { el.textContent = '✗ Erreur (non connecté ?)'; el.style.color = '#e85d2a'; }
 }
 
 function copyReportLink() {
@@ -1981,6 +1997,7 @@ async function confirmAndGenerate() {
 
   const selectedIds = ALL_SERVICES.filter(s => document.getElementById('svc-card-' + s.id)?.classList.contains('active')).map(s => s.id);
   const services = ALL_SERVICES.filter(s => selectedIds.includes(s.id)).map(s => s.label);
+  window._confirmedServices = services;
 
   document.getElementById('confirmServices').style.display = 'none';
   document.getElementById('progressTitle').textContent = 'Génération en cours...';

@@ -11,10 +11,26 @@ export default async function handler(req, res) {
   try {
     const id = randomUUID();
     const hash = await bcrypt.hash(password, 10);
-    await db.execute({
-      sql: 'INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)',
-      args: [id, email.toLowerCase(), hash, name || '']
+    // Check for a pending email invite
+    const inviteRow = await db.execute({
+      sql: 'SELECT * FROM workspace_invites WHERE invited_email = ? AND used = 0 LIMIT 1',
+      args: [email.toLowerCase()]
     });
+    const invite = inviteRow.rows[0];
+    const workspaceId = invite?.workspace_id || null;
+
+    await db.execute({
+      sql: 'INSERT INTO users (id, email, password_hash, name, workspace_id) VALUES (?, ?, ?, ?, ?)',
+      args: [id, email.toLowerCase(), hash, name || '', workspaceId]
+    });
+
+    if (invite) {
+      await db.execute({
+        sql: 'UPDATE workspace_invites SET used = 1 WHERE token = ?',
+        args: [invite.token]
+      });
+    }
+
     const token = signToken(id);
     return res.status(201).json({ token, user: { id, email, name } });
   } catch (e) {

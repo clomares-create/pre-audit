@@ -1181,11 +1181,12 @@
       </div>
       <div class="espace-card" id="espaceInviteCard" style="display:none">
         <div class="espace-card-title">Inviter un collaborateur</div>
-        <div style="font-size:13px;color:var(--text-muted);margin-bottom:1rem">Générez un lien d'invitation valable 7 jours. La personne invitée aura accès aux clés API de votre espace.</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:1rem">Entrez l'adresse email de la personne à inviter. Si elle a déjà un compte, elle rejoint immédiatement votre espace.</div>
         <div style="display:flex;gap:8px;align-items:center">
-          <div id="espaceInviteLinkBox" style="flex:1;font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Cliquez sur "Générer" pour créer un lien</div>
-          <button class="btn btn-primary" style="font-size:13px;white-space:nowrap" onclick="generateInviteLinkEspace()">Générer un lien</button>
+          <input type="email" id="espaceInviteEmail" placeholder="email@exemple.com" style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none" onkeydown="if(event.key==='Enter')inviteMemberByEmail()">
+          <button class="btn btn-primary" style="font-size:13px;white-space:nowrap;padding:10px 18px" onclick="inviteMemberByEmail()">Inviter</button>
         </div>
+        <div id="espacePendingInvites" style="margin-top:1rem"></div>
       </div>
     </div>
 
@@ -1908,6 +1909,7 @@ async function loadEspaceData() {
   }
 
   document.getElementById('espaceInviteCard').style.display = isOwner ? '' : 'none';
+  if (isOwner) await loadPendingInvites();
 
   // RAPPORTS
   await loadEspaceReports();
@@ -2029,19 +2031,49 @@ async function loadReportFromEspace(reportId, slug) {
   document.getElementById('reportLinkContainer').style.display = 'flex';
 }
 
-async function generateInviteLinkEspace() {
+async function inviteMemberByEmail() {
   const jwt = getJwt();
   if (!jwt) return;
+  const email = document.getElementById('espaceInviteEmail').value.trim();
+  if (!email || !email.includes('@')) { showToast('Adresse email invalide'); return; }
   try {
     const res = await fetch('/api/workspace?action=invite', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + jwt.token, 'Content-Type': 'application/json' }
+      headers: { 'Authorization': 'Bearer ' + jwt.token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
     });
-    const { token } = await res.json();
-    const link = `${window.location.origin}/?invite=${token}`;
-    document.getElementById('espaceInviteLinkBox').textContent = link;
-    navigator.clipboard.writeText(link).then(() => showToast("Lien d'invitation copié ✓"));
-  } catch(e) { showToast('Erreur lors de la génération'); }
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || 'Erreur'); return; }
+    if (data.status === 'added') {
+      showToast(`✓ ${data.name} a rejoint votre espace`);
+      document.getElementById('espaceInviteEmail').value = '';
+      await loadEspaceData();
+    } else {
+      showToast(`Invitation envoyée à ${email} ✓`);
+      document.getElementById('espaceInviteEmail').value = '';
+      await loadPendingInvites();
+    }
+  } catch(e) { showToast('Erreur lors de l\'invitation'); }
+}
+
+async function loadPendingInvites() {
+  const jwt = getJwt();
+  if (!jwt) return;
+  const el = document.getElementById('espacePendingInvites');
+  if (!el) return;
+  try {
+    const res = await fetch('/api/workspace?action=pending-invites', { headers: { 'Authorization': 'Bearer ' + jwt.token } });
+    if (!res.ok) { el.innerHTML = ''; return; }
+    const { invites } = await res.json();
+    if (!invites?.length) { el.innerHTML = ''; return; }
+    el.innerHTML = `<div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em">Invitations en attente</div>` +
+      invites.map(inv => `
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div style="flex:1;font-size:13px;color:var(--text)">${inv.invited_email}</div>
+          <span style="font-size:11px;color:#888;background:#f3f3f3;padding:2px 8px;border-radius:10px">En attente d'inscription</span>
+        </div>
+      `).join('');
+  } catch(e) { el.innerHTML = ''; }
 }
 
 async function saveEspaceSettings() {

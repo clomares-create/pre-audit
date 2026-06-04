@@ -729,6 +729,80 @@
   #regenPanel .btn-regen-go:hover { background: #d04e20; }
   #regenPanel .btn-regen-go:disabled { opacity: 0.5; cursor: default; }
 
+  /* SONATE GROUP SLIDES */
+  .sonate-group-intro { font-style: italic; color: #888; font-size: 14px; margin: 6px 0 22px; line-height: 1.6; }
+  .sonate-logo-block { text-align: center; margin: 0 0 24px; }
+  .sonate-logo-text {
+    font-size: 52px; font-weight: 900; color: #123C34; letter-spacing: -0.04em; line-height: 1;
+    font-family: Georgia, serif;
+  }
+  .sonate-logo-sub { font-size: 13px; color: #888; margin-top: 4px; letter-spacing: 0.05em; }
+  .sonate-agencies-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .sonate-agency-card {
+    border: 2px solid #123C34; border-radius: 14px;
+    padding: 22px 16px; text-align: center; background: transparent;
+  }
+  .sonate-agency-name { font-size: 20px; font-weight: 800; color: #123C34; margin-bottom: 8px; }
+  .sonate-agency-desc { font-size: 13px; color: #666; line-height: 1.4; }
+
+  .sonate-kpi-subtitle { font-size: 18px; font-weight: 700; color: #1a1a18; margin: 4px 0 20px; }
+  .sonate-kpi-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .sonate-kpi-card {
+    border: 2px solid #123C34; border-radius: 14px;
+    padding: 24px 12px; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .sonate-kpi-card.dark { background: #123C34; }
+  .sonate-kpi-num { font-size: 52px; font-weight: 900; color: #e85d2a; line-height: 1; }
+  .sonate-kpi-label { font-size: 13px; color: #555; line-height: 1.3; }
+  .sonate-kpi-card.dark .sonate-kpi-label { color: rgba(255,255,255,0.75); }
+  .sonate-refs-label { font-size: 14px; font-weight: 700; color: #1a1a18; margin-bottom: 8px; }
+  .sonate-refs-row { font-size: 16px; font-weight: 700; color: #1a1a18; letter-spacing: 0.01em; line-height: 1.8; }
+
+  .sonate-team-layout { display: flex; gap: 24px; align-items: center; margin-top: 16px; flex: 1; }
+  .sonate-team-photo {
+    flex: 1; min-height: 220px; border-radius: 12px; overflow: hidden;
+    background: #e8e4db; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; position: relative;
+  }
+  .sonate-team-photo img { width: 100%; height: 100%; object-fit: cover; }
+  .sonate-team-photo-placeholder {
+    text-align: center; color: #aaa; padding: 20px;
+  }
+  .sonate-team-photo-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.35);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 13px; font-weight: 600; opacity: 0; transition: opacity 0.2s;
+  }
+  .sonate-team-photo:hover .sonate-team-photo-overlay { opacity: 1; }
+  .sonate-locations { display: flex; flex-direction: column; gap: 12px; min-width: 160px; }
+  .sonate-location-pin {
+    display: flex; align-items: center; gap: 10px;
+    border: 2px solid #123C34; border-radius: 40px;
+    padding: 10px 18px; font-size: 15px; font-weight: 700; color: #123C34;
+  }
+  .sonate-location-pin-dot {
+    width: 30px; height: 30px; border-radius: 50%; background: #e85d2a;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    font-size: 14px; color: white;
+  }
+
+  .sonate-tagline-slide { background: #123C34 !important; border-color: #123C34 !important; }
+  .sonate-tagline-inner {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 380px; text-align: center; position: relative;
+  }
+  .sonate-tagline-bg-circle {
+    position: absolute; border-radius: 50%; border: 60px solid rgba(255,255,255,0.07);
+    pointer-events: none;
+  }
+  .sonate-tagline-title {
+    font-size: 48px; font-weight: 800; color: #fff;
+    letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 20px; position: relative;
+  }
+  .sonate-tagline-bar { width: 60px; height: 4px; background: #e85d2a; border-radius: 2px; margin-bottom: 18px; }
+  .sonate-tagline-sub { font-size: 16px; font-style: italic; color: rgba(255,255,255,0.7); position: relative; }
+
   /* ALGO SEO SLIDE */
   .algo-seo-intro { font-style: italic; color: #666; font-size: 14px; margin: 8px 0 24px; line-height: 1.6; }
   .algo-seo-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-bottom: 24px; }
@@ -1813,6 +1887,20 @@ async function confirmAndGenerate() {
       slides.splice(sec03PsiIdx + 1, 0, ...toInjectAfterSec03);
     }
 
+    // Always inject "Un groupe 100% digital" section just before "Notre Proposition"
+    const proposalIdx = slides.findIndex(s => s.type === 'section' && (s.title || '').includes('Proposition'));
+    const groupInsertAt = proposalIdx !== -1 ? proposalIdx : slides.length;
+    const groupLabel = proposalIdx !== -1
+      ? String(parseInt(slides[proposalIdx].label || '99') - 1).padStart(2, '0')
+      : String(slides.filter(s => s.type === 'section').length + 1).padStart(2, '0');
+    slides.splice(groupInsertAt, 0,
+      { type: 'section', label: groupLabel, title: 'Un groupe 100% digital', subtitle: 'Votre croissance est clé' },
+      { type: 'sonate-group' },
+      { type: 'sonate-kpi' },
+      { type: 'sonate-team', image: null },
+      { type: 'sonate-tagline' }
+    );
+
     // Render
     window.currentReportId = null;
     document.getElementById('reportLinkContainer').style.display = 'none';
@@ -1944,7 +2032,8 @@ function buildPrompt({ clientName, clientUrl, sector, geo, services, meetingCont
   const hasSeo = services.some(s => s.toLowerCase().includes('seo'));
   const hasSea = services.some(s => s.toLowerCase().includes('sea'));
 
-  const proposalLabel = hasSeo ? '08' : '03';
+  // +1 because "Un groupe 100% digital" is always injected just before Notre Proposition
+  const proposalLabel = hasSeo ? '09' : (hasSea ? '04' : '03');
 
   const seoStructure = hasSeo ? `
 3. type "section" — label = "01", title = "Contexte & Objectifs", subtitle = "Analyse du positionnement et des enjeux", body = null, summary = null
@@ -2055,6 +2144,26 @@ function uploadChartImage(idx) {
         <img src="${base64}" alt="Graphique">
         <div class="chart-img-overlay">🔄 Remplacer l'image</div>
       </div>`;
+      debounceSave();
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function uploadTeamPhoto(idx) {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = ev.target.result;
+      if (window.__currentSlides?.[idx]) window.__currentSlides[idx].image = base64;
+      const clientName = document.getElementById('clientName')?.value || '';
+      const clientUrl = document.getElementById('clientUrl')?.value || '';
+      document.getElementById('slidesContainer').innerHTML = renderSlides(window.__currentSlides, { clientName, clientUrl, consultant: '' });
       debounceSave();
     };
     reader.readAsDataURL(file);
@@ -2430,6 +2539,132 @@ function renderSlide(s, idx, clientName, consultant) {
         <div class="algo-seo-summary">SEO : ensemble des techniques pour positionner un site dans les premiers résultats de Google.</div>
       </div>
       ${footer(false)}
+    </div>`;
+  }
+
+  // SONATE GROUP — slide 1 : présentation des agences
+  if (s.type === 'sonate-group') {
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-label">À propos</div>
+        <div class="slide-title">Groupe 100% digital</div>
+        <div class="sonate-group-intro">Sonate Group rassemble 3 agences spécialisées au service de la performance digitale.</div>
+        <div class="sonate-logo-block">
+          <div class="sonate-logo-text">Sonate</div>
+          <div class="sonate-logo-sub">Votre croissance est clé</div>
+        </div>
+        <div class="sonate-agencies-grid">
+          <div class="sonate-agency-card">
+            <div class="sonate-agency-name">Wedig</div>
+            <div class="sonate-agency-desc">Prospection & marketing digital</div>
+          </div>
+          <div class="sonate-agency-card">
+            <div class="sonate-agency-name">Let's Clic</div>
+            <div class="sonate-agency-desc">Agence de marketing digital</div>
+          </div>
+          <div class="sonate-agency-card">
+            <div class="sonate-agency-name">deux.io</div>
+            <div class="sonate-agency-desc">Growth & sales automation</div>
+          </div>
+        </div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // SONATE KPI — slide 2 : chiffres clés
+  if (s.type === 'sonate-kpi') {
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">Groupe 100% digital · Chiffres clés</div>
+        <div class="sonate-kpi-subtitle">3 sociétés dédiées à la performance digitale</div>
+        <div class="sonate-kpi-grid">
+          <div class="sonate-kpi-card">
+            <div class="sonate-kpi-num">3</div>
+            <div class="sonate-kpi-label">sociétés</div>
+          </div>
+          <div class="sonate-kpi-card dark">
+            <div class="sonate-kpi-num">2</div>
+            <div class="sonate-kpi-label">agences à Rennes & Paris</div>
+          </div>
+          <div class="sonate-kpi-card">
+            <div class="sonate-kpi-num">27</div>
+            <div class="sonate-kpi-label">salariés</div>
+          </div>
+          <div class="sonate-kpi-card dark">
+            <div class="sonate-kpi-num">8</div>
+            <div class="sonate-kpi-label">domaines d'expertise</div>
+          </div>
+        </div>
+        <div class="sonate-refs-label">Des références fortes :</div>
+        <div class="sonate-refs-row">Blast · Altaroc · Silvera · LP Promotion · Pente douce · Cimaise · YesYes Padel ·</div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // SONATE TEAM — slide 3 : équipe + localisations
+  if (s.type === 'sonate-team') {
+    const teamEditable = !!window.__editableSlides;
+    const teamPhotoHtml = s.image
+      ? `<div class="sonate-team-photo"${teamEditable ? ` onclick="uploadTeamPhoto(${idx})"` : ''}>
+          <img src="${s.image}" alt="Notre équipe">
+          ${teamEditable ? `<div class="sonate-team-photo-overlay">🔄 Remplacer la photo</div>` : ''}
+        </div>`
+      : teamEditable
+        ? `<div class="sonate-team-photo" onclick="uploadTeamPhoto(${idx})">
+            <div class="sonate-team-photo-placeholder">
+              <div style="font-size:28px;margin-bottom:8px">📸</div>
+              <div style="font-weight:600;margin-bottom:4px;color:#666">Cliquer pour ajouter la photo</div>
+              <div style="font-size:12px;color:#aaa">Photo de l'équipe Sonate</div>
+            </div>
+            <div class="sonate-team-photo-overlay">📸 Ajouter la photo</div>
+          </div>`
+        : `<div class="sonate-team-photo" style="cursor:default">
+            <div class="sonate-team-photo-placeholder"><span style="color:#ccc">Aucune photo</span></div>
+          </div>`;
+    return `<div class="slide slide-content">
+      ${editToolbar}
+      <div class="slide-inner" style="display:flex;flex-direction:column">
+        <div class="slide-title">Notre équipe</div>
+        <div class="sonate-team-layout">
+          ${teamPhotoHtml}
+          <div class="sonate-locations">
+            <div class="sonate-location-pin">
+              <div class="sonate-location-pin-dot">📍</div>
+              RENNES
+            </div>
+            <div class="sonate-location-pin">
+              <div class="sonate-location-pin-dot">📍</div>
+              LAVAL
+            </div>
+            <div class="sonate-location-pin">
+              <div class="sonate-location-pin-dot">📍</div>
+              PARIS
+            </div>
+          </div>
+        </div>
+      </div>
+      ${footer(false)}
+    </div>`;
+  }
+
+  // SONATE TAGLINE — slide 4 : "Votre croissance est clé"
+  if (s.type === 'sonate-tagline') {
+    return `<div class="slide sonate-tagline-slide">
+      ${editToolbar}
+      <div class="sonate-tagline-inner">
+        <div class="sonate-tagline-bg-circle" style="width:300px;height:300px;top:-80px;right:-60px"></div>
+        <div class="sonate-tagline-bg-circle" style="width:200px;height:200px;bottom:-50px;left:-40px"></div>
+        <div class="sonate-tagline-title">Votre croissance est clé.</div>
+        <div class="sonate-tagline-bar"></div>
+        <div class="sonate-tagline-sub">Une expertise globale, des résultats mesurables, une équipe engagée.</div>
+      </div>
+      ${footer(true)}
     </div>`;
   }
 

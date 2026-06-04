@@ -652,14 +652,15 @@
 
   /* ESPACE PAGE */
   .espace-overlay {
-    position: fixed; inset: 0; background: var(--bg);
-    z-index: 600; display: none; flex-direction: column; overflow: hidden;
+    display: none; flex-direction: column;
+    min-height: 100vh; background: var(--bg);
   }
   .espace-overlay.open { display: flex; }
   .espace-header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0 2rem; height: 56px; background: var(--green-dark);
+    padding: 0 1.5rem; height: 56px; background: var(--green-dark);
     border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;
+    position: relative;
   }
   .espace-header-title { font-size: 16px; font-weight: 600; color: #fff; }
   .espace-close {
@@ -1161,8 +1162,9 @@
 <!-- ESPACE PAGE -->
 <div class="espace-overlay" id="espaceOverlay">
   <div class="espace-header">
-    <span class="espace-header-title">Mon Espace</span>
-    <button class="espace-close" onclick="closeEspace()">✕</button>
+    <button class="espace-close" onclick="closeEspace()" style="font-size:13px;padding:6px 10px;display:flex;align-items:center;gap:6px">← Retour</button>
+    <span class="espace-header-title" style="position:absolute;left:50%;transform:translateX(-50%)">Mon Espace</span>
+    <div style="width:80px"></div>
   </div>
   <div class="espace-tabs">
     <button class="espace-tab active" onclick="switchEspaceTab('membres')">Membres</button>
@@ -1845,6 +1847,8 @@ function toggleSettings(forceOpen) {
 let _espaceCurrentTab = 'membres';
 
 async function openEspace() {
+  document.querySelector('header').style.display = 'none';
+  document.querySelector('.app').style.display = 'none';
   document.getElementById('espaceOverlay').classList.add('open');
   switchEspaceTab(_espaceCurrentTab);
   await loadEspaceData();
@@ -1852,6 +1856,8 @@ async function openEspace() {
 
 function closeEspace() {
   document.getElementById('espaceOverlay').classList.remove('open');
+  document.querySelector('header').style.display = '';
+  document.querySelector('.app').style.display = '';
 }
 
 function switchEspaceTab(tab) {

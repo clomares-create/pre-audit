@@ -682,6 +682,53 @@
   .chart-summary-edit[contenteditable="true"]:empty::before { content: attr(data-placeholder); color: rgba(255,255,255,0.35); pointer-events: none; }
   .chart-summary-edit[contenteditable="true"]:focus { box-shadow: 0 0 0 2px #e85d2a; }
 
+  /* SLIDE EDIT TOOLBAR */
+  .slide-edit-toolbar {
+    position: absolute; top: 8px; right: 8px; z-index: 20;
+    display: flex; gap: 5px;
+  }
+  .slide-edit-btn {
+    background: rgba(30,30,28,0.72); color: #fff; border: none; border-radius: 6px;
+    padding: 4px 9px; font-size: 11px; cursor: pointer; backdrop-filter: blur(4px);
+    transition: background 0.15s; white-space: nowrap; line-height: 1.6;
+  }
+  .slide-edit-btn:hover { background: rgba(232,93,42,0.85); }
+  .slide-edit-field[contenteditable="true"] {
+    outline: none; border-radius: 3px; transition: box-shadow 0.15s; cursor: text;
+  }
+  .slide-edit-field[contenteditable="true"]:hover { box-shadow: 0 0 0 1.5px rgba(232,93,42,0.45); }
+  .slide-edit-field[contenteditable="true"]:focus { box-shadow: 0 0 0 2px #e85d2a; }
+
+  /* REGEN PANEL */
+  #regenPanel {
+    display: none; position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #1a1a18; border: 1px solid #333; border-radius: 14px;
+    padding: 18px 20px; width: 460px; z-index: 300; box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  }
+  #regenPanel .regen-title {
+    font-size: 13px; font-weight: 600; color: #e8e4db; margin-bottom: 10px;
+  }
+  #regenPanel textarea {
+    width: 100%; box-sizing: border-box; background: #0f0f0d; border: 1px solid #444;
+    color: #e8e4db; border-radius: 8px; padding: 10px 12px; font-size: 13px;
+    font-family: inherit; resize: none; outline: none; line-height: 1.55;
+  }
+  #regenPanel textarea:focus { border-color: #e85d2a; }
+  #regenPanel .regen-actions {
+    display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;
+  }
+  #regenPanel .btn-regen-cancel {
+    background: transparent; border: 1px solid #444; color: #aaa;
+    border-radius: 8px; padding: 7px 14px; font-size: 12px; cursor: pointer;
+  }
+  #regenPanel .btn-regen-cancel:hover { border-color: #aaa; }
+  #regenPanel .btn-regen-go {
+    background: #e85d2a; color: white; border: none;
+    border-radius: 8px; padding: 7px 16px; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  #regenPanel .btn-regen-go:hover { background: #d04e20; }
+  #regenPanel .btn-regen-go:disabled { opacity: 0.5; cursor: default; }
+
   /* ALGO SEO SLIDE */
   .algo-seo-intro { font-style: italic; color: #666; font-size: 14px; margin: 8px 0 24px; line-height: 1.6; }
   .algo-seo-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-bottom: 24px; }
@@ -944,6 +991,15 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div id="regenPanel">
+  <div class="regen-title">✨ Régénérer cette slide avec l'IA</div>
+  <textarea id="regenPrompt" rows="3" placeholder="Ex : Reformule de façon plus percutante, ajoute des données chiffrées, traduis en anglais…"></textarea>
+  <div class="regen-actions">
+    <button class="btn-regen-cancel" onclick="closeRegenPanel()">Annuler</button>
+    <button class="btn-regen-go" id="regenBtn" onclick="regenSlide()">✨ Régénérer</button>
+  </div>
+</div>
 
 <script>
 const STATE = {
@@ -1629,7 +1685,7 @@ async function confirmAndGenerate() {
       },
       body: JSON.stringify({
         model,
-        max_tokens: 16000,
+        max_tokens: 32000,
         messages: [{ role: 'user', content: prompt }],
       })
     });
@@ -1639,9 +1695,18 @@ async function confirmAndGenerate() {
       throw new Error(err.error?.message || `Erreur API ${response.status}`);
     }
 
-    progressUpdate('propo');
     const data = await response.json();
-    const raw = data.choices?.[0]?.message?.content || '';
+    const choice = data.choices?.[0];
+    const raw = choice?.message?.content || '';
+    const finishReason = choice?.finish_reason;
+
+    if (!raw) {
+      const apiErr = data.error?.message;
+      throw new Error(apiErr ? `Erreur API : ${apiErr}` : `Réponse vide du modèle (finish_reason: ${finishReason || 'inconnu'}). Vérifiez votre clé API et le modèle sélectionné.`);
+    }
+    if (finishReason === 'length') {
+      throw new Error(`Réponse tronquée : le modèle a atteint la limite de tokens avant de finir le JSON. Essayez un modèle avec une plus grande fenêtre de sortie (ex: google/gemini-2.5-pro).`);
+    }
 
     // Parse JSON from response
     let slides;
@@ -1671,10 +1736,12 @@ async function confirmAndGenerate() {
         });
         slides = JSON.parse(repaired);
       } catch(e2) {
-        const preview = raw.slice(0, 300).replace(/</g, '&lt;');
-        throw new Error(`JSON invalide (${e2.message}). Début de la réponse : ${preview}`);
+        const preview = raw.slice(0, 400).replace(/</g, '&lt;').replace(/\n/g, ' ');
+        throw new Error(`JSON invalide (${e2.message}). Début de la réponse : ${preview || '(vide)'}`);
       }
     }
+
+    progressUpdate('propo');
 
     // Compute service flags for static injections
     const hasSeo = services.some(s => s.toLowerCase().includes('seo'));
@@ -2012,6 +2079,90 @@ function psiTab(btn, uid, tab) {
   if (panel) panel.classList.add('active');
 }
 
+// ─── SLIDE EDITING ───────────────────────────────────────────────────────────
+
+function onFieldEdit(idx, field, value) {
+  if (window.__currentSlides?.[idx]) window.__currentSlides[idx][field] = value;
+  debounceSave();
+}
+
+let __regenIdx = null;
+
+function openRegenPanel(idx) {
+  __regenIdx = idx;
+  const panel = document.getElementById('regenPanel');
+  panel.style.display = 'block';
+  document.getElementById('regenPrompt').value = '';
+  document.getElementById('regenPrompt').focus();
+}
+
+function closeRegenPanel() {
+  document.getElementById('regenPanel').style.display = 'none';
+  __regenIdx = null;
+}
+
+async function regenSlide() {
+  const idx = __regenIdx;
+  if (idx === null || !window.__currentSlides?.[idx]) return;
+  const userPrompt = document.getElementById('regenPrompt').value.trim();
+  if (!userPrompt) return;
+
+  const settings = JSON.parse(localStorage.getItem('sonate_settings') || '{}');
+  const apiKey = settings.apiKey || document.getElementById('apiKey')?.value?.trim();
+  const model = settings.model || document.getElementById('modelName')?.value?.trim() || 'google/gemini-2.5-pro';
+  if (!apiKey) { showToast('⚠️ Clé API manquante'); return; }
+
+  const btn = document.getElementById('regenBtn');
+  btn.textContent = '⏳ Génération…';
+  btn.disabled = true;
+
+  const slide = window.__currentSlides[idx];
+  const instruction = `Tu es un expert en marketing digital. Modifie la slide de pré-audit suivante selon l'instruction, en conservant le même type JSON et la même structure de champs.
+Slide actuelle : ${JSON.stringify(slide)}
+Instruction : ${userPrompt}
+Réponds UNIQUEMENT avec le JSON de la slide modifiée. Aucun texte avant ou après.`;
+
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://sonate.group',
+        'X-Title': 'Sonate Pre-audit Generator',
+      },
+      body: JSON.stringify({ model, max_tokens: 4000, messages: [{ role: 'user', content: instruction }] }),
+    });
+    const data = await res.json();
+    const raw = data.choices?.[0]?.message?.content || '';
+    let newSlide;
+    try {
+      let jsonStr = raw;
+      const mdMatch = raw.match(/```json\s*([\s\S]*?)```/);
+      if (mdMatch) jsonStr = mdMatch[1];
+      else { const m = raw.match(/\{[\s\S]*\}/); if (m) jsonStr = m[0]; }
+      newSlide = JSON.parse(jsonStr);
+    } catch(e) { throw new Error('Réponse invalide de l\'IA'); }
+    window.__currentSlides[idx] = { ...newSlide, image: slide.image };
+    const clientName = document.getElementById('clientName')?.value || '';
+    const clientUrl = document.getElementById('clientUrl')?.value || '';
+    document.getElementById('slidesContainer').innerHTML = renderSlides(window.__currentSlides, { clientName, clientUrl, consultant: '' });
+    debounceSave();
+    closeRegenPanel();
+    showToast('✅ Slide régénérée');
+  } catch(e) {
+    showToast('❌ ' + e.message);
+  } finally {
+    btn.textContent = '✨ Régénérer';
+    btn.disabled = false;
+  }
+}
+
+// Close regen panel on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('regenPanel').style.display !== 'none') closeRegenPanel();
+});
+
 function renderSlides(slides, { clientName, clientUrl, consultant }) {
   if (!Array.isArray(slides)) slides = Object.values(slides);
   return slides.map((s, i) => renderSlide(s, i, clientName, consultant)).join('');
@@ -2027,14 +2178,28 @@ function renderSlide(s, idx, clientName, consultant) {
       <span>${pageNum}</span>
     </div>`;
 
+  const editable = !!window.__editableSlides;
+  const editToolbar = editable
+    ? `<div class="slide-edit-toolbar">
+        <button class="slide-edit-btn" onclick="openRegenPanel(${idx})" title="Régénérer avec l'IA">✨ IA</button>
+      </div>`
+    : '';
+
+  const ef = (field, val, tag = 'div', cls = '') =>
+    editable
+      ? `<${tag} class="${cls} slide-edit-field" contenteditable="true" data-idx="${idx}" data-field="${field}"
+           oninput="onFieldEdit(${idx},'${field}',this.innerText)">${val || ''}</${tag}>`
+      : `<${tag} class="${cls}">${val || ''}</${tag}>`;
+
   // COVER
   if (s.type === 'cover') {
     return `<div class="slide slide-cover">
+      ${editToolbar}
       <div class="slide-inner">
         <div class="slide-badge-orange">PRÉ-AUDIT</div>
         <div class="slide-cover-body">
-          <div class="slide-cover-title">${s.title || clientName}</div>
-          ${s.subtitle ? `<div class="slide-cover-subtitle">${s.subtitle}</div>` : ''}
+          ${ef('title', s.title || clientName, 'div', 'slide-cover-title')}
+          ${s.subtitle || editable ? ef('subtitle', s.subtitle, 'div', 'slide-cover-subtitle') : ''}
         </div>
         <div class="slide-cover-bottom">
           <span>${new Date().toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'})}</span>
@@ -2049,11 +2214,12 @@ function renderSlide(s, idx, clientName, consultant) {
   if (s.type === 'section') {
     const num = String(s.num || pageNum).padStart(2, '0');
     return `<div class="slide slide-section">
+      ${editToolbar}
       <div class="slide-inner">
         <div class="slide-section-num">${num}</div>
         <div class="slide-section-num-label">${num}</div>
-        <div class="slide-section-title">${s.title || ''}</div>
-        ${s.subtitle ? `<div class="slide-section-sub">${s.subtitle}</div>` : ''}
+        ${ef('title', s.title, 'div', 'slide-section-title')}
+        ${s.subtitle || editable ? ef('subtitle', s.subtitle, 'div', 'slide-section-sub') : ''}
       </div>
       ${footer(true)}
     </div>`;
@@ -2070,10 +2236,11 @@ function renderSlide(s, idx, clientName, consultant) {
           </div>`).join('')
       : (s.body ? `<div class="slide-body">${s.body}</div>` : '');
     return `<div class="slide slide-content">
+      ${editToolbar}
       <div class="slide-accent-bar"></div>
       <div class="slide-inner">
         <div class="slide-label">Document</div>
-        <div class="slide-title">${s.title || 'Sommaire'}</div>
+        ${ef('title', s.title || 'Sommaire', 'div', 'slide-title')}
         <div class="sommaire-grid">${itemsHtml}</div>
       </div>
       ${footer(false)}
@@ -2083,13 +2250,14 @@ function renderSlide(s, idx, clientName, consultant) {
   // CLOSING
   if (s.type === 'closing') {
     return `<div class="slide slide-closing">
+      ${editToolbar}
       <div class="slide-inner">
         <div class="closing-content">
-          <div class="slide-label-light">${s.label || 'Prochaines étapes'}</div>
-          <div class="closing-title">${s.title || ''}</div>
+          ${ef('label', s.label || 'Prochaines étapes', 'div', 'slide-label-light')}
+          ${ef('title', s.title, 'div', 'closing-title')}
           <div class="closing-bar"></div>
-          ${s.subtitle ? `<div class="closing-subtitle">${s.subtitle}</div>` : ''}
-          ${s.body ? `<div class="closing-body">${s.body}</div>` : ''}
+          ${s.subtitle || editable ? ef('subtitle', s.subtitle, 'div', 'closing-subtitle') : ''}
+          ${s.body || editable ? ef('body', s.body, 'div', 'closing-body') : ''}
         </div>
       </div>
       ${footer(true)}
@@ -2098,7 +2266,6 @@ function renderSlide(s, idx, clientName, consultant) {
 
   // EDITABLE CHART — slide à compléter manuellement (trafic, potentiel SEO…)
   if (s.type === 'editable-chart') {
-    const editable = !!window.__editableSlides;
 
     let imageHtml;
     if (s.image) {
@@ -2133,10 +2300,11 @@ function renderSlide(s, idx, clientName, consultant) {
     }
 
     return `<div class="slide slide-content">
+      ${editToolbar}
       <div class="slide-accent-bar"></div>
       <div class="slide-inner">
-        <div class="slide-title">${s.title || ''}</div>
-        ${s.subtitle ? `<div class="slide-subtitle">${s.subtitle}</div>` : ''}
+        ${ef('title', s.title, 'div', 'slide-title')}
+        ${s.subtitle || editable ? ef('subtitle', s.subtitle, 'div', 'slide-subtitle') : ''}
         <div class="chart-area" id="chart-area-${idx}">${imageHtml}</div>
         ${summaryHtml}
       </div>
@@ -2222,6 +2390,7 @@ function renderSlide(s, idx, clientName, consultant) {
     }
 
     return `<div class="slide slide-content">
+      ${editToolbar}
       <div class="slide-accent-bar"></div>
       <div class="slide-inner">
         <div class="slide-title">${s.title || 'Technique · Vitesse de chargement'}</div>
@@ -2235,6 +2404,7 @@ function renderSlide(s, idx, clientName, consultant) {
   // ALGO SEO — slide fixe "Fonctionnement de l'algorithme" (SEO uniquement)
   if (s.type === 'algo-seo') {
     return `<div class="slide slide-content">
+      ${editToolbar}
       <div class="slide-accent-bar"></div>
       <div class="slide-inner">
         <div class="slide-label">Algorithme SEO</div>
@@ -2270,10 +2440,10 @@ function renderSlide(s, idx, clientName, consultant) {
   const accentBarColor = { amber: ' amber', red: ' red', blue: ' blue' }[s.accentColor] || '';
 
   let content = `
-    <div class="slide-label">${s.label || ''}</div>
-    <div class="slide-title">${s.title || ''}</div>`;
+    ${ef('label', s.label, 'div', 'slide-label')}
+    ${ef('title', s.title, 'div', 'slide-title')}`;
 
-  if (s.subtitle) content += `<div class="slide-subtitle">${s.subtitle}</div>`;
+  if (s.subtitle || editable) content += ef('subtitle', s.subtitle, 'div', 'slide-subtitle');
 
   if (s.badges?.length) {
     content += `<div class="badges-row">` +
@@ -2301,15 +2471,16 @@ function renderSlide(s, idx, clientName, consultant) {
     }).join('') + `</div>`;
   }
 
-  if (s.body) content += `<div class="slide-body">${s.body}</div>`;
+  if (s.body || editable) content += ef('body', s.body, 'div', 'slide-body');
 
-  if (s.summary) {
+  if (s.summary || editable) {
     content += `<div class="summary-block">
-      <div class="summary-text">${s.summary}</div>
+      ${ef('summary', s.summary, 'div', 'summary-text')}
     </div>`;
   }
 
   return `<div class="slide slide-content">
+    ${editToolbar}
     <div class="slide-accent-bar${accentBarColor}"></div>
     <div class="slide-inner">${content}</div>
     ${footer(false)}

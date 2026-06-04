@@ -2985,7 +2985,7 @@ function renderSlide(s, idx, clientName, consultant) {
   // GEO OVERVIEW — slide statique "Analyse GEO · Vue d'ensemble" (6 cards)
   if (s.type === 'geo-overview') {
     const geoCards = [
-      { num: '01', title: 'Contexte & GEO', sub: 'Enjeux 2025-2026', dark: true },
+      { num: '01', title: 'Contexte & GEO', sub: 'Enjeux 2026', dark: true },
       { num: '02', title: 'Présence IA actuelle', sub: 'Topics couverts', dark: false },
       { num: '03', title: 'Sources citées', sub: 'Top URLs & insights', dark: false },
       { num: '04', title: 'Opportunités', sub: 'Topics manqués', dark: false },
@@ -3010,50 +3010,45 @@ function renderSlide(s, idx, clientName, consultant) {
     </div>`;
   }
 
-  // GEO CONTEXTE — "01 · Contexte & GEO · Enjeux 2025-2026"
+  // GEO CONTEXTE — "01 · Contexte & GEO · Enjeux 2026" (static, pre-filled)
   if (s.type === 'geo-contexte') {
-    const m = s.metrics || {};
-    const mkField = (val, placeholder, field, style='') =>
-      editable
-        ? `<span contenteditable="true" data-placeholder="${placeholder}" style="display:inline-block;min-width:40px;border-bottom:1px dashed #bbb;outline:none;${style}" oninput="(function(el){if(window.__currentSlides?.[${idx}]){if(!window.__currentSlides[${idx}].metrics)window.__currentSlides[${idx}].metrics={};window.__currentSlides[${idx}].metrics['${field}']=el.textContent;}})(this)">${val||''}</span>`
-        : `<span>${val||'—'}</span>`;
-    const mkText = (val, placeholder, field, cls='') =>
-      editable
-        ? `<div contenteditable="true" class="${cls}" data-placeholder="${placeholder}" style="outline:none;min-height:1.2em;" oninput="(function(el){if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}]['${field}']=el.innerHTML;})(this)">${val||''}</div>`
-        : `<div class="${cls}">${val||''}</div>`;
+    const icons = [
+      `<img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" style="height:44px;object-fit:contain;" onerror="this.style.display='none'">`,
+      `<div style="width:52px;height:52px;background:#1a1a2e;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:#fff;font-family:serif">H</div>`,
+      `<div style="width:52px;height:52px;background:#1c1c3c;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#20c0c0;font-weight:700">✳</div>`,
+      `<div style="width:52px;height:52px;background:#10a37f;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;font-weight:700">G</div>`,
+      `<div style="width:52px;height:52px;background:#cc5500;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;font-weight:700">✳</div>`,
+      `<div style="font-size:44px;line-height:1;background:linear-gradient(135deg,#4285f4,#34a853,#fbbc04,#ea4335);-webkit-background-clip:text;-webkit-text-fill-color:transparent">✦</div>`,
+    ];
     return `<div class="slide slide-content">
       ${editToolbar}
       <div class="slide-accent-bar"></div>
       <div class="slide-inner">
-        <div class="slide-title">01 · Contexte & GEO · Enjeux 2025-2026</div>
+        <div class="slide-title">01 · Contexte & GEO · Enjeux 2026</div>
         <div class="slide-subtitle" style="font-style:italic;">Pourquoi la visibilité dans les IA génératives devient incontournable.</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-top:1rem;flex:1;min-height:0;">
           <div style="display:flex;flex-direction:column;gap:0.8rem;">
             <div style="background:#fff;border:1.5px solid var(--border);border-left:4px solid var(--orange);border-radius:8px;padding:1.2rem;flex:1;">
-              <div style="font-size:15px;font-weight:700;color:var(--green-dark);margin-bottom:0.7rem;">Generative Engine Optimization</div>
-              ${mkText(s.geoTopics, 'Description du GEO…', 'geoTopics', '')}
+              <div style="font-size:16px;font-weight:700;color:var(--green-dark);margin-bottom:0.8rem;">Generative Engine Optimization</div>
+              <div style="font-size:13px;line-height:1.65;color:var(--text);margin-bottom:0.6rem;">Le GEO désigne l'ensemble des pratiques visant à améliorer la visibilité d'une marque ou d'un site dans les réponses générées par les moteurs IA (ChatGPT, Perplexity, Google SGE / AI Overview, Gemini, Copilot, Claude…).</div>
+              <div style="font-size:13px;line-height:1.65;color:var(--text);">Contrairement au SEO classique, le GEO ne cible pas un classement de lien mais la citation et la mise en avant dans une réponse synthétique.</div>
             </div>
-            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" style="height:22px;object-fit:contain;" onerror="this.style.display='none'">
-              <span style="font-size:18px;">🅷</span>
-              <span style="font-size:18px;background:#6e5cf6;color:#fff;border-radius:6px;padding:1px 6px;font-weight:700;font-size:13px;">✳</span>
-              <span style="font-size:18px;background:#10a37f;color:#fff;border-radius:50%;padding:2px 7px;font-weight:700;font-size:13px;">G</span>
-              <span style="font-size:18px;background:#d97706;color:#fff;border-radius:8px;padding:2px 7px;font-size:13px;">✳</span>
-              <span style="font-size:18px;">✦</span>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+              ${icons.join('')}
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:0.7rem;">
             <div style="background:#fff;border:1.5px solid var(--border);border-left:3px solid var(--orange);border-radius:8px;padding:0.9rem 1rem;">
-              <div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:0.3rem;">🔍 Part de trafic IA en hausse</div>
-              ${mkText(s.metrics?.trafficPct, 'Texte explicatif…', 'trafficPct', '')}
+              <div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:0.4rem;">🔍 Part de trafic IA en hausse</div>
+              <div style="font-size:12px;line-height:1.6;color:var(--text);">Les requêtes traitées par des interfaces IA représentent une portion croissante des recherches en 2026, notamment sur les requêtes informelles e-commerce.</div>
             </div>
             <div style="background:#fff;border:1.5px solid var(--border);border-left:3px solid var(--orange);border-radius:8px;padding:0.9rem 1rem;">
-              <div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:0.3rem;">🛒 Enjeu e-commerce fort</div>
-              ${mkText(s.metrics?.ecommerce, 'Texte explicatif…', 'ecommerce', '')}
+              <div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:0.4rem;">🛒 Enjeu e-commerce fort</div>
+              <div style="font-size:12px;line-height:1.6;color:var(--text);">Les acheteurs en ligne interrogent de plus en plus l'IA pour comparer des produits, obtenir des recommandations ou identifier des marques fiables.</div>
             </div>
             <div style="background:#fff;border:1.5px solid var(--border);border-left:3px solid var(--orange);border-radius:8px;padding:0.9rem 1rem;">
-              <div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:0.3rem;">📊 Métriques de mesure (source : Semrush)</div>
-              ${mkText(s.metrics?.score, 'Mentions IA, Citations, Pages citées, Score…', 'score', '')}
+              <div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:0.4rem;">📊 Métriques de mesure (source : Semrush)</div>
+              <div style="font-size:12px;line-height:1.7;color:var(--text);"><strong>Mentions IA</strong> : nombre de fois où la marque est citée dans une réponse IA.<br><strong>Citations</strong> : nombre de sources utilisées par les IA pour construire leurs réponses.<br><strong>Pages citées</strong> : URLs du site apparaissant comme sources dans les réponses IA.<br><strong>Score de visibilité IA (/100)</strong> : indice global de présence de la marque dans les LLM, comparé aux concurrents.</div>
             </div>
           </div>
         </div>

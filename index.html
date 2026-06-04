@@ -1878,6 +1878,15 @@ function removeCompetitorChip(idx) {
   renderCompetitorChips(current);
 }
 
+function setNestedField(idx, pathJson, value) {
+  const path = JSON.parse(pathJson);
+  let t = window.__currentSlides?.[idx];
+  if (!t) return;
+  path.slice(0, -1).forEach(k => { if (!t[k]) t[k] = {}; t = t[k]; });
+  t[path[path.length - 1]] = value;
+  debounceSave();
+}
+
 function updateGagnerCard(idx, ci, field, value) {
   if (!window.__currentSlides?.[idx]?.cards?.[ci]) return;
   window.__currentSlides[idx].cards[ci][field] = value;
@@ -4088,10 +4097,10 @@ function renderSlide(s, idx, clientName, consultant) {
     const setup = s.setup || {};
     const run = s.run || {};
     const mkText = (val, placeholder, path) => editable
-      ? `<span contenteditable="true" style="outline:none;min-width:20px;display:inline;" data-placeholder="${placeholder}" oninput="(function(el){const p=${JSON.stringify(path)};let t=window.__currentSlides?.[${idx}];if(!t)return;p.slice(0,-1).forEach(k=>{if(!t[k])t[k]={};t=t[k];});t[p[p.length-1]]=el.textContent;})(this)">${val||''}</span>`
+      ? `<span contenteditable="true" style="outline:none;min-width:20px;display:inline;" data-placeholder="${placeholder}" oninput='setNestedField(${idx},${JSON.stringify(JSON.stringify(path))},this.textContent)'>${val||''}</span>`
       : `<span>${val||''}</span>`;
     const mkBlock = (val, placeholder, path) => editable
-      ? `<div contenteditable="true" style="outline:none;min-height:1em;" data-placeholder="${placeholder}" oninput="(function(el){const p=${JSON.stringify(path)};let t=window.__currentSlides?.[${idx}];if(!t)return;p.slice(0,-1).forEach(k=>{if(!t[k])t[k]={};t=t[k];});t[p[p.length-1]]=el.textContent;})(this)">${val||''}</div>`
+      ? `<div contenteditable="true" style="outline:none;min-height:1em;" data-placeholder="${placeholder}" oninput='setNestedField(${idx},${JSON.stringify(JSON.stringify(path))},this.textContent)'>${val||''}</div>`
       : `<div>${val||''}</div>`;
     const mkList = (items, side) => {
       const listItems = (Array.isArray(items) && items.length ? items : ['']).map((item, ii) =>
@@ -4141,10 +4150,10 @@ function renderSlide(s, idx, clientName, consultant) {
     const setup = s.setup || {};
     const run = s.run || {};
     const mkText = (val, placeholder, path) => editable
-      ? `<span contenteditable="true" style="outline:none;min-width:20px;display:inline;" data-placeholder="${placeholder}" oninput="(function(el){const p=${JSON.stringify(path)};let t=window.__currentSlides?.[${idx}];if(!t)return;p.slice(0,-1).forEach(k=>{if(!t[k])t[k]={};t=t[k];});t[p[p.length-1]]=el.textContent;})(this)">${val||''}</span>`
+      ? `<span contenteditable="true" style="outline:none;min-width:20px;display:inline;" data-placeholder="${placeholder}" oninput='setNestedField(${idx},${JSON.stringify(JSON.stringify(path))},this.textContent)'>${val||''}</span>`
       : `<span>${val||''}</span>`;
     const mkBlock = (val, placeholder, path) => editable
-      ? `<div contenteditable="true" style="outline:none;min-height:1em;" data-placeholder="${placeholder}" oninput="(function(el){const p=${JSON.stringify(path)};let t=window.__currentSlides?.[${idx}];if(!t)return;p.slice(0,-1).forEach(k=>{if(!t[k])t[k]={};t=t[k];});t[p[p.length-1]]=el.textContent;})(this)">${val||''}</div>`
+      ? `<div contenteditable="true" style="outline:none;min-height:1em;" data-placeholder="${placeholder}" oninput='setNestedField(${idx},${JSON.stringify(JSON.stringify(path))},this.textContent)'>${val||''}</div>`
       : `<div>${val||''}</div>`;
     const mkList = (items, side) => {
       const listItems = (Array.isArray(items) && items.length ? items : ['']).map((item, ii) =>

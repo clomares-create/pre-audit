@@ -346,7 +346,7 @@
   .slide-section { background: #123C34; border-color: #123C34; }
   .slide-section .slide-inner {
     background: #123C34;
-    min-height: 220px; padding: 2.5rem 3rem;
+    min-height: 140px; padding: 2rem 3rem;
     display: flex; flex-direction: column; justify-content: flex-end;
     position: relative; overflow: hidden;
   }
@@ -2697,7 +2697,6 @@ function renderSlide(s, idx, clientName, consultant) {
         ${ef('title', s.title, 'div', 'slide-section-title')}
         ${s.subtitle || editable ? ef('subtitle', s.subtitle, 'div', 'slide-section-sub') : ''}
       </div>
-      ${footer(true)}
     </div>`;
   }
 

@@ -2693,6 +2693,42 @@ function onSummaryEdit(idx, value) {
   debounceSave();
 }
 
+async function analyzeSlideImage(idx) {
+  const slide = window.__currentSlides?.[idx];
+  if (!slide?.image) return;
+  const { apiKey, model } = _pendingContext || {};
+  if (!apiKey) { alert('Clé API manquante'); return; }
+
+  const btn = document.getElementById(`ai-analyze-btn-${idx}`);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Analyse en cours…'; }
+
+  try {
+    const context = [slide.title, slide.subtitle].filter(Boolean).join(' — ');
+    const visionModel = (model || '').match(/gemini|claude|gpt-4o/) ? model : 'google/gemini-2.5-flash-preview';
+
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://sonate.group', 'X-Title': 'Sonate Pre-audit Generator' },
+      body: JSON.stringify({
+        model: visionModel,
+        max_tokens: 300,
+        messages: [{ role: 'user', content: [
+          { type: 'image_url', image_url: { url: slide.image } },
+          { type: 'text', text: `Tu es expert SEO chez Sonate Group. Analyse ce graphique (issu de Semrush, Ahrefs ou GSC).\nContexte de la slide : ${context}\nRédige une analyse concise (2-3 phrases) en français, orientée recommandation stratégique. Sois précis et actionnable. Commence directement par l'observation principale.` }
+        ]}]
+      })
+    });
+    const data = await res.json();
+    const analysis = data.choices?.[0]?.message?.content?.trim();
+    if (!analysis) throw new Error('Réponse vide');
+    window.__currentSlides[idx].summary = analysis;
+    renderSlides();
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = '✨ Analyser avec l\'IA'; }
+    alert('Erreur analyse image : ' + (e.message || 'inconnue'));
+  }
+}
+
 function psiTab(btn, uid, tab) {
   const widget = btn.closest('.psi-widget');
   widget.querySelectorAll('.psi-tab-btn').forEach(b => b.classList.remove('active'));
@@ -3027,8 +3063,9 @@ function renderSlide(s, idx, clientName, consultant) {
             </div>
           </div>`
         : `<div class="chart-placeholder chart-placeholder-static" style="cursor:default;pointer-events:none"><span style="color:#ccc;font-size:13px">Aucune image</span></div>`;
+    const aiBtn3 = editable && s.image ? `<button id="ai-analyze-btn-${idx}" onclick="analyzeSlideImage(${idx})" style="font-size:12px;background:var(--green-light);color:var(--green-dark);border:1px solid #b7d9c2;border-radius:6px;padding:4px 12px;cursor:pointer;margin-bottom:6px;display:block;">✨ Analyser avec l'IA</button>` : '';
     const summaryHtml = editable
-      ? `<div class="summary-block"><div contenteditable="true" class="summary-text" data-placeholder="Répartition par LLM…" style="outline:none;" oninput="(function(el){if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].summary=el.innerHTML;})(this)">${s.summary||''}</div></div>`
+      ? `${aiBtn3}<div class="summary-block"><div contenteditable="true" class="summary-text" data-placeholder="Répartition par LLM…" style="outline:none;" oninput="(function(el){if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].summary=el.innerHTML;})(this)">${s.summary||''}</div></div>`
       : s.summary ? `<div class="summary-block"><div class="summary-text">${s.summary}</div></div>` : '';
     return `<div class="slide slide-content">
       ${editToolbar}
@@ -3321,6 +3358,11 @@ function renderSlide(s, idx, clientName, consultant) {
       </div>
     </div>`;
 
+    const netlinkAiBtn = editable && s.image ? `<button id="ai-analyze-btn-${idx}" onclick="analyzeSlideImage(${idx})" style="font-size:12px;background:var(--green-light);color:var(--green-dark);border:1px solid #b7d9c2;border-radius:6px;padding:4px 12px;cursor:pointer;margin-bottom:6px;display:block;">✨ Analyser avec l'IA</button>` : '';
+    const netlinkSummary = editable
+      ? `${netlinkAiBtn}<div class="chart-summary-edit" contenteditable="true" data-placeholder="Commentaire sur le profil de liens…" oninput="onSummaryEdit(${idx}, this.textContent)">${s.summary || ''}</div>`
+      : s.summary ? `<div class="algo-seo-summary">${s.summary}</div>` : '';
+
     return `<div class="slide slide-content">
       ${editToolbar}
       <div class="slide-accent-bar"></div>
@@ -3331,6 +3373,7 @@ function renderSlide(s, idx, clientName, consultant) {
           <div id="chart-area-${idx}" style="display:flex;flex-direction:column;">${imageHtml}</div>
           <div>${methodeHtml}</div>
         </div>
+        ${netlinkSummary}
       </div>
       ${footer(false)}
     </div>`;
@@ -3431,7 +3474,8 @@ function renderSlide(s, idx, clientName, consultant) {
 
     let summaryHtml;
     if (editable) {
-      summaryHtml = `<div class="chart-summary-edit"
+      const aiBtn = s.image ? `<button id="ai-analyze-btn-${idx}" onclick="analyzeSlideImage(${idx})" style="font-size:12px;background:var(--green-light);color:var(--green-dark);border:1px solid #b7d9c2;border-radius:6px;padding:4px 12px;cursor:pointer;margin-bottom:6px;display:block;">✨ Analyser avec l'IA</button>` : '';
+      summaryHtml = `${aiBtn}<div class="chart-summary-edit"
         contenteditable="true"
         data-placeholder="Saisir le commentaire analytique..."
         oninput="onSummaryEdit(${idx}, this.textContent)">${s.summary || ''}</div>`;

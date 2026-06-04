@@ -17,6 +17,12 @@ export default async function handler(req, res) {
   if (!clientName || !content) return res.status(400).json({ error: 'Données manquantes' });
   const contentStr = JSON.stringify(content);
 
+  const userRow = await db.execute({
+    sql: 'SELECT workspace_id FROM users WHERE id = ?',
+    args: [payload.userId]
+  });
+  const workspaceId = userRow.rows[0]?.workspace_id || null;
+
   if (reportId) {
     const existing = await db.execute({
       sql: 'SELECT id, slug FROM reports WHERE id = ? AND user_id = ?',
@@ -33,8 +39,8 @@ export default async function handler(req, res) {
   const id = randomUUID();
   const slug = toSlug(clientName);
   await db.execute({
-    sql: 'INSERT INTO reports (id, user_id, client_name, client_url, slug, content) VALUES (?, ?, ?, ?, ?, ?)',
-    args: [id, payload.userId, clientName, clientUrl || '', slug, contentStr]
+    sql: 'INSERT INTO reports (id, user_id, workspace_id, client_name, client_url, slug, content) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    args: [id, payload.userId, workspaceId, clientName, clientUrl || '', slug, contentStr]
   });
   return res.status(201).json({ reportId: id, slug, url: '/r/' + slug });
 }

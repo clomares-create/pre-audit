@@ -1193,6 +1193,13 @@
         <input type="text" id="consultantName" placeholder="Prénom Nom" value="">
       </div>
       <button class="btn btn-outline" style="width:100%;margin-top:4px" onclick="saveSettings()">Enregistrer</button>
+
+      <div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--border)">
+        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:0.6rem;letter-spacing:0.04em">MON ESPACE</div>
+        <div id="workspacePanel">
+          <div style="font-size:12px;color:var(--text-muted)">Chargement…</div>
+        </div>
+      </div>
     </div>
   </aside>
 
@@ -1321,7 +1328,13 @@ function initApp(jwt) {
   if (saved.model) document.getElementById('modelName').value = saved.model;
   if (saved.consultant) document.getElementById('consultantName').value = saved.consultant;
   updateApiStatus();
-  if (!saved.apiKey) toggleSettings(true);
+
+  // Handle invite token in URL
+  const inviteToken = new URLSearchParams(window.location.search).get('invite');
+  if (inviteToken) joinWorkspace(inviteToken);
+  else loadWorkspace().then(() => {
+    if (!document.getElementById('apiKey').value) toggleSettings(true);
+  });
 }
 
 // ─── AUTH ────────────────────────────────────────────────────────────────────
@@ -1592,7 +1605,7 @@ function updateApiStatus() {
   }
 }
 
-function saveSettings() {
+async function saveSettings() {
   const settings = {
     apiKey: document.getElementById('apiKey').value.trim(),
     pagespeedKey: document.getElementById('pagespeedKey').value.trim(),
@@ -1601,8 +1614,101 @@ function saveSettings() {
   };
   localStorage.setItem('sonate_settings', JSON.stringify(settings));
   updateApiStatus();
+
+  // If workspace owner, sync API keys to the server
+  if (_workspace?.isOwner) {
+    const jwt = getJwt();
+    if (jwt) {
+      await fetch('/api/workspace/settings', {
+        method: 'PATCH',
+        headers: { 'Authorization': 'Bearer ' + jwt.token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api_key: settings.apiKey, pagespeed_key: settings.pagespeedKey })
+      }).catch(() => {});
+    }
+  }
+
   showToast('Paramètres enregistrés ✓');
   toggleSettings(false);
+}
+
+// ─── WORKSPACE ───────────────────────────────────────────────────────────────
+
+let _workspace = null;
+
+async function loadWorkspace() {
+  const jwt = getJwt();
+  if (!jwt) return;
+  try {
+    const res = await fetch('/api/workspace/me', { headers: { 'Authorization': 'Bearer ' + jwt.token } });
+    const data = await res.json();
+    _workspace = data.workspace;
+    renderWorkspacePanel();
+    if (_workspace?.api_key && !document.getElementById('apiKey').value) {
+      document.getElementById('apiKey').value = _workspace.api_key;
+      updateApiStatus();
+    }
+    if (_workspace?.pagespeed_key && !document.getElementById('pagespeedKey').value) {
+      document.getElementById('pagespeedKey').value = _workspace.pagespeed_key;
+    }
+  } catch(e) { /* offline */ }
+}
+
+function renderWorkspacePanel() {
+  const el = document.getElementById('workspacePanel');
+  if (!el) return;
+  if (!_workspace) {
+    el.innerHTML = `<div style="font-size:12px;color:var(--text-muted)">Aucun espace configuré.</div>`;
+    return;
+  }
+  const memberLabel = _workspace.memberCount > 1 ? `${_workspace.memberCount} membres` : '1 membre';
+  el.innerHTML = `
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:0.5rem">${_workspace.isOwner ? '👑 Vous êtes propriétaire' : '👤 Membre'} · ${memberLabel}</div>
+    ${_workspace.isOwner ? `
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:0.4rem">Partagez ce lien pour inviter des collaborateurs :</div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <div id="inviteLinkBox" style="font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:4px 8px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted)">Générer un lien…</div>
+        <button class="btn btn-outline" style="font-size:11px;padding:4px 8px" onclick="generateInviteLink()">Inviter</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:0.5rem">Les clés API enregistrées ici sont partagées avec tous les membres.</div>
+    ` : `
+      <div style="font-size:11px;color:var(--green-dark)">✓ Clés API chargées depuis l'espace de votre propriétaire.</div>
+    `}
+  `;
+}
+
+async function generateInviteLink() {
+  const jwt = getJwt();
+  if (!jwt) return;
+  try {
+    const res = await fetch('/api/workspace/invite', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + jwt.token, 'Content-Type': 'application/json' }
+    });
+    const { token } = await res.json();
+    const link = `${window.location.origin}/?invite=${token}`;
+    document.getElementById('inviteLinkBox').textContent = link;
+    navigator.clipboard.writeText(link).then(() => showToast('Lien d\'invitation copié ✓'));
+  } catch(e) { showToast('Erreur lors de la génération'); }
+}
+
+async function joinWorkspace(token) {
+  const jwt = getJwt();
+  if (!jwt) return;
+  try {
+    const res = await fetch('/api/workspace/join', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + jwt.token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    });
+    if (res.ok) {
+      window.history.replaceState({}, '', '/');
+      showToast('✓ Vous avez rejoint l\'espace');
+      await loadWorkspace();
+    } else {
+      showToast('Lien invalide ou expiré');
+      loadWorkspace();
+    }
+  } catch(e) { loadWorkspace(); }
 }
 
 function toggleSettings(forceOpen) {

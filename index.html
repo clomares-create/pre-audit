@@ -2484,13 +2484,20 @@ function uploadSeoImage(idx, field) {
   input.click();
 }
 
+function refLogoKey(idx) {
+  const title = window.__currentSlides?.[idx]?.title || String(idx);
+  return 'sonate_ref_logo_' + title.toLowerCase().replace(/[^a-z0-9]/g, '_');
+}
+
 function uploadRefLogo(idx) {
   const input = document.createElement('input');
   input.type = 'file'; input.accept = 'image/*';
   input.onchange = (e) => {
     const reader = new FileReader();
     reader.onload = (ev) => {
-      if (window.__currentSlides?.[idx]) window.__currentSlides[idx].logo = ev.target.result;
+      const base64 = ev.target.result;
+      localStorage.setItem(refLogoKey(idx), base64);
+      if (window.__currentSlides?.[idx]) window.__currentSlides[idx].logo = base64;
       const cn = document.getElementById('clientName')?.value || '';
       const cu = document.getElementById('clientUrl')?.value || '';
       document.getElementById('slidesContainer').innerHTML = renderSlides(window.__currentSlides, { clientName: cn, clientUrl: cu, consultant: '' });
@@ -3572,9 +3579,11 @@ function renderSlide(s, idx, clientName, consultant) {
   // RÉFÉRENCE CLIENT — étude de cas (Santarome, GCE…)
   if (s.type === 'sonate-ref') {
     const refEditable = !!window.__editableSlides;
-    const logoHtml = s.logo
+    const refKey = 'sonate_ref_logo_' + (s.title || '').toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const refLogo = s.logo || localStorage.getItem(refKey);
+    const logoHtml = refLogo
       ? `<div class="ref-logo-area"${refEditable ? ` onclick="uploadRefLogo(${idx})"` : ''}>
-          <img src="${s.logo}" alt="Logo">
+          <img src="${refLogo}" alt="Logo">
           ${refEditable ? `<div class="ref-logo-overlay">🔄 Remplacer</div>` : ''}
         </div>`
       : refEditable

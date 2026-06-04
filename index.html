@@ -653,6 +653,35 @@
   .report-link-label { font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
   .report-link-url { font-size: 12px; color: var(--green-dark); font-family: 'DM Mono', monospace; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+  /* EDITABLE CHART SLIDE */
+  .chart-area { margin: 10px 0 12px; flex: 1; }
+  .chart-placeholder {
+    width: 100%; min-height: 210px;
+    border: 2px dashed #c8c4bb; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; background: #faf8f5; color: #999;
+    font-size: 14px; transition: border-color 0.15s, background 0.15s;
+  }
+  .chart-placeholder:hover { border-color: #1a3a2e; background: #f0ede8; color: #1a3a2e; }
+  .chart-placeholder-static { min-height: 120px; cursor: default; }
+  .chart-img-wrap { position: relative; cursor: pointer; display: inline-block; width: 100%; }
+  .chart-img-wrap img { width: 100%; border-radius: 8px; border: 1px solid #e8e8e8; display: block; max-height: 290px; object-fit: contain; object-position: top; }
+  .chart-img-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: white; font-weight: 600; opacity: 0; transition: all 0.2s;
+  }
+  .chart-img-wrap:hover .chart-img-overlay { background: rgba(0,0,0,0.38); opacity: 1; }
+  .chart-summary-edit {
+    margin-top: 12px; background: #1a3a2e; color: white;
+    border-left: 4px solid #e85d2a; border-radius: 4px;
+    padding: 13px 16px; font-size: 13px; line-height: 1.65; min-height: 46px;
+    transition: box-shadow 0.15s;
+  }
+  .chart-summary-edit[contenteditable="true"] { outline: none; cursor: text; }
+  .chart-summary-edit[contenteditable="true"]:empty::before { content: attr(data-placeholder); color: rgba(255,255,255,0.35); pointer-events: none; }
+  .chart-summary-edit[contenteditable="true"]:focus { box-shadow: 0 0 0 2px #e85d2a; }
+
   /* ALGO SEO SLIDE */
   .algo-seo-intro { font-style: italic; color: #666; font-size: 14px; margin: 8px 0 24px; line-height: 1.6; }
   .algo-seo-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-bottom: 24px; }
@@ -1109,6 +1138,8 @@ async function loadReportIntoApp(reportId) {
   document.getElementById('resultState').style.display = '';
   document.getElementById('resultTitle').textContent = 'Pré-audit — ' + report.clientName;
   document.getElementById('resultDate').textContent = `Chargé le ${new Date().toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})}`;
+  window.__editableSlides = true;
+  window.__currentSlides = report.content;
   document.getElementById('slidesContainer').innerHTML = renderSlides(report.content, {
     clientName: report.clientName, clientUrl: report.clientUrl || '', consultant: '',
   });
@@ -1190,6 +1221,8 @@ async function loadPublicReport(slug) {
   document.getElementById('resultState').style.display = '';
   document.getElementById('resultTitle').textContent = 'Pré-audit — ' + report.clientName;
   document.getElementById('resultDate').textContent = `Généré le ${new Date(report.createdAt).toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})}`;
+  window.__editableSlides = false;
+  window.__currentSlides = null;
   document.getElementById('slidesContainer').innerHTML = renderSlides(report.content, {
     clientName: report.clientName, clientUrl: report.clientUrl || '', consultant: '',
   });
@@ -1643,6 +1676,19 @@ async function confirmAndGenerate() {
       }
     }
 
+    // For SEO reports, inject "Votre trafic VS la concurrence" section before "Notre Proposition"
+    if (hasSeo) {
+      const proposalIdx = slides.findIndex(s => s.type === 'section' && (s.title || '').includes('Proposition'));
+      const insertAt = proposalIdx !== -1 ? proposalIdx : Math.max(slides.length - 3, 0);
+      slides.splice(insertAt, 0,
+        { type: 'section', label: '', title: 'Votre trafic VS la concurrence', subtitle: 'Données issues de vos outils SEO' },
+        { type: 'editable-chart', title: 'Trafic concurrence · Marché', subtitle: 'Estimation du trafic SEO généré par les concurrents', image: null, summary: '' },
+        { type: 'editable-chart', title: 'Performance de votre trafic seo', subtitle: 'Estimation de votre trafic SEO', image: null, summary: '' },
+        { type: 'editable-chart', title: 'Potentiel SEO · Visibilité actuelle vs potentielle', subtitle: 'Évolution attendue du portefeuille de mots-clés positionnés sur Google.', image: null, summary: '' },
+        { type: 'editable-chart', title: 'Potentiel SEO · Vue d\'ensemble des positions', subtitle: 'Améliorer les positions existantes – répartition actuelle des mots-clés positionnés.', image: null, summary: '' }
+      );
+    }
+
     // For SEO reports, inject the fixed "Fonctionnement de l'algorithme" slide after section "01"
     const hasSeo = services.some(s => s.toLowerCase().includes('seo'));
     if (hasSeo) {
@@ -1706,6 +1752,8 @@ async function confirmAndGenerate() {
     document.getElementById('resultState').style.display = '';
     document.getElementById('resultTitle').textContent = `Pré-audit — ${clientName}`;
     document.getElementById('resultDate').textContent = `Généré le ${new Date().toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})} · ${model}`;
+    window.__editableSlides = true;
+    window.__currentSlides = slides;
     document.getElementById('slidesContainer').innerHTML = renderSlides(slides, { clientName, clientUrl, consultant });
     saveReport(slides);
 
@@ -1917,6 +1965,42 @@ ${hasSeo ? `9. type "section" — label = "04", title = "Stratégie de Contenu",
 Rédige en français. Ton professionnel et expert. Données chiffrées réalistes et cohérentes avec le secteur "${sector || 'digital'}".`;
 }
 
+let __saveTimeout = null;
+function debounceSave() {
+  clearTimeout(__saveTimeout);
+  __saveTimeout = setTimeout(() => {
+    if (window.__currentSlides) saveReport(window.__currentSlides);
+  }, 1200);
+}
+
+function uploadChartImage(idx) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = ev.target.result;
+      if (window.__currentSlides?.[idx]) window.__currentSlides[idx].image = base64;
+      const area = document.getElementById(`chart-area-${idx}`);
+      if (area) area.innerHTML = `<div class="chart-img-wrap" onclick="uploadChartImage(${idx})">
+        <img src="${base64}" alt="Graphique">
+        <div class="chart-img-overlay">🔄 Remplacer l'image</div>
+      </div>`;
+      debounceSave();
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function onSummaryEdit(idx, value) {
+  if (window.__currentSlides?.[idx]) window.__currentSlides[idx].summary = value;
+  debounceSave();
+}
+
 function psiTab(btn, uid, tab) {
   const widget = btn.closest('.psi-widget');
   widget.querySelectorAll('.psi-tab-btn').forEach(b => b.classList.remove('active'));
@@ -2007,6 +2091,54 @@ function renderSlide(s, idx, clientName, consultant) {
         </div>
       </div>
       ${footer(true)}
+    </div>`;
+  }
+
+  // EDITABLE CHART — slide à compléter manuellement (trafic, potentiel SEO…)
+  if (s.type === 'editable-chart') {
+    const editable = !!window.__editableSlides;
+
+    let imageHtml;
+    if (s.image) {
+      imageHtml = `<div class="chart-img-wrap"${editable ? ` onclick="uploadChartImage(${idx})"` : ''}>
+        <img src="${s.image}" alt="Graphique">
+        ${editable ? `<div class="chart-img-overlay">🔄 Remplacer l'image</div>` : ''}
+      </div>`;
+    } else if (editable) {
+      imageHtml = `<div class="chart-placeholder" onclick="uploadChartImage(${idx})">
+        <div style="text-align:center">
+          <div style="font-size:30px;margin-bottom:8px">📎</div>
+          <div style="font-weight:600;margin-bottom:4px">Cliquer pour uploader l'image</div>
+          <div style="font-size:12px;opacity:0.65">Screenshot depuis votre outil SEO (Semrush, Ahrefs…)</div>
+        </div>
+      </div>`;
+    } else {
+      imageHtml = `<div class="chart-placeholder chart-placeholder-static" style="cursor:default;pointer-events:none">
+        <span style="color:#ccc;font-size:13px">Aucune image</span>
+      </div>`;
+    }
+
+    let summaryHtml;
+    if (editable) {
+      summaryHtml = `<div class="chart-summary-edit"
+        contenteditable="true"
+        data-placeholder="Saisir le commentaire analytique..."
+        oninput="onSummaryEdit(${idx}, this.textContent)">${s.summary || ''}</div>`;
+    } else if (s.summary) {
+      summaryHtml = `<div class="algo-seo-summary">${s.summary}</div>`;
+    } else {
+      summaryHtml = '';
+    }
+
+    return `<div class="slide slide-content">
+      <div class="slide-accent-bar"></div>
+      <div class="slide-inner">
+        <div class="slide-title">${s.title || ''}</div>
+        ${s.subtitle ? `<div class="slide-subtitle">${s.subtitle}</div>` : ''}
+        <div class="chart-area" id="chart-area-${idx}">${imageHtml}</div>
+        ${summaryHtml}
+      </div>
+      ${footer(false)}
     </div>`;
   }
 

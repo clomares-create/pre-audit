@@ -1862,6 +1862,33 @@ function removeCompetitorChip(idx) {
   renderCompetitorChips(current);
 }
 
+const WIKI_COLORS = ['#8b5cf6','#3b82f6','#06b6d4','#10b981','#84cc16','#eab308','#f97316','#ef4444','#ec4899','#a855f7','#6366f1','#14b8a6'];
+
+function updateWikiKw(idx, ki, field, value) {
+  if (!window.__currentSlides?.[idx]?.keywords?.[ki]) return;
+  window.__currentSlides[idx].keywords[ki][field] = value;
+  debounceSave();
+}
+function updateWikiTopic(idx, value) {
+  if (!window.__currentSlides?.[idx]) return;
+  window.__currentSlides[idx].topic = value;
+  debounceSave();
+}
+function addWikiKw(idx, side) {
+  if (!window.__currentSlides?.[idx]) return;
+  if (!Array.isArray(window.__currentSlides[idx].keywords)) window.__currentSlides[idx].keywords = [];
+  const kws = window.__currentSlides[idx].keywords;
+  const sideCount = kws.filter(k => k.side === side).length;
+  const colorIdx = side === 'left' ? sideCount : sideCount + 6;
+  kws.push({ label: '', volume: '', side, color: WIKI_COLORS[colorIdx % WIKI_COLORS.length] });
+  renderSlides();
+}
+function removeWikiKw(idx, ki) {
+  if (!window.__currentSlides?.[idx]?.keywords) return;
+  window.__currentSlides[idx].keywords.splice(ki, 1);
+  renderSlides();
+}
+
 function updateVisibilityBar(idx, field, value) {
   if (!window.__currentSlides?.[idx]) return;
   if (!window.__currentSlides[idx].bars) window.__currentSlides[idx].bars = {};
@@ -2064,7 +2091,16 @@ async function confirmAndGenerate() {
       if (sec05Idx !== -1) {
         slides.splice(sec05Idx + 1, 0,
           { type: 'seo-gagner-positions' },
-          { type: 'seo-wikipedia-methode', image: null },
+          { type: 'seo-wikipedia-methode', topic: '', keywords: [
+            { label: '', volume: '', side: 'left', color: '#8b5cf6' },
+            { label: '', volume: '', side: 'left', color: '#3b82f6' },
+            { label: '', volume: '', side: 'left', color: '#06b6d4' },
+            { label: '', volume: '', side: 'left', color: '#10b981' },
+            { label: '', volume: '', side: 'right', color: '#14b8a6' },
+            { label: '', volume: '', side: 'right', color: '#84cc16' },
+            { label: '', volume: '', side: 'right', color: '#eab308' },
+            { label: '', volume: '', side: 'right', color: '#f97316' },
+          ] },
           { type: 'seo-gagner-positions-upload', title: 'Comment gagner des positions ?', keyword: '[MOT-CLÉ]', image: null, pageUrl: '' },
           { type: 'seo-qualite-contenus' }
         );
@@ -3676,17 +3712,58 @@ function renderSlide(s, idx, clientName, consultant) {
 
   // NOTRE MÉTHODE WIKIPÉDIA — static hex + image uploadable
   if (s.type === 'seo-wikipedia-methode') {
-    const imgHtml = s.image
-      ? `<div class="seo-wiki-image-area"${editable ? ` onclick="uploadSeoImage(${idx},'image')"` : ''}>
-          <img src="${s.image}" alt="Mind map">
-          ${editable ? `<div class="seo-wiki-overlay">🔄 Remplacer l'image</div>` : ''}
+    const topic = s.topic || '';
+    const kws = Array.isArray(s.keywords) ? s.keywords : [];
+    const leftKws = kws.filter(k => k.side === 'left');
+    const rightKws = kws.filter(k => k.side === 'right');
+
+    // SVG viewBox 0 0 100 100 with preserveAspectRatio="none" → 1 unit = 1% of container
+    // Left keyword line ends at x=30, right at x=70, center at (50,50)
+    let svgPaths = '';
+    leftKws.forEach((kw, i) => {
+      const y = ((i + 0.5) / leftKws.length * 100).toFixed(2);
+      svgPaths += `<path d="M 30,${y} C 40,${y} 44,50 50,50" stroke="${kw.color||'#888'}" stroke-width="1.2" fill="none" stroke-linecap="round"/>`;
+    });
+    rightKws.forEach((kw, j) => {
+      const y = ((j + 0.5) / rightKws.length * 100).toFixed(2);
+      svgPaths += `<path d="M 70,${y} C 60,${y} 56,50 50,50" stroke="${kw.color||'#888'}" stroke-width="1.2" fill="none" stroke-linecap="round"/>`;
+    });
+
+    const mkKwDiv = (kw, ki, topPct, align) => {
+      const side = kw.side;
+      const pos = side === 'left' ? `left:0;width:29%;text-align:right;padding-right:6px;` : `right:0;width:29%;text-align:left;padding-left:6px;`;
+      if (editable) return `<div style="position:absolute;top:calc(${topPct}% - 16px);${pos}">
+        <div contenteditable="true" style="font-size:11px;font-weight:500;color:var(--text);outline:none;line-height:1.3" oninput="updateWikiKw(${idx},${ki},'label',this.textContent)">${kw.label||''}</div>
+        <div contenteditable="true" style="font-size:10px;color:#999;outline:none" oninput="updateWikiKw(${idx},${ki},'volume',this.textContent)">${kw.volume||''}</div>
+        <button onclick="removeWikiKw(${idx},${ki})" style="font-size:9px;color:#f87171;background:none;border:none;cursor:pointer;padding:0;line-height:1">✕</button>
+      </div>`;
+      return `<div style="position:absolute;top:calc(${topPct}% - 16px);${pos}">
+        <div style="font-size:11px;font-weight:500;color:var(--text);line-height:1.3">${kw.label||''}</div>
+        <div style="font-size:10px;color:#999">${kw.volume||''}</div>
+      </div>`;
+    };
+
+    let kwsHtml = '';
+    leftKws.forEach((kw, i) => {
+      const ki = kws.indexOf(kw);
+      kwsHtml += mkKwDiv(kw, ki, ((i+0.5)/leftKws.length*100).toFixed(1), 'right');
+    });
+    rightKws.forEach((kw, j) => {
+      const ki = kws.indexOf(kw);
+      kwsHtml += mkKwDiv(kw, ki, ((j+0.5)/rightKws.length*100).toFixed(1), 'left');
+    });
+
+    const centerNode = editable
+      ? `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:2;">
+          <div contenteditable="true" style="font-size:12px;font-weight:700;color:var(--green-dark);outline:none;border-bottom:1px dashed #ccc;min-width:60px;max-width:110px;text-align:center;background:rgba(255,255,255,0.9);padding:2px 4px;border-radius:4px;" oninput="updateWikiTopic(${idx},this.textContent)">${topic}</div>
         </div>`
-      : editable
-        ? `<div class="seo-wiki-image-area" onclick="uploadSeoImage(${idx},'image')">
-            <div class="seo-wiki-placeholder"><div style="font-size:26px;margin-bottom:6px">🗺️</div><div>Mind map / arbre de contenus</div><div style="margin-top:4px;font-size:11px;opacity:.7">Cliquer pour uploader</div></div>
-            <div class="seo-wiki-overlay">📊 Uploader l'image</div>
-          </div>`
-        : `<div class="seo-wiki-image-area" style="cursor:default"><div class="seo-wiki-placeholder">Aucune image</div></div>`;
+      : `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:2;background:rgba(255,255,255,0.9);padding:4px 8px;border-radius:6px;"><div style="font-size:12px;font-weight:700;color:var(--green-dark)">${topic||'Thème'}</div></div>`;
+
+    const addBtns = editable ? `<div style="display:flex;gap:8px;margin-top:8px;justify-content:center;">
+      <button onclick="addWikiKw(${idx},'left')" style="font-size:11px;background:var(--green-light);color:var(--green-dark);border:1px solid #b7d9c2;border-radius:5px;padding:3px 10px;cursor:pointer;">+ Gauche</button>
+      <button onclick="addWikiKw(${idx},'right')" style="font-size:11px;background:var(--green-light);color:var(--green-dark);border:1px solid #b7d9c2;border-radius:5px;padding:3px 10px;cursor:pointer;">+ Droite</button>
+    </div>` : '';
+
     return `<div class="slide slide-content">
       ${editToolbar}
       <div class="slide-accent-bar"></div>
@@ -3698,7 +3775,14 @@ function renderSlide(s, idx, clientName, consultant) {
             <div class="seo-wiki-hex-icon">💡</div>
             <div class="seo-wiki-hex-text">Devenez le Wikipédia de votre activité</div>
           </div>
-          ${imgHtml}
+          <div style="flex:1;display:flex;flex-direction:column;">
+            <div style="position:relative;width:100%;flex:1;min-height:220px;background:#fff;border-radius:12px;border:1px solid var(--border);">
+              <svg style="position:absolute;top:0;left:0;width:100%;height:100%" viewBox="0 0 100 100" preserveAspectRatio="none">${svgPaths}</svg>
+              ${kwsHtml}
+              ${centerNode}
+            </div>
+            ${addBtns}
+          </div>
         </div>
       </div>
       ${footer(false)}

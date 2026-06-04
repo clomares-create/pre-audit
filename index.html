@@ -318,9 +318,9 @@
   }
 
   /* SECTION SEPARATOR */
-  .slide-section { background: #111; border-color: #111; }
+  .slide-section { background: #123C34; border-color: #123C34; }
   .slide-section .slide-inner {
-    background: #111;
+    background: #123C34;
     min-height: 220px; padding: 2.5rem 3rem;
     display: flex; flex-direction: column; justify-content: flex-end;
     position: relative; overflow: hidden;
@@ -2212,7 +2212,7 @@ function renderSlide(s, idx, clientName, consultant) {
 
   // SECTION SEPARATOR
   if (s.type === 'section') {
-    const num = String(s.num || pageNum).padStart(2, '0');
+    const num = s.label ? String(s.label).padStart(2, '0') : String(s.num || pageNum).padStart(2, '0');
     return `<div class="slide slide-section">
       ${editToolbar}
       <div class="slide-inner">

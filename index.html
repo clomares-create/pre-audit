@@ -544,30 +544,30 @@
   .psi-tab-btn.active { color: #1a73e8; border-bottom-color: #1a73e8; }
   .psi-tab-icon { font-size: 16px; }
   .psi-columns { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #e8e8e8; }
-  .psi-column { padding: 16px 20px 18px; }
+  .psi-column { padding: 18px 22px 20px; }
   .psi-column + .psi-column { border-left: 1px solid #e8e8e8; }
-  .psi-column-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
+  .psi-column-label { display: flex; align-items: center; gap: 7px; font-size: 15px; font-weight: 700; color: #333; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
   .psi-panel { display: none; padding: 18px 22px 20px; }
   .psi-panel.active { display: flex; gap: 22px; align-items: flex-start; }
   .psi-left { flex: 1; min-width: 0; }
   .psi-right { flex-shrink: 0; width: 120px; }
   .psi-right img { width: 100%; border-radius: 6px; border: 1px solid #e8e8e8; display: block; }
-  .psi-gauge-row { display: flex; align-items: center; gap: 16px; margin-bottom: 6px; }
-  .psi-gauge-svg { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
-  .psi-score-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; }
-  .psi-gauge-label { font-size: 15px; font-weight: 600; color: #333; }
+  .psi-gauge-row { display: flex; align-items: center; gap: 18px; margin-bottom: 10px; }
+  .psi-gauge-svg { position: relative; width: 88px; height: 88px; flex-shrink: 0; }
+  .psi-score-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; }
+  .psi-gauge-label { font-size: 16px; font-weight: 700; color: #222; }
   .psi-note { font-size: 11px; color: #666; line-height: 1.5; margin: 6px 0 8px; max-width: 340px; }
   .psi-note a { color: #1a73e8; }
-  .psi-legend { display: flex; gap: 14px; font-size: 11px; color: #444; margin-bottom: 10px; }
+  .psi-legend { display: flex; gap: 12px; font-size: 12px; color: #444; margin-bottom: 4px; flex-wrap: wrap; }
   .psi-legend-item { display: flex; align-items: center; gap: 4px; }
   .psi-leg-red { color: #ea4335; }
   .psi-leg-orange { color: #f4a225; }
   .psi-leg-green { color: #0cce6b; }
-  .psi-stats-title { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #555; margin-bottom: 8px; }
+  .psi-stats-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #555; margin-bottom: 8px; margin-top: 10px; }
   .psi-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
-  .psi-stat { padding: 8px 0; border-top: 1px solid #f0f0f0; }
-  .psi-stat-name { font-size: 12px; color: #333; display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
-  .psi-stat-val { font-size: 15px; font-weight: 600; }
+  .psi-stat { padding: 9px 0; border-top: 1px solid #f0f0f0; }
+  .psi-stat-name { font-size: 13px; color: #444; display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
+  .psi-stat-val { font-size: 18px; font-weight: 700; }
   .psi-ind-red { color: #ea4335; }
   .psi-ind-orange { color: #f4a225; }
   .psi-ind-green { color: #0cce6b; }
@@ -2411,7 +2411,32 @@ function updateVisibilityBar(idx, field, value) {
   if (!window.__currentSlides?.[idx]) return;
   if (!window.__currentSlides[idx].bars) window.__currentSlides[idx].bars = {};
   window.__currentSlides[idx].bars[field] = value;
-  renderSlides();
+
+  const b = window.__currentSlides[idx].bars;
+  const vals = {
+    top3: parseInt(b.top3) || 0,
+    basPage1: parseInt(b.basPage1) || 0,
+    page2: parseInt(b.page2) || 0,
+    page34: parseInt(b.page34) || 0,
+    page59: parseInt(b.page59) || 0,
+  };
+  const maxVal = Math.max(...Object.values(vals), 1);
+  const barH = 160;
+
+  const slide = document.querySelector(`.slide[data-slide-idx="${idx}"]`);
+  if (!slide) return;
+
+  for (const [f, val] of Object.entries(vals)) {
+    const fillEl = slide.querySelector(`[data-bar-fill="${f}"]`);
+    if (fillEl) fillEl.style.height = `${val ? Math.round((val / maxVal) * barH) : 0}px`;
+  }
+
+  const totalActuel = vals.top3 + vals.basPage1;
+  const totalPotentiel = vals.page2 + vals.page34 + vals.page59;
+  const actuelEl = slide.querySelector('[data-total="actuel"]');
+  const potentielEl = slide.querySelector('[data-total="potentiel"]');
+  if (actuelEl) actuelEl.innerHTML = totalActuel ? `> <strong>${totalActuel.toLocaleString('fr-FR')}</strong> Mots Clés` : '';
+  if (potentielEl) potentielEl.innerHTML = totalPotentiel ? `> <strong>${totalPotentiel.toLocaleString('fr-FR')}</strong> Mots Clés` : '';
 }
 
 function addCompetitorChip() {
@@ -4001,7 +4026,7 @@ function renderSlide(s, idx, clientName, consultant) {
         ${mkInput(field, val, bgFill)}
         <div style="font-size:11px;color:#888;font-weight:500">Mots Clés</div>
         <div style="width:100%;height:${barH}px;background:${bgFull};border-radius:6px 6px 0 0;display:flex;align-items:flex-end;position:relative;overflow:hidden">
-          <div style="width:100%;height:${fillH}px;background:${bgFill};border-radius:6px 6px 0 0;transition:height .3s"></div>
+          <div data-bar-fill="${field}" style="width:100%;height:${fillH}px;background:${bgFill};border-radius:6px 6px 0 0;transition:height .3s"></div>
         </div>
         <div style="font-size:10px;font-weight:700;text-align:center;line-height:1.3;color:#fff;background:${bgFill};border-radius:0 0 4px 4px;width:100%;padding:4px 2px">${label}</div>
       </div>`;
@@ -4010,7 +4035,7 @@ function renderSlide(s, idx, clientName, consultant) {
     const greenLight = '#e8f5e9'; const greenDark = '#2d6a4f';
     const orangeLight = '#fff3e0'; const orangeDark = '#e65100';
 
-    return `<div class="slide slide-content">
+    return `<div class="slide slide-content" data-slide-idx="${idx}">
       ${editToolbar}
       <div class="slide-accent-bar"></div>
       <div class="slide-inner">
@@ -4030,11 +4055,11 @@ function renderSlide(s, idx, clientName, consultant) {
         <div style="display:flex;gap:24px;margin-top:1rem;align-items:center">
           <div style="display:flex;align-items:center;gap:8px">
             <div style="width:18px;height:18px;background:${greenLight};border:2px solid ${greenDark};border-radius:3px"></div>
-            <span style="font-size:13px;font-weight:600">visibilité actuelle${totalActuel ? ` > <strong>${totalActuel.toLocaleString('fr-FR')}</strong> Mots Clés` : ''}</span>
+            <span style="font-size:13px;font-weight:600">visibilité actuelle <span data-total="actuel">${totalActuel ? `> <strong>${totalActuel.toLocaleString('fr-FR')}</strong> Mots Clés` : ''}</span></span>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
             <div style="width:18px;height:18px;background:${orangeLight};border:2px solid ${orangeDark};border-radius:3px"></div>
-            <span style="font-size:13px;font-weight:600">visibilité potentielle${totalPotentiel ? ` > <strong>${totalPotentiel.toLocaleString('fr-FR')}</strong> Mots Clés` : ''}</span>
+            <span style="font-size:13px;font-weight:600">visibilité potentielle <span data-total="potentiel">${totalPotentiel ? `> <strong>${totalPotentiel.toLocaleString('fr-FR')}</strong> Mots Clés` : ''}</span></span>
           </div>
         </div>
       </div>
@@ -4112,7 +4137,7 @@ function renderSlide(s, idx, clientName, consultant) {
       const col = scoreColor(score);
       const filled = circ * score / 100;
       return `<div class="psi-gauge-svg">
-        <svg viewBox="0 0 100 100" width="72" height="72">
+        <svg viewBox="0 0 100 100" width="88" height="88">
           <circle cx="50" cy="50" r="40" fill="none" stroke="#e8e8e8" stroke-width="9"/>
           <circle cx="50" cy="50" r="40" fill="none" stroke="${col}" stroke-width="9"
             stroke-dasharray="${filled.toFixed(1)} ${(circ - filled).toFixed(1)}"
@@ -4161,8 +4186,8 @@ function renderSlide(s, idx, clientName, consultant) {
     const columnHtml = (d, label, icon) => `
       <div class="psi-column">
         <div class="psi-column-label"><span>${icon}</span> ${label}</div>
-        <div style="display:grid;grid-template-columns:1fr${d.screenshot ? ' 1fr' : ''};gap:14px;align-items:start;">
-          <div class="psi-left">
+        <div style="display:flex;gap:16px;align-items:flex-start;">
+          <div class="psi-left" style="flex:1;min-width:0;">
             <div class="psi-gauge-row">
               ${gaugeHtml(d.score)}
               <div>
@@ -4176,7 +4201,7 @@ function renderSlide(s, idx, clientName, consultant) {
             </div>
             ${statsHtml(d)}
           </div>
-          ${d.screenshot ? `<div style="border-radius:8px;overflow:hidden;border:1px solid #e8e8e8;"><img src="${d.screenshot}" alt="Aperçu ${label}" style="width:100%;display:block;object-fit:contain;"></div>` : ''}
+          ${d.screenshot ? `<div style="flex-shrink:0;width:110px;border-radius:8px;overflow:hidden;border:1px solid #e8e8e8;margin-top:4px;"><img src="${d.screenshot}" alt="Aperçu ${label}" style="width:100%;display:block;object-fit:contain;"></div>` : ''}
         </div>
       </div>`;
 

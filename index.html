@@ -3583,13 +3583,15 @@ function renderSlide(s, idx, clientName, consultant) {
 
   // GEO CONTEXTE — "01 · Contexte & GEO · Enjeux 2026" (static, pre-filled)
   if (s.type === 'geo-contexte') {
+    const mkLogo = (src, alt, h='44px') =>
+      `<img src="${src}" alt="${alt}" style="height:${h};object-fit:contain;" onerror="this.style.display='none'">`;
     const icons = [
-      `<img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" style="height:44px;object-fit:contain;" onerror="this.style.display='none'">`,
-      `<div style="width:52px;height:52px;background:#1a1a2e;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:#fff;font-family:serif">H</div>`,
-      `<div style="width:52px;height:52px;background:#1c1c3c;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#20c0c0;font-weight:700">✳</div>`,
-      `<div style="width:52px;height:52px;background:#10a37f;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;font-weight:700">G</div>`,
-      `<div style="width:52px;height:52px;background:#cc5500;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;font-weight:700">✳</div>`,
-      `<div style="font-size:44px;line-height:1;background:linear-gradient(135deg,#4285f4,#34a853,#fbbc04,#ea4335);-webkit-background-clip:text;-webkit-text-fill-color:transparent">✦</div>`,
+      mkLogo('https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg', 'Google'),
+      mkLogo('https://commons.wikimedia.org/wiki/Special:Redirect/file/OpenAI_ChatGPT_favicon.svg', 'ChatGPT', '52px'),
+      mkLogo('https://commons.wikimedia.org/wiki/Special:Redirect/file/Perplexity_AI_logo.svg', 'Perplexity'),
+      mkLogo('https://commons.wikimedia.org/wiki/Special:Redirect/file/Google-gemini-icon.svg', 'Gemini', '52px'),
+      mkLogo('https://commons.wikimedia.org/wiki/Special:Redirect/file/Mistral_AI_logo_(2025%E2%80%93).svg', 'Mistral', '36px'),
+      mkLogo('https://commons.wikimedia.org/wiki/Special:Redirect/file/Claude_AI_symbol.svg', 'Claude', '52px'),
     ];
     return `<div class="slide slide-content">
       ${editToolbar}

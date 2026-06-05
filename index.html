@@ -1336,7 +1336,48 @@
       </div>
       <div class="form-group">
         <label class="form-label">Modèle</label>
-        <input type="text" id="modelName" placeholder="google/gemini-2.5-pro" value="google/gemini-2.5-pro">
+        <select id="modelName" onchange="if(this.value==='__custom__'){this.style.display='none';document.getElementById('modelNameCustom').style.display='';document.getElementById('modelNameCustom').focus();}">
+          <optgroup label="Google Gemini">
+            <option value="google/gemini-2.5-pro" selected>gemini-2.5-pro</option>
+            <option value="google/gemini-2.5-flash">gemini-2.5-flash</option>
+            <option value="google/gemini-2.5-flash-preview:thinking">gemini-2.5-flash-preview (thinking)</option>
+            <option value="google/gemini-2.0-flash-001">gemini-2.0-flash</option>
+            <option value="google/gemini-pro-1.5">gemini-pro-1.5</option>
+          </optgroup>
+          <optgroup label="Anthropic Claude">
+            <option value="anthropic/claude-opus-4-5">claude-opus-4.5</option>
+            <option value="anthropic/claude-sonnet-4-5">claude-sonnet-4.5</option>
+            <option value="anthropic/claude-haiku-4-5">claude-haiku-4.5</option>
+            <option value="anthropic/claude-3-5-sonnet">claude-3.5-sonnet</option>
+            <option value="anthropic/claude-3-5-haiku">claude-3.5-haiku</option>
+          </optgroup>
+          <optgroup label="OpenAI">
+            <option value="openai/gpt-4o">gpt-4o</option>
+            <option value="openai/gpt-4o-mini">gpt-4o-mini</option>
+            <option value="openai/o3">o3</option>
+            <option value="openai/o4-mini">o4-mini</option>
+            <option value="openai/o1">o1</option>
+          </optgroup>
+          <optgroup label="DeepSeek">
+            <option value="deepseek/deepseek-r1">deepseek-r1</option>
+            <option value="deepseek/deepseek-chat-v3-0324">deepseek-v3</option>
+          </optgroup>
+          <optgroup label="xAI">
+            <option value="x-ai/grok-3">grok-3</option>
+            <option value="x-ai/grok-3-mini">grok-3-mini</option>
+          </optgroup>
+          <optgroup label="Mistral">
+            <option value="mistralai/mistral-large">mistral-large</option>
+            <option value="mistralai/mistral-medium-3">mistral-medium</option>
+            <option value="mistralai/mixtral-8x7b-instruct">mixtral-8x7b</option>
+          </optgroup>
+          <optgroup label="Meta">
+            <option value="meta-llama/llama-3.3-70b-instruct">llama-3.3-70b</option>
+            <option value="meta-llama/llama-3.1-405b-instruct">llama-3.1-405b</option>
+          </optgroup>
+          <option value="__custom__">✏️ Autre modèle…</option>
+        </select>
+        <input type="text" id="modelNameCustom" placeholder="provider/model-name" style="display:none;margin-top:6px;">
         <div style="font-size:11px;color:var(--text-light);margin-top:4px">Tout modèle OpenRouter accepté</div>
       </div>
       <div class="form-group">
@@ -1470,7 +1511,12 @@ function initApp(jwt) {
   const saved = JSON.parse(localStorage.getItem('sonate_settings') || '{}');
   if (saved.apiKey) document.getElementById('apiKey').value = saved.apiKey;
   if (saved.pagespeedKey) document.getElementById('pagespeedKey').value = saved.pagespeedKey;
-  if (saved.model) document.getElementById('modelName').value = saved.model;
+  if (saved.model) {
+    const sel = document.getElementById('modelName');
+    const opt = Array.from(sel.options).find(o => o.value === saved.model);
+    if (opt) { sel.value = saved.model; }
+    else { sel.style.display = 'none'; const c = document.getElementById('modelNameCustom'); c.style.display = ''; c.value = saved.model; }
+  }
   if (saved.consultant) document.getElementById('consultantName').value = saved.consultant;
   updateApiStatus();
 
@@ -1789,11 +1835,19 @@ function updateApiStatus() {
   }
 }
 
+function getSelectedModel() {
+  const sel = document.getElementById('modelName');
+  const custom = document.getElementById('modelNameCustom');
+  if (sel && sel.style.display !== 'none') return sel.value || 'google/gemini-2.5-pro';
+  if (custom && custom.value.trim()) return custom.value.trim();
+  return 'google/gemini-2.5-pro';
+}
+
 async function saveSettings() {
   const settings = {
     apiKey: document.getElementById('apiKey').value.trim(),
     pagespeedKey: document.getElementById('pagespeedKey').value.trim(),
-    model: document.getElementById('modelName').value.trim(),
+    model: getSelectedModel(),
     consultant: document.getElementById('consultantName').value.trim(),
   };
   localStorage.setItem('sonate_settings', JSON.stringify(settings));
@@ -2283,7 +2337,7 @@ async function generate() {
   const clientUrl = document.getElementById('clientUrl').value.trim();
   if (!clientName || !clientUrl) { showToast('⚠️ Nom et URL du client requis'); return; }
 
-  const model = document.getElementById('modelName').value.trim() || 'google/gemini-2.5-pro';
+  const model = getSelectedModel();
   const consultant = document.getElementById('consultantName').value.trim() || 'Fabien Guilleux';
   const sector = document.getElementById('clientSector').value.trim();
   const geo = document.getElementById('clientGeo').value.trim();

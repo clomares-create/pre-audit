@@ -2550,7 +2550,7 @@ async function confirmAndGenerate() {
       },
       body: JSON.stringify({
         model,
-        ...(model.includes('gemini') ? {} : { max_tokens: 32000 }),
+        max_tokens: model.includes('gemini-2.5') ? 16000 : 32000,
         messages: [{ role: 'user', content: prompt }],
       })
     });
@@ -2570,7 +2570,8 @@ async function confirmAndGenerate() {
       const detail = apiErr
         ? `Erreur API : ${apiErr}`
         : `Réponse vide (finish_reason: ${finishReason ?? 'inconnu'}). `
-          + (model.includes('gemini') ? `Gemini via OpenRouter peut nécessiter un compte avec crédits suffisants. ` : '')
+          + (finishReason === 'content_filter' ? `La requête a été bloquée par le filtre de contenu. ` : '')
+          + (model.includes('gemini') ? `Le modèle ${model} peut avoir épuisé son budget de tokens (surtout en mode "thinking"). ` : '')
           + `Essayez le modèle google/gemini-2.5-flash-preview.`;
       throw new Error(detail);
     }

@@ -1712,6 +1712,12 @@ async function saveReport(slides) {
         reportId: window.currentReportId || null,
       }),
     });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      const detail = errData.error || errData.message || `HTTP ${res.status}`;
+      setSaveStatus('error', detail);
+      return;
+    }
     const data = await res.json();
     window.currentReportId = data.reportId;
     const url = window.location.origin + '/r/' + data.slug;
@@ -1719,16 +1725,16 @@ async function saveReport(slides) {
     document.getElementById('reportLinkContainer').style.display = 'flex';
     setSaveStatus('saved');
   } catch (e) {
-    setSaveStatus('error');
+    setSaveStatus('error', e.message || 'réseau inaccessible');
   }
 }
 
-function setSaveStatus(state) {
+function setSaveStatus(state, detail) {
   const el = document.getElementById('saveStatus');
   if (!el) return;
   if (state === 'saving') { el.textContent = '⏳ Enregistrement…'; el.style.color = 'var(--text-muted)'; }
   else if (state === 'saved') { el.textContent = '✓ Enregistré'; el.style.color = 'var(--green-dark)'; }
-  else if (state === 'error') { el.textContent = '✗ Erreur (non connecté ?)'; el.style.color = '#e85d2a'; }
+  else if (state === 'error') { el.textContent = `✗ Erreur sauvegarde${detail ? ` — ${detail}` : ''}`; el.style.color = '#e85d2a'; el.title = detail || ''; }
 }
 
 function copyReportLink() {

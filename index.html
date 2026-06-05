@@ -4315,8 +4315,8 @@ function renderSlide(s, idx, clientName, consultant) {
       const side = kw.side;
       const pos = side === 'left' ? `left:0;width:29%;text-align:right;padding-right:6px;` : `right:0;width:29%;text-align:left;padding-left:6px;`;
       if (editable) return `<div style="position:absolute;top:calc(${topPct}% - 16px);${pos}">
-        <div contenteditable="true" style="font-size:11px;font-weight:500;color:var(--text);outline:none;line-height:1.3" oninput="updateWikiKw(${idx},${ki},'label',this.textContent)">${kw.label||''}</div>
-        <div contenteditable="true" style="font-size:10px;color:#999;outline:none" oninput="updateWikiKw(${idx},${ki},'volume',this.textContent)">${kw.volume||''}</div>
+        <div contenteditable="true" style="font-size:11px;font-weight:500;color:var(--text);outline:none;line-height:1.3;border:1px solid #d1d5db;border-radius:4px;padding:2px 5px;min-width:40px;background:#fff;" oninput="updateWikiKw(${idx},${ki},'label',this.textContent)">${kw.label||''}</div>
+        <div contenteditable="true" style="font-size:10px;color:#999;outline:none;border:1px solid #d1d5db;border-radius:4px;padding:1px 5px;min-width:30px;background:#fff;margin-top:2px;" oninput="updateWikiKw(${idx},${ki},'volume',this.textContent)">${kw.volume||''}</div>
         <button onclick="removeWikiKw(${idx},${ki})" style="font-size:9px;color:#f87171;background:none;border:none;cursor:pointer;padding:0;line-height:1">✕</button>
       </div>`;
       return `<div style="position:absolute;top:calc(${topPct}% - 16px);${pos}">
@@ -4337,7 +4337,7 @@ function renderSlide(s, idx, clientName, consultant) {
 
     const centerNode = editable
       ? `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:2;">
-          <div contenteditable="true" style="font-size:12px;font-weight:700;color:var(--green-dark);outline:none;border-bottom:1px dashed #ccc;min-width:60px;max-width:110px;text-align:center;background:rgba(255,255,255,0.9);padding:2px 4px;border-radius:4px;" oninput="updateWikiTopic(${idx},this.textContent)">${topic}</div>
+          <div contenteditable="true" style="font-size:12px;font-weight:700;color:var(--green-dark);outline:none;border:1px solid #d1d5db;border-radius:5px;min-width:60px;max-width:110px;text-align:center;background:#fff;padding:3px 6px;" oninput="updateWikiTopic(${idx},this.textContent)">${topic}</div>
         </div>`
       : `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:2;background:rgba(255,255,255,0.9);padding:4px 8px;border-radius:6px;"><div style="font-size:12px;font-weight:700;color:var(--green-dark)">${topic||'Thème'}</div></div>`;
 

@@ -1712,6 +1712,12 @@ async function saveReport(slides) {
         reportId: window.currentReportId || null,
       }),
     });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      const detail = errData.error || errData.message || `HTTP ${res.status}`;
+      setSaveStatus('error', detail);
+      return;
+    }
     const data = await res.json();
     window.currentReportId = data.reportId;
     const url = window.location.origin + '/r/' + data.slug;
@@ -1719,16 +1725,16 @@ async function saveReport(slides) {
     document.getElementById('reportLinkContainer').style.display = 'flex';
     setSaveStatus('saved');
   } catch (e) {
-    setSaveStatus('error');
+    setSaveStatus('error', e.message || 'réseau inaccessible');
   }
 }
 
-function setSaveStatus(state) {
+function setSaveStatus(state, detail) {
   const el = document.getElementById('saveStatus');
   if (!el) return;
   if (state === 'saving') { el.textContent = '⏳ Enregistrement…'; el.style.color = 'var(--text-muted)'; }
   else if (state === 'saved') { el.textContent = '✓ Enregistré'; el.style.color = 'var(--green-dark)'; }
-  else if (state === 'error') { el.textContent = '✗ Erreur (non connecté ?)'; el.style.color = '#e85d2a'; }
+  else if (state === 'error') { el.textContent = `✗ Erreur sauvegarde${detail ? ` — ${detail}` : ''}`; el.style.color = '#e85d2a'; el.title = detail || ''; }
 }
 
 function copyReportLink() {
@@ -3588,7 +3594,7 @@ function renderSlide(s, idx, clientName, consultant) {
     const icons = [
       mkLogo('https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg', 'Google'),
       mkLogo('https://commons.wikimedia.org/wiki/Special:Redirect/file/OpenAI_ChatGPT_favicon.svg', 'ChatGPT', '52px'),
-      mkLogo('https://commons.wikimedia.org/wiki/Special:Redirect/file/Perplexity_AI_logo.svg', 'Perplexity'),
+      mkLogo('https://commons.wikimedia.org/wiki/Special:Redirect/file/Perplexity_AI_Turquoise_on_White.png', 'Perplexity', '52px'),
       mkLogo('https://commons.wikimedia.org/wiki/Special:Redirect/file/Google-gemini-icon.svg', 'Gemini', '52px'),
       mkLogo('https://commons.wikimedia.org/wiki/Special:Redirect/file/Mistral_AI_logo_(2025%E2%80%93).svg', 'Mistral', '36px'),
       mkLogo('https://commons.wikimedia.org/wiki/Special:Redirect/file/Claude_AI_symbol.svg', 'Claude', '52px'),
@@ -4650,40 +4656,44 @@ function renderSlide(s, idx, clientName, consultant) {
           : `<li>${item}</li>`
       ).join('');
       const addBtn = editable ? `<button onclick="(function(){if(!Array.isArray(window.__currentSlides?.[${idx}]?.${side}?.items))window.__currentSlides[${idx}].${side}.items=[];window.__currentSlides[${idx}].${side}.items.push('');renderSlides();})()" style="margin-top:6px;font-size:11px;background:rgba(255,255,255,0.15);color:inherit;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;">+ item</button>` : '';
-      return `<ul style="margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:0.3rem;font-size:13px;">${listItems}</ul>${addBtn}`;
+      return `<ul style="margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:0.4rem;font-size:14px;">${listItems}</ul>${addBtn}`;
     };
-    return `<div class="slide slide-content">
+    const budgetSlideHtml = (titleText) => `<div class="slide slide-content" style="background:#f5f0e6;">
       ${editToolbar}
       <div class="slide-accent-bar"></div>
-      <div class="slide-inner">
-        <div class="slide-title">SEO-GEO · Le budget</div>
-        ${editable
-          ? `<div contenteditable="true" class="slide-subtitle" style="font-style:italic;outline:none;" oninput="if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].subtitle=this.textContent">${s.subtitle||''}</div>`
-          : s.subtitle ? `<div class="slide-subtitle" style="font-style:italic;">${s.subtitle}</div>` : ''}
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-top:1rem;flex:1;min-height:0;">
-          <!-- PHASE 1 SETUP -->
-          <div style="background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:1.5rem;display:flex;flex-direction:column;gap:0.8rem;">
-            <div style="display:inline-block;background:var(--orange);color:#fff;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;letter-spacing:0.08em;width:fit-content;">
-              ${mkText(setup.badge,'PHASE 1 · SETUP',['setup','badge'])}
+      <div class="slide-inner" style="position:relative;">
+        <div style="position:absolute;top:-2.2rem;left:-2.2rem;width:90px;height:90px;background:var(--green-dark);border-radius:50%;z-index:0;"></div>
+        <div style="position:relative;z-index:1;">
+          <div class="slide-title" style="color:var(--green-dark)">${titleText}</div>
+          ${editable
+            ? `<div contenteditable="true" class="slide-subtitle" style="font-style:italic;outline:none;" oninput="if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].subtitle=this.textContent">${s.subtitle||''}</div>`
+            : s.subtitle ? `<div class="slide-subtitle" style="font-style:italic;">${s.subtitle}</div>` : ''}
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;margin-top:1.2rem;flex:1;min-height:0;">
+            <!-- PHASE 1 SETUP -->
+            <div style="background:#fff;border:1.5px solid var(--green-dark);border-radius:18px;padding:1.6rem 1.8rem;display:flex;flex-direction:column;gap:0.9rem;">
+              <div style="display:inline-block;background:var(--orange);color:#fff;border-radius:30px;padding:6px 16px;font-size:11px;font-weight:700;letter-spacing:0.09em;width:fit-content;">
+                ${mkText(setup.badge,'PHASE 1 · SETUP',['setup','badge'])}
+              </div>
+              <div style="font-size:22px;font-weight:700;color:var(--green-dark);">${mkText(setup.title,'Titre',['setup','title'])}</div>
+              <div style="font-size:52px;font-weight:800;color:var(--orange);line-height:1;">${mkBlock(setup.price,'1 400 €',['setup','price'])}</div>
+              ${mkList(setup.items, 'setup')}
             </div>
-            <div style="font-size:17px;font-weight:700;color:var(--green-dark);">${mkText(setup.title,'Titre','setup.title'.split('.'))}</div>
-            <div style="font-size:36px;font-weight:800;color:var(--orange);line-height:1;">${mkBlock(setup.price,'1 400 €',['setup','price'])}</div>
-            ${mkList(setup.items, 'setup')}
-          </div>
-          <!-- PHASE 2 RUN -->
-          <div style="background:var(--green-dark);color:#fff;border-radius:14px;padding:1.5rem;display:flex;flex-direction:column;gap:0.8rem;">
-            <div style="display:inline-block;background:var(--orange);color:#fff;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;letter-spacing:0.08em;width:fit-content;">
-              ${mkText(run.badge,'PHASE 2 · RUN',['run','badge'])}
+            <!-- PHASE 2 RUN -->
+            <div style="background:var(--green-dark);color:#fff;border-radius:18px;padding:1.6rem 1.8rem;display:flex;flex-direction:column;gap:0.9rem;">
+              <div style="display:inline-block;background:var(--orange);color:#fff;border-radius:30px;padding:6px 16px;font-size:11px;font-weight:700;letter-spacing:0.09em;width:fit-content;">
+                ${mkText(run.badge,'PHASE 2 · RUN',['run','badge'])}
+              </div>
+              <div style="font-size:22px;font-weight:700;color:#fff;">${mkText(run.title,'Titre',['run','title'])}</div>
+              <div style="font-size:52px;font-weight:800;color:var(--orange);line-height:1;">${mkBlock(run.price,'700 € / mois',['run','price'])}</div>
+              ${run.note || editable ? `<div style="font-size:13px;font-style:italic;color:rgba(255,255,255,0.75);">${editable?`<span contenteditable="true" style="outline:none;" oninput="if(window.__currentSlides?.[${idx}]?.run)window.__currentSlides[${idx}].run.note=this.textContent">${run.note||''}</span>`:(run.note||'')}</div>` : ''}
+              ${mkList(run.items, 'run')}
             </div>
-            <div style="font-size:17px;font-weight:700;color:#fff;">${mkText(run.title,'Titre',['run','title'])}</div>
-            <div style="font-size:36px;font-weight:800;color:var(--orange);line-height:1;">${mkBlock(run.price,'700 € / mois',['run','price'])}</div>
-            ${run.note || editable ? `<div style="font-size:12px;font-style:italic;color:rgba(255,255,255,0.7);">${editable?`<span contenteditable="true" style="outline:none;" oninput="if(window.__currentSlides?.[${idx}]?.run)window.__currentSlides[${idx}].run.note=this.textContent">${run.note||''}</span>`:(run.note||'')}</div>` : ''}
-            ${mkList(run.items, 'run')}
           </div>
         </div>
       </div>
       ${footer(false)}
     </div>`;
+    return budgetSlideHtml('SEO-GEO · Le budget');
   }
 
   // SEA BUDGET — slide budget deux colonnes SEA, chiffres et texte éditables
@@ -4703,35 +4713,38 @@ function renderSlide(s, idx, clientName, consultant) {
           : `<li>${item}</li>`
       ).join('');
       const addBtn = editable ? `<button onclick="(function(){if(!Array.isArray(window.__currentSlides?.[${idx}]?.${side}?.items))window.__currentSlides[${idx}].${side}.items=[];window.__currentSlides[${idx}].${side}.items.push('');renderSlides();})()" style="margin-top:6px;font-size:11px;background:rgba(255,255,255,0.15);color:inherit;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;">+ item</button>` : '';
-      return `<ul style="margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:0.3rem;font-size:13px;">${listItems}</ul>${addBtn}`;
+      return `<ul style="margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:0.4rem;font-size:14px;">${listItems}</ul>${addBtn}`;
     };
-    return `<div class="slide slide-content">
+    return `<div class="slide slide-content" style="background:#f5f0e6;">
       ${editToolbar}
       <div class="slide-accent-bar"></div>
-      <div class="slide-inner">
-        <div class="slide-title">SEA · Le budget</div>
-        ${editable
-          ? `<div contenteditable="true" class="slide-subtitle" style="font-style:italic;outline:none;" oninput="if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].subtitle=this.textContent">${s.subtitle||''}</div>`
-          : s.subtitle ? `<div class="slide-subtitle" style="font-style:italic;">${s.subtitle}</div>` : ''}
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-top:1rem;flex:1;min-height:0;">
-          <!-- PHASE 1 SETUP -->
-          <div style="background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:1.5rem;display:flex;flex-direction:column;gap:0.8rem;">
-            <div style="display:inline-block;background:var(--orange);color:#fff;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;letter-spacing:0.08em;width:fit-content;">
-              ${mkText(setup.badge,'PHASE 1 · SETUP',['setup','badge'])}
+      <div class="slide-inner" style="position:relative;">
+        <div style="position:absolute;top:-2.2rem;left:-2.2rem;width:90px;height:90px;background:var(--green-dark);border-radius:50%;z-index:0;"></div>
+        <div style="position:relative;z-index:1;">
+          <div class="slide-title" style="color:var(--green-dark)">SEA · Le budget</div>
+          ${editable
+            ? `<div contenteditable="true" class="slide-subtitle" style="font-style:italic;outline:none;" oninput="if(window.__currentSlides?.[${idx}])window.__currentSlides[${idx}].subtitle=this.textContent">${s.subtitle||''}</div>`
+            : s.subtitle ? `<div class="slide-subtitle" style="font-style:italic;">${s.subtitle}</div>` : ''}
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;margin-top:1.2rem;flex:1;min-height:0;">
+            <!-- PHASE 1 SETUP -->
+            <div style="background:#fff;border:1.5px solid var(--green-dark);border-radius:18px;padding:1.6rem 1.8rem;display:flex;flex-direction:column;gap:0.9rem;">
+              <div style="display:inline-block;background:var(--orange);color:#fff;border-radius:30px;padding:6px 16px;font-size:11px;font-weight:700;letter-spacing:0.09em;width:fit-content;">
+                ${mkText(setup.badge,'PHASE 1 · SETUP',['setup','badge'])}
+              </div>
+              <div style="font-size:22px;font-weight:700;color:var(--green-dark);">${mkText(setup.title,'Paramétrage SEA',['setup','title'])}</div>
+              <div style="font-size:52px;font-weight:800;color:var(--orange);line-height:1;">${mkBlock(setup.price,'1 400 €',['setup','price'])}</div>
+              ${mkList(setup.items, 'setup')}
             </div>
-            <div style="font-size:17px;font-weight:700;color:var(--green-dark);">${mkText(setup.title,'Paramétrage SEA',['setup','title'])}</div>
-            <div style="font-size:36px;font-weight:800;color:var(--orange);line-height:1;">${mkBlock(setup.price,'1 400 €',['setup','price'])}</div>
-            ${mkList(setup.items, 'setup')}
-          </div>
-          <!-- PHASE 2 RUN -->
-          <div style="background:var(--green-dark);color:#fff;border-radius:14px;padding:1.5rem;display:flex;flex-direction:column;gap:0.8rem;">
-            <div style="display:inline-block;background:var(--orange);color:#fff;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;letter-spacing:0.08em;width:fit-content;">
-              ${mkText(run.badge,'PHASE 2 · RUN',['run','badge'])}
+            <!-- PHASE 2 RUN -->
+            <div style="background:var(--green-dark);color:#fff;border-radius:18px;padding:1.6rem 1.8rem;display:flex;flex-direction:column;gap:0.9rem;">
+              <div style="display:inline-block;background:var(--orange);color:#fff;border-radius:30px;padding:6px 16px;font-size:11px;font-weight:700;letter-spacing:0.09em;width:fit-content;">
+                ${mkText(run.badge,'PHASE 2 · RUN',['run','badge'])}
+              </div>
+              <div style="font-size:22px;font-weight:700;color:#fff;">${mkText(run.title,'Travaux mensuels',['run','title'])}</div>
+              <div style="font-size:52px;font-weight:800;color:var(--orange);line-height:1;">${mkBlock(run.price,'400 € / mois',['run','price'])}</div>
+              ${run.note || editable ? `<div style="font-size:13px;font-style:italic;color:rgba(255,255,255,0.75);">${editable?`<span contenteditable="true" style="outline:none;" oninput="if(window.__currentSlides?.[${idx}]?.run)window.__currentSlides[${idx}].run.note=this.textContent">${run.note||''}</span>`:(run.note||'')}</div>` : ''}
+              ${mkList(run.items, 'run')}
             </div>
-            <div style="font-size:17px;font-weight:700;color:#fff;">${mkText(run.title,'Travaux mensuels',['run','title'])}</div>
-            <div style="font-size:36px;font-weight:800;color:var(--orange);line-height:1;">${mkBlock(run.price,'400 € / mois',['run','price'])}</div>
-            ${run.note || editable ? `<div style="font-size:12px;font-style:italic;color:rgba(255,255,255,0.7);">${editable?`<span contenteditable="true" style="outline:none;" oninput="if(window.__currentSlides?.[${idx}]?.run)window.__currentSlides[${idx}].run.note=this.textContent">${run.note||''}</span>`:(run.note||'')}</div>` : ''}
-            ${mkList(run.items, 'run')}
           </div>
         </div>
       </div>
